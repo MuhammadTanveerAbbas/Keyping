@@ -52,7 +52,7 @@ KeyPing is a developer tool that validates API keys across 10+ providers in seco
 ### Clone & Install
 
 ```bash
-git clone <YOUR_GIT_URL>
+git clone https://github.com/MuhammadTanveerAbbas/Keyping.git
 cd keyping
 pnpm install
 ```

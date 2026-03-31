@@ -4,6 +4,14 @@
   "private": true,
   "version": "1.0.0",
   "author": "Muhammad Tanveer Abbas <https://themvpguy.vercel.app/>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MuhammadTanveerAbbas/Keyping.git"
+  },
+  "homepage": "https://github.com/MuhammadTanveerAbbas/Keyping#readme",
+  "bugs": {
+    "url": "https://github.com/MuhammadTanveerAbbas/Keyping/issues"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",
