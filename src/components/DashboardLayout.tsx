@@ -155,12 +155,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#000000] flex">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#000000] flex overflow-x-hidden">
       <CommandPalette />
 
       {/* Desktop sidebar */}
       <aside className={cn(
-        "hidden md:flex flex-col border-r border-slate-200 dark:border-blue-500/20 bg-white dark:bg-[#000000] transition-all duration-300",
+        "hidden md:flex flex-col border-r border-slate-200 dark:border-blue-500/20 bg-white dark:bg-[#000000] transition-all duration-300 shrink-0",
         collapsed ? "w-16" : "w-60"
       )}>
         {sidebarContent}
@@ -170,25 +170,25 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       {sidebarOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
           <div className="absolute inset-0 bg-black/50 dark:bg-black/75 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
-          <aside className="absolute left-0 top-0 h-full w-60 border-r border-slate-200 dark:border-blue-500/20 bg-white dark:bg-[#000000]">
+          <aside className="absolute left-0 top-0 h-full w-64 max-w-[80vw] border-r border-slate-200 dark:border-blue-500/20 bg-white dark:bg-[#000000]">
             {sidebarContent}
           </aside>
         </div>
       )}
 
       {/* Main */}
-      <div className="flex-1 flex flex-col min-h-screen">
+      <div className="flex-1 flex flex-col min-h-screen min-w-0">
         {/* Topbar */}
         <header className="bg-white/80 dark:bg-[#000000]/80 backdrop-blur-sm border-b border-slate-200 dark:border-blue-500/20 h-14 px-4 sm:px-6 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" className="md:hidden h-8 w-8 text-slate-500" onClick={() => setSidebarOpen(true)}>
+          <div className="flex items-center gap-3 min-w-0">
+            <Button variant="ghost" size="icon" className="md:hidden h-9 w-9 text-slate-500 shrink-0" onClick={() => setSidebarOpen(true)}>
               <Menu className="h-5 w-5" />
             </Button>
-            <div className="md:hidden flex items-center gap-2">
+            <div className="md:hidden flex items-center gap-2 min-w-0">
               <KeyPingLogo size={24} />
-              <span className="font-display text-sm font-bold text-slate-900 dark:text-white">KeyPing</span>
+              <span className="font-display text-sm font-bold text-slate-900 dark:text-white truncate">KeyPing</span>
             </div>
-            <span className="hidden md:inline font-mono text-sm text-slate-400 dark:text-blue-400/60">
+            <span className="hidden md:inline font-mono text-sm text-slate-400 dark:text-blue-400/60 truncate">
               keyping
               {pathSegments.map((seg, i) => (
                 <span key={i}>
@@ -198,12 +198,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               ))}
             </span>
             {totalTests > 0 && (
-              <span className="hidden sm:inline font-mono text-[10px] text-slate-400 dark:text-blue-400/40 border border-slate-200 dark:border-blue-500/20 rounded px-2 py-0.5">
+              <span className="hidden sm:inline font-mono text-[10px] text-slate-400 dark:text-blue-400/40 border border-slate-200 dark:border-blue-500/20 rounded px-2 py-0.5 shrink-0">
                 {totalTests} tests
               </span>
             )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }))}
               className="hidden sm:flex items-center gap-1.5 font-mono text-xs text-slate-400 dark:text-blue-400/40 border border-slate-200 dark:border-blue-500/20 rounded-lg px-2.5 py-1.5 hover:border-slate-300 dark:hover:border-blue-500/40 hover:text-slate-600 dark:hover:text-blue-400 transition-colors"
@@ -211,19 +211,20 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               <Command className="h-3 w-3" /><span>K</span>
             </button>
             <ThemeToggle />
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 dark:text-blue-400/60 hover:text-slate-700 dark:hover:text-blue-400" onClick={() => navigate("/dashboard/alerts")}>
+            <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-500 dark:text-blue-400/60 hover:text-slate-700 dark:hover:text-blue-400" onClick={() => navigate("/dashboard/alerts")}>
               <Bell className="h-4 w-4" />
             </Button>
             <Button size="sm"
-              className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white dark:text-black font-sans font-semibold text-xs rounded-lg px-4 dark:shadow-[0_0_15px_rgba(59,130,246,0.3)] dark:hover:shadow-[0_0_22px_rgba(59,130,246,0.55)] transition-all border-0"
+              className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white dark:text-black font-sans font-semibold text-xs rounded-lg px-3 sm:px-4 dark:shadow-[0_0_15px_rgba(59,130,246,0.3)] dark:hover:shadow-[0_0_22px_rgba(59,130,246,0.55)] transition-all border-0 h-9 min-w-[44px]"
               onClick={() => navigate("/dashboard")}>
-              + Add Key
+              <span className="hidden sm:inline">+ Add Key</span>
+              <span className="sm:hidden">+</span>
             </Button>
           </div>
         </header>
 
         {/* Content */}
-        <main className="flex-1 p-4 sm:p-6 overflow-auto">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto">
           <PageTransition>{children}</PageTransition>
         </main>
       </div>

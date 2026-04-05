@@ -38,7 +38,7 @@ export default function KeyHistory() {
     setLoading(true);
     let query = supabase
       .from("key_tests")
-      .select("*")
+      .select("id, provider, key_preview, nickname, notes, status, scopes, rate_limit_info, tested_at, health_score, latency_ms")
       .order("tested_at", { ascending: false });
 
     if (filterProvider !== "all") query = query.eq("provider", filterProvider);

@@ -78,7 +78,11 @@ export default function AuthPage() {
     if (!loading && user) navigate("/dashboard", { replace: true });
   }, [user, loading, navigate]);
 
-  if (loading) return null;
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[#000000]">
+      <div className="h-5 w-5 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+    </div>
+  );
 
   const handleGoogle = async () => {
     setSigningIn(true);
@@ -87,7 +91,7 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left panel  always dark */}
+      {/* Left panel — always dark, hidden on mobile */}
       <div className="hidden lg:flex lg:w-[55%] bg-[#000000] flex-col relative overflow-hidden">
         {/* Dot grid */}
         <div className="absolute inset-0 bg-grid-dark opacity-60 pointer-events-none" />
@@ -124,7 +128,7 @@ export default function AuthPage() {
       </div>
 
       {/* Right panel */}
-      <div className="flex-1 flex items-center justify-center bg-white dark:bg-[#000000] border-l border-blue-500/20 px-6 py-12">
+      <div className="flex-1 flex items-center justify-center bg-white dark:bg-[#000000] border-l border-blue-500/20 px-4 sm:px-6 py-12 min-h-screen">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}

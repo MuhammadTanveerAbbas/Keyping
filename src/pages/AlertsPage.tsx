@@ -30,7 +30,7 @@ const AlertsPage = () => {
   const fetchAlerts = async () => {
     if (!user) return;
     setLoading(true);
-    const { data, error } = await supabase.from("alerts").select("*").order("expiry_date", { ascending: true });
+    const { data, error } = await supabase.from("alerts").select("id, key_nickname, expiry_date, reminder_days, notified, created_at").order("expiry_date", { ascending: true });
     if (error) toast.error(error.message);
     else setAlerts((data as Alert[]) || []);
     setLoading(false);

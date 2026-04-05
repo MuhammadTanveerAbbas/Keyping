@@ -21,11 +21,17 @@ import NotFound from "./pages/NotFound";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // cache 5 minutes
+      retry: 1,
+    },
+  },
+});
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
-  if (loading) return (
+function FullScreenLoader() {
+  return (
     <div className="flex min-h-screen items-center justify-center bg-background">
       <div className="flex flex-col items-center gap-3">
         <div className="h-5 w-5 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
@@ -33,7 +39,21 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
       </div>
     </div>
   );
+}
+
+/** Blocks access to protected pages — redirects to / if not logged in */
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  if (loading) return <FullScreenLoader />;
   if (!user) return <Navigate to="/" replace />;
+  return <>{children}</>;
+}
+
+/** Blocks landing/auth pages when already logged in — redirects to /dashboard */
+function PublicRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  if (loading) return <FullScreenLoader />;
+  if (user) return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 }
 
@@ -42,8 +62,11 @@ const AppRoutes = () => {
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<Landing />} />
-        <Route path="/auth" element={<AuthPage />} />
+        {/* Public routes — redirect to /dashboard if already logged in */}
+        <Route path="/" element={<PublicRoute><Landing /></PublicRoute>} />
+        <Route path="/auth" element={<PublicRoute><AuthPage /></PublicRoute>} />
+
+        {/* Protected routes — redirect to / if not logged in */}
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/dashboard/bulk" element={<ProtectedRoute><BulkTestPage /></ProtectedRoute>} />
         <Route path="/dashboard/vault" element={<ProtectedRoute><VaultPage /></ProtectedRoute>} />
@@ -53,8 +76,11 @@ const AppRoutes = () => {
         <Route path="/dashboard/history" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
         <Route path="/dashboard/alerts" element={<ProtectedRoute><AlertsPage /></ProtectedRoute>} />
         <Route path="/dashboard/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+
+        {/* Legal — always public */}
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
+
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>

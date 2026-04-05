@@ -102,6 +102,21 @@
   }
 }
 
+/* ── Responsive base resets ── */
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+img, video, svg {
+  max-width: 100%;
+  height: auto;
+}
+
 @layer base {
   * {
     @apply border-border;

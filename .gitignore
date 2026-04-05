@@ -44,5 +44,8 @@ Thumbs.db
 supabase/.branches
 supabase/.temp
 
+# Vercel
+.vercel
+
 # Vite
 *.local

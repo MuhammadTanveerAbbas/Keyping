@@ -38,6 +38,7 @@ const StatsPage = () => {
     if (!user) return;
     supabase.from("key_tests").select("id, provider, status, health_score, latency_ms, tested_at")
       .order("tested_at", { ascending: false })
+      .limit(500)
       .then(({ data }) => {
         setTests((data as KeyTest[]) || []);
         setLoading(false);
