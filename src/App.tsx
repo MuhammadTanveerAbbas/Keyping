@@ -41,7 +41,7 @@ function FullScreenLoader() {
   );
 }
 
-/** Blocks access to protected pages — redirects to / if not logged in */
+/** Blocks access to protected pages  redirects to / if not logged in */
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   if (loading) return <FullScreenLoader />;
@@ -49,7 +49,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-/** Blocks landing/auth pages when already logged in — redirects to /dashboard */
+/** Blocks landing/auth pages when already logged in  redirects to /dashboard */
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   if (loading) return <FullScreenLoader />;
@@ -62,11 +62,11 @@ const AppRoutes = () => {
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
-        {/* Public routes — redirect to /dashboard if already logged in */}
+        {/* Public routes  redirect to /dashboard if already logged in */}
         <Route path="/" element={<PublicRoute><Landing /></PublicRoute>} />
         <Route path="/auth" element={<PublicRoute><AuthPage /></PublicRoute>} />
 
-        {/* Protected routes — redirect to / if not logged in */}
+        {/* Protected routes  redirect to / if not logged in */}
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/dashboard/bulk" element={<ProtectedRoute><BulkTestPage /></ProtectedRoute>} />
         <Route path="/dashboard/vault" element={<ProtectedRoute><VaultPage /></ProtectedRoute>} />
@@ -77,7 +77,7 @@ const AppRoutes = () => {
         <Route path="/dashboard/alerts" element={<ProtectedRoute><AlertsPage /></ProtectedRoute>} />
         <Route path="/dashboard/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
 
-        {/* Legal — always public */}
+        {/* Legal  always public */}
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
 

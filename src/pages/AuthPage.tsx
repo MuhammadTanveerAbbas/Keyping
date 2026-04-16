@@ -91,7 +91,7 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left panel — always dark, hidden on mobile */}
+      {/* Left panel  always dark, hidden on mobile */}
       <div className="hidden lg:flex lg:w-[55%] bg-[#000000] flex-col relative overflow-hidden">
         {/* Dot grid */}
         <div className="absolute inset-0 bg-grid-dark opacity-60 pointer-events-none" />

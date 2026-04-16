@@ -20,7 +20,7 @@
 
 # KeyPing
 
-**Validate, monitor, and manage API keys across 10+ providers — in seconds.**
+**Validate, monitor, and manage API keys across 10+ providers  in seconds.**
 
 [![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen?style=for-the-badge)](https://keyping.vercel.app)
 [![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
@@ -42,7 +42,7 @@
 
 ## Overview
 
-Debugging a broken API key shouldn't take hours. KeyPing lets you paste any API key and get a full validation report — status, health score, rate limits, scopes, and latency — in under 2 seconds. Built for developers and teams who ship fast and can't afford silent key failures in production.
+Debugging a broken API key shouldn't take hours. KeyPing lets you paste any API key and get a full validation report  status, health score, rate limits, scopes, and latency  in under 2 seconds. Built for developers and teams who ship fast and can't afford silent key failures in production.
 
 Unlike generic secret managers, KeyPing is purpose-built for API key health: it tells you not just whether a key works, but how well it works, what it can do, and when it's about to expire.
 
@@ -50,17 +50,17 @@ Unlike generic secret managers, KeyPing is purpose-built for API key health: it 
 
 ## ✨ Features
 
-- 🔑 **Instant Key Validation** — Paste any API key and get a pass/fail result with full details in under 2 seconds
-- 📊 **Health Score (0–100)** — Every validation produces a composite score based on validity, rate limits, scopes, and response latency
-- ⚡ **Latency Benchmarking** — Measures real round-trip latency to each provider's auth endpoint so you can spot slow keys before they slow down users
-- 🧪 **Bulk Testing** — Test up to 10 keys simultaneously across dev, staging, and prod environments; export results as a PDF report
-- 🔒 **Secure Key Vault** — Only the last 4 characters of each key are stored; full keys are tested at the edge and immediately discarded
-- 🔔 **Expiry Alerts** — Set reminders for key expiry dates with configurable lead times (1, 3, or 7 days before)
-- 👥 **Team Workspaces** — Create teams, invite members via shareable links, and manage shared key testing environments
-- 📈 **Analytics Dashboard** — Track validation history, provider distribution, health score trends, and latency benchmarks over time
-- 🌐 **10+ Supported Providers** — OpenAI, Groq, Anthropic, Stripe, GitHub, Twitter/X, Notion, Supabase, AWS, Gemini, and custom endpoints
-- 🎨 **Dark / Light Mode** — Full theme support with smooth transitions
-- ⌨️ **Command Palette** — Keyboard-first navigation across the entire app
+- 🔑 **Instant Key Validation**  Paste any API key and get a pass/fail result with full details in under 2 seconds
+- 📊 **Health Score (0–100)**  Every validation produces a composite score based on validity, rate limits, scopes, and response latency
+- ⚡ **Latency Benchmarking**  Measures real round-trip latency to each provider's auth endpoint so you can spot slow keys before they slow down users
+- 🧪 **Bulk Testing**  Test up to 10 keys simultaneously across dev, staging, and prod environments; export results as a PDF report
+- 🔒 **Secure Key Vault**  Only the last 4 characters of each key are stored; full keys are tested at the edge and immediately discarded
+- 🔔 **Expiry Alerts**  Set reminders for key expiry dates with configurable lead times (1, 3, or 7 days before)
+- 👥 **Team Workspaces**  Create teams, invite members via shareable links, and manage shared key testing environments
+- 📈 **Analytics Dashboard**  Track validation history, provider distribution, health score trends, and latency benchmarks over time
+- 🌐 **10+ Supported Providers**  OpenAI, Groq, Anthropic, Stripe, GitHub, Twitter/X, Notion, Supabase, AWS, Gemini, and custom endpoints
+- 🎨 **Dark / Light Mode**  Full theme support with smooth transitions
+- ⌨️ **Command Palette**  Keyboard-first navigation across the entire app
 
 ---
 
@@ -149,7 +149,7 @@ Keyping/
 │       └── supabase/        # Supabase client + generated types
 ├── supabase/
 │   ├── functions/
-│   │   └── test-api-key/    # Edge function — validates keys server-side
+│   │   └── test-api-key/    # Edge function  validates keys server-side
 │   └── migrations/          # Database schema migrations
 ├── .env.example
 ├── package.json

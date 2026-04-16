@@ -17,7 +17,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Resolve existing session first — prevents flicker on reload
+    // Resolve existing session first  prevents flicker on reload
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setLoading(false);
