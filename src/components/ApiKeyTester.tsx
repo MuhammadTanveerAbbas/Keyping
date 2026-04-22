@@ -157,7 +157,7 @@ export default function ApiKeyTester({ onSave }: { onSave?: () => void } = {}) {
       </div>
 
       {/* Step 1: Input */}
-      <div className="bg-white dark:bg-[#000000] border border-slate-200 dark:border-blue-500/20 rounded-2xl p-5 space-y-5 shadow-sm dark:shadow-[0_0_15px_rgba(59,130,246,0.04)]">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl p-5 space-y-5 shadow-sm dark:shadow-xl dark:shadow-black/20">
         <div className="flex items-center justify-between">
           <h2 className="font-display text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <span className="h-5 w-5 rounded-md bg-blue-500 text-white text-xs flex items-center justify-center font-bold">1</span>
@@ -224,7 +224,7 @@ export default function ApiKeyTester({ onSave }: { onSave?: () => void } = {}) {
 
       {/* Step 2: Options */}
       {showOptions && (
-        <div className="bg-white dark:bg-[#000000] border border-slate-200 dark:border-blue-500/20 rounded-2xl p-5 space-y-4 shadow-sm dark:shadow-[0_0_15px_rgba(59,130,246,0.04)]">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl p-5 space-y-4 shadow-sm dark:shadow-xl dark:shadow-black/20">
           <h2 className="font-display text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <span className="h-5 w-5 rounded-md bg-blue-500 text-white text-xs flex items-center justify-center font-bold">2</span>
             Configure & Test
@@ -268,7 +268,7 @@ export default function ApiKeyTester({ onSave }: { onSave?: () => void } = {}) {
 
       {/* Step 3: Result */}
       {result && (
-        <div className="bg-white dark:bg-[#000000] border border-slate-200 dark:border-blue-500/20 rounded-2xl p-5 space-y-5 shadow-sm dark:shadow-[0_0_15px_rgba(59,130,246,0.04)]">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl p-5 space-y-5 shadow-sm dark:shadow-xl dark:shadow-black/20">
           <h2 className="font-display text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <span className="h-5 w-5 rounded-md bg-blue-500 text-white text-xs flex items-center justify-center font-bold">3</span>
             Result
@@ -355,7 +355,7 @@ export default function ApiKeyTester({ onSave }: { onSave?: () => void } = {}) {
 
       {/* Save dialog */}
       {showSaveDialog && (
-        <div className="bg-white dark:bg-[#000000] border border-slate-200 dark:border-blue-500/20 rounded-2xl p-5 space-y-4 shadow-sm dark:shadow-[0_0_15px_rgba(59,130,246,0.04)]">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl p-5 space-y-4 shadow-sm dark:shadow-xl dark:shadow-black/20">
           <h2 className="font-display text-sm font-bold text-slate-900 dark:text-white">Save Result</h2>
           <div>
             <Label className="font-sans text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">Nickname</Label>

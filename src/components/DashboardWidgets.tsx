@@ -3,10 +3,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { PROVIDERS } from "@/lib/providers";
 import {
-  Activity, TrendingUp, Clock, Shield, Zap, AlertTriangle,
-  CheckCircle2, XCircle, ArrowUpRight, ArrowDownRight,
+  Activity,
+  TrendingUp,
+  Clock,
+  Shield,
+  Zap,
+  AlertTriangle,
+  CheckCircle2,
+  XCircle,
+  ArrowUpRight,
+  ArrowDownRight,
 } from "lucide-react";
-import { LineChart, Line, ResponsiveContainer, AreaChart, Area, Tooltip } from "recharts";
+import {
+  LineChart,
+  Line,
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  Tooltip,
+} from "recharts";
 import { format, subDays, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -21,51 +36,103 @@ type KeyTest = {
   key_preview: string;
 };
 
-function SparkLine({ data, color, height = 28 }: { data: number[]; color: string; height?: number }) {
+function SparkLine({
+  data,
+  color,
+  height = 28,
+}: {
+  data: number[];
+  color: string;
+  height?: number;
+}) {
   const chartData = data.map((v, i) => ({ v, i }));
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <AreaChart data={chartData} margin={{ top: 2, right: 2, bottom: 2, left: 2 }}>
+      <AreaChart
+        data={chartData}
+        margin={{ top: 2, right: 2, bottom: 2, left: 2 }}
+      >
         <defs>
           <linearGradient id={`spark-${color}`} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor={color} stopOpacity={0.3} />
             <stop offset="100%" stopColor={color} stopOpacity={0} />
           </linearGradient>
         </defs>
-        <Area type="monotone" dataKey="v" stroke={color} strokeWidth={1.5} fill={`url(#spark-${color})`} dot={false} />
+        <Area
+          type="monotone"
+          dataKey="v"
+          stroke={color}
+          strokeWidth={1.5}
+          fill={`url(#spark-${color})`}
+          dot={false}
+        />
       </AreaChart>
     </ResponsiveContainer>
   );
 }
 
 function StatCard({
-  icon: Icon, label, value, subValue, trend, sparkData, sparkColor, className,
+  icon: Icon,
+  label,
+  value,
+  subValue,
+  trend,
+  sparkData,
+  sparkColor,
+  className,
 }: {
-  icon: any; label: string; value: string; subValue?: string;
+  icon: any;
+  label: string;
+  value: string;
+  subValue?: string;
   trend?: { value: number; up: boolean };
-  sparkData?: number[]; sparkColor?: string; className?: string;
+  sparkData?: number[];
+  sparkColor?: string;
+  className?: string;
 }) {
   return (
-    <div className={cn("bg-white dark:bg-[#000000] border border-slate-200 dark:border-blue-500/20 rounded-2xl p-3 space-y-2 card-hover-lift shadow-sm dark:shadow-[0_0_15px_rgba(59,130,246,0.05)]", className)}>
+    <div
+      className={cn(
+        "bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl p-3 space-y-2 card-hover-lift shadow-sm dark:shadow-xl dark:shadow-black/20",
+        className,
+      )}
+    >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="h-7 w-7 rounded-lg bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 flex items-center justify-center shrink-0">
             <Icon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
           </div>
-          <span className="font-sans text-xs text-slate-500 dark:text-slate-400">{label}</span>
+          <span className="font-sans text-xs text-slate-500 dark:text-slate-400">
+            {label}
+          </span>
         </div>
         {trend && (
-          <div className={cn("flex items-center gap-0.5 font-mono text-xs font-medium",
-            trend.up ? "text-green-600 dark:text-green-400" : "text-red-500 dark:text-red-400"
-          )}>
-            {trend.up ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+          <div
+            className={cn(
+              "flex items-center gap-0.5 font-mono text-xs font-medium",
+              trend.up
+                ? "text-green-600 dark:text-green-400"
+                : "text-red-500 dark:text-red-400",
+            )}
+          >
+            {trend.up ? (
+              <ArrowUpRight className="h-3 w-3" />
+            ) : (
+              <ArrowDownRight className="h-3 w-3" />
+            )}
             {Math.abs(trend.value)}%
           </div>
         )}
       </div>
       <div>
-        <p className="font-display text-xl font-bold text-slate-900 dark:text-white">{value}</p>
-        {subValue && <p className="font-sans text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">{subValue}</p>}
+        <p className="font-display text-xl font-bold text-slate-900 dark:text-white">
+          {value}
+        </p>
+        {subValue && (
+          <p className="font-sans text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
+            {subValue}
+          </p>
+        )}
       </div>
       {sparkData && sparkData.length > 1 && (
         <SparkLine data={sparkData} color={sparkColor || "#3B82F6"} />
@@ -88,21 +155,28 @@ function LatencyTrendChart({ tests }: { tests: KeyTest[] }) {
     });
     return Object.entries(days).map(([name, vals]) => ({
       name,
-      avg: vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : null,
+      avg: vals.length
+        ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length)
+        : null,
     }));
   }, [tests]);
 
   return (
-    <div className="bg-white dark:bg-[#000000] border border-slate-200 dark:border-blue-500/20 rounded-2xl p-4 space-y-2 shadow-sm dark:shadow-[0_0_15px_rgba(59,130,246,0.04)]">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl p-4 space-y-2 shadow-sm dark:shadow-xl dark:shadow-black/20">
       <div className="flex items-center justify-between">
         <h3 className="font-display text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
           <Clock className="h-4 w-4 text-blue-500 dark:text-blue-400" />
           Latency Trend (14 days)
         </h3>
-        <span className="font-mono text-[10px] text-slate-400 dark:text-blue-400/40 border border-slate-200 dark:border-blue-500/20 rounded px-2 py-0.5">ms</span>
+        <span className="font-mono text-[10px] text-slate-400 dark:text-blue-400/40 border border-slate-200 dark:border-blue-500/20 rounded px-2 py-0.5">
+          ms
+        </span>
       </div>
       <ResponsiveContainer width="100%" height={110}>
-        <AreaChart data={data} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
+        <AreaChart
+          data={data}
+          margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
+        >
           <defs>
             <linearGradient id="latencyGrad" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.2} />
@@ -110,10 +184,24 @@ function LatencyTrendChart({ tests }: { tests: KeyTest[] }) {
             </linearGradient>
           </defs>
           <Tooltip
-            contentStyle={{ background: "#fff", border: "1px solid #E2E8F0", borderRadius: 12, fontSize: 12, fontFamily: "JetBrains Mono" }}
+            contentStyle={{
+              background: "#fff",
+              border: "1px solid #E2E8F0",
+              borderRadius: 12,
+              fontSize: 12,
+              fontFamily: "JetBrains Mono",
+            }}
             formatter={(v: number) => [`${v}ms`, "Avg Latency"]}
           />
-          <Area type="monotone" dataKey="avg" stroke="#3B82F6" strokeWidth={2} fill="url(#latencyGrad)" dot={false} connectNulls />
+          <Area
+            type="monotone"
+            dataKey="avg"
+            stroke="#3B82F6"
+            strokeWidth={2}
+            fill="url(#latencyGrad)"
+            dot={false}
+            connectNulls
+          />
         </AreaChart>
       </ResponsiveContainer>
     </div>
@@ -122,12 +210,18 @@ function LatencyTrendChart({ tests }: { tests: KeyTest[] }) {
 
 function ProviderUptime({ tests }: { tests: KeyTest[] }) {
   const providers = useMemo(() => {
-    const map: Record<string, { total: number; valid: number; lastTest?: KeyTest }> = {};
+    const map: Record<
+      string,
+      { total: number; valid: number; lastTest?: KeyTest }
+    > = {};
     tests.forEach((t) => {
       if (!map[t.provider]) map[t.provider] = { total: 0, valid: 0 };
       map[t.provider].total++;
       if (t.status === "valid") map[t.provider].valid++;
-      if (!map[t.provider].lastTest || new Date(t.tested_at) > new Date(map[t.provider].lastTest!.tested_at)) {
+      if (
+        !map[t.provider].lastTest ||
+        new Date(t.tested_at) > new Date(map[t.provider].lastTest!.tested_at)
+      ) {
         map[t.provider].lastTest = t;
       }
     });
@@ -139,7 +233,9 @@ function ProviderUptime({ tests }: { tests: KeyTest[] }) {
         total,
         lastStatus: lastTest?.status || "unknown",
         lastHealth: lastTest?.health_score,
-        daysSince: lastTest ? differenceInDays(new Date(), new Date(lastTest.tested_at)) : null,
+        daysSince: lastTest
+          ? differenceInDays(new Date(), new Date(lastTest.tested_at))
+          : null,
       }))
       .sort((a, b) => b.total - a.total);
   }, [tests]);
@@ -147,7 +243,7 @@ function ProviderUptime({ tests }: { tests: KeyTest[] }) {
   if (!providers.length) return null;
 
   return (
-    <div className="bg-white dark:bg-[#000000] border border-slate-200 dark:border-blue-500/20 rounded-2xl p-4 space-y-3 shadow-sm dark:shadow-[0_0_15px_rgba(59,130,246,0.04)]">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl p-4 space-y-3 shadow-sm dark:shadow-xl dark:shadow-black/20">
       <h3 className="font-display text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
         <Shield className="h-4 w-4 text-blue-500 dark:text-blue-400" />
         Provider Uptime
@@ -157,7 +253,9 @@ function ProviderUptime({ tests }: { tests: KeyTest[] }) {
           <div key={p.id} className="space-y-1.5">
             <div className="flex items-center justify-between text-xs">
               <div className="flex items-center gap-2">
-                <span className="font-sans font-medium text-slate-700 dark:text-slate-300">{p.name}</span>
+                <span className="font-sans font-medium text-slate-700 dark:text-slate-300">
+                  {p.name}
+                </span>
                 {p.lastStatus === "valid" ? (
                   <CheckCircle2 className="h-3 w-3 text-green-500 dark:text-green-400" />
                 ) : (
@@ -165,17 +263,33 @@ function ProviderUptime({ tests }: { tests: KeyTest[] }) {
                 )}
               </div>
               <div className="flex items-center gap-2">
-                <span className={cn("font-mono font-bold",
-                  p.uptime >= 90 ? "text-green-600 dark:text-green-400" : p.uptime >= 60 ? "text-amber-500 dark:text-amber-400" : "text-red-500 dark:text-red-400"
-                )}>
+                <span
+                  className={cn(
+                    "font-mono font-bold",
+                    p.uptime >= 90
+                      ? "text-green-600 dark:text-green-400"
+                      : p.uptime >= 60
+                        ? "text-amber-500 dark:text-amber-400"
+                        : "text-red-500 dark:text-red-400",
+                  )}
+                >
                   {p.uptime}%
                 </span>
-                <span className="font-mono text-slate-400 dark:text-slate-600">({p.total})</span>
+                <span className="font-mono text-slate-400 dark:text-slate-600">
+                  ({p.total})
+                </span>
               </div>
             </div>
             <div className="h-1.5 rounded-full bg-slate-100 dark:bg-blue-500/10 overflow-hidden">
               <div
-                className={cn("h-full rounded-full transition-all", p.uptime >= 90 ? "bg-green-500 dark:bg-green-400" : p.uptime >= 60 ? "bg-amber-400" : "bg-red-500 dark:bg-red-400")}
+                className={cn(
+                  "h-full rounded-full transition-all",
+                  p.uptime >= 90
+                    ? "bg-green-500 dark:bg-green-400"
+                    : p.uptime >= 60
+                      ? "bg-amber-400"
+                      : "bg-red-500 dark:bg-red-400",
+                )}
                 style={{ width: `${p.uptime}%` }}
               />
             </div>
@@ -197,21 +311,36 @@ function RecentActivity({ tests }: { tests: KeyTest[] }) {
   if (!recent.length) return null;
 
   return (
-    <div className="bg-white dark:bg-[#000000] border border-slate-200 dark:border-blue-500/20 rounded-2xl p-4 space-y-2 shadow-sm dark:shadow-[0_0_15px_rgba(59,130,246,0.04)]">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl p-4 space-y-2 shadow-sm dark:shadow-xl dark:shadow-black/20">
       <h3 className="font-display text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
         <Activity className="h-4 w-4 text-blue-500 dark:text-blue-400" />
         Recent Activity
       </h3>
       <div className="space-y-2">
         {recent.map((t) => (
-          <div key={t.id} className="flex items-center gap-3 py-1.5 border-b border-slate-100 dark:border-blue-500/10 last:border-0">
-            <div className={cn("h-2 w-2 rounded-full shrink-0",
-              t.status === "valid" ? "bg-green-500 dark:bg-green-400" : t.status === "limited" ? "bg-amber-400" : "bg-red-500 dark:bg-red-400"
-            )} />
+          <div
+            key={t.id}
+            className="flex items-center gap-3 py-1.5 border-b border-slate-100 dark:border-blue-500/10 last:border-0"
+          >
+            <div
+              className={cn(
+                "h-2 w-2 rounded-full shrink-0",
+                t.status === "valid"
+                  ? "bg-green-500 dark:bg-green-400"
+                  : t.status === "limited"
+                    ? "bg-amber-400"
+                    : "bg-red-500 dark:bg-red-400",
+              )}
+            />
             <div className="flex-1 min-w-0">
               <p className="font-sans text-xs font-medium text-slate-700 dark:text-slate-300 truncate">
                 {PROVIDERS.find((p) => p.id === t.provider)?.name || t.provider}
-                {t.nickname && <span className="text-slate-400 dark:text-slate-500"> · {t.nickname}</span>}
+                {t.nickname && (
+                  <span className="text-slate-400 dark:text-slate-500">
+                    {" "}
+                    · {t.nickname}
+                  </span>
+                )}
               </p>
               <p className="font-mono text-[10px] text-slate-400 dark:text-slate-600">
                 {format(new Date(t.tested_at), "MMM d, h:mm a")}
@@ -219,9 +348,16 @@ function RecentActivity({ tests }: { tests: KeyTest[] }) {
               </p>
             </div>
             {t.health_score !== null && (
-              <span className={cn("font-mono text-xs font-bold",
-                t.health_score >= 80 ? "text-green-600 dark:text-green-400" : t.health_score >= 50 ? "text-amber-500 dark:text-amber-400" : "text-red-500 dark:text-red-400"
-              )}>
+              <span
+                className={cn(
+                  "font-mono text-xs font-bold",
+                  t.health_score >= 80
+                    ? "text-green-600 dark:text-green-400"
+                    : t.health_score >= 50
+                      ? "text-amber-500 dark:text-amber-400"
+                      : "text-red-500 dark:text-red-400",
+                )}
+              >
                 {t.health_score}
               </span>
             )}
@@ -232,7 +368,11 @@ function RecentActivity({ tests }: { tests: KeyTest[] }) {
   );
 }
 
-export default function DashboardWidgets({ refreshKey }: { refreshKey?: number }) {
+export default function DashboardWidgets({
+  refreshKey,
+}: {
+  refreshKey?: number;
+}) {
   const { user } = useAuth();
   const [tests, setTests] = useState<KeyTest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -241,7 +381,10 @@ export default function DashboardWidgets({ refreshKey }: { refreshKey?: number }
     if (!user) return;
     supabase
       .from("key_tests")
-      .select("id, provider, status, health_score, latency_ms, tested_at, nickname, key_preview")
+      .select(
+        "id, provider, status, health_score, latency_ms, tested_at, nickname, key_preview",
+      )
+      .eq("user_id", user.id)
       .order("tested_at", { ascending: false })
       .limit(500)
       .then(({ data }) => {
@@ -254,7 +397,9 @@ export default function DashboardWidgets({ refreshKey }: { refreshKey?: number }
     if (!tests.length) return null;
 
     const now = new Date();
-    const last30 = tests.filter((t) => new Date(t.tested_at) > subDays(now, 30));
+    const last30 = tests.filter(
+      (t) => new Date(t.tested_at) > subDays(now, 30),
+    );
     const prev30 = tests.filter((t) => {
       const d = new Date(t.tested_at);
       return d > subDays(now, 60) && d <= subDays(now, 30);
@@ -263,21 +408,30 @@ export default function DashboardWidgets({ refreshKey }: { refreshKey?: number }
     const totalTests = tests.length;
     const monthlyTests = last30.length;
     const prevMonthlyTests = prev30.length;
-    const testsTrend = prevMonthlyTests > 0
-      ? Math.round(((monthlyTests - prevMonthlyTests) / prevMonthlyTests) * 100)
-      : 0;
+    const testsTrend =
+      prevMonthlyTests > 0
+        ? Math.round(
+            ((monthlyTests - prevMonthlyTests) / prevMonthlyTests) * 100,
+          )
+        : 0;
 
     const validTests = tests.filter((t) => t.status === "valid").length;
     const overallUptime = Math.round((validTests / totalTests) * 100);
 
     const avgLatency = tests.filter((t) => t.latency_ms !== null);
     const avgMs = avgLatency.length
-      ? Math.round(avgLatency.reduce((s, t) => s + (t.latency_ms || 0), 0) / avgLatency.length)
+      ? Math.round(
+          avgLatency.reduce((s, t) => s + (t.latency_ms || 0), 0) /
+            avgLatency.length,
+        )
       : 0;
 
     const avgHealth = tests.filter((t) => t.health_score !== null);
     const healthAvg = avgHealth.length
-      ? Math.round(avgHealth.reduce((s, t) => s + (t.health_score || 0), 0) / avgHealth.length)
+      ? Math.round(
+          avgHealth.reduce((s, t) => s + (t.health_score || 0), 0) /
+            avgHealth.length,
+        )
       : 0;
 
     // Sparkline data (last 14 days tests per day)
@@ -286,17 +440,38 @@ export default function DashboardWidgets({ refreshKey }: { refreshKey?: number }
     const dailyHealth: number[] = [];
     for (let i = 13; i >= 0; i--) {
       const d = format(subDays(now, i), "yyyy-MM-dd");
-      const dayTests = tests.filter((t) => format(new Date(t.tested_at), "yyyy-MM-dd") === d);
+      const dayTests = tests.filter(
+        (t) => format(new Date(t.tested_at), "yyyy-MM-dd") === d,
+      );
       dailyCounts.push(dayTests.length);
       const lat = dayTests.filter((t) => t.latency_ms !== null);
-      dailyLatency.push(lat.length ? Math.round(lat.reduce((s, t) => s + (t.latency_ms || 0), 0) / lat.length) : 0);
+      dailyLatency.push(
+        lat.length
+          ? Math.round(
+              lat.reduce((s, t) => s + (t.latency_ms || 0), 0) / lat.length,
+            )
+          : 0,
+      );
       const hl = dayTests.filter((t) => t.health_score !== null);
-      dailyHealth.push(hl.length ? Math.round(hl.reduce((s, t) => s + (t.health_score || 0), 0) / hl.length) : 0);
+      dailyHealth.push(
+        hl.length
+          ? Math.round(
+              hl.reduce((s, t) => s + (t.health_score || 0), 0) / hl.length,
+            )
+          : 0,
+      );
     }
 
     return {
-      totalTests, monthlyTests, testsTrend, overallUptime, avgMs, healthAvg,
-      dailyCounts, dailyLatency, dailyHealth,
+      totalTests,
+      monthlyTests,
+      testsTrend,
+      overallUptime,
+      avgMs,
+      healthAvg,
+      dailyCounts,
+      dailyLatency,
+      dailyHealth,
     };
   }, [tests]);
 
@@ -305,7 +480,10 @@ export default function DashboardWidgets({ refreshKey }: { refreshKey?: number }
       <div className="space-y-4">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-36 rounded-2xl bg-slate-100 dark:bg-blue-500/5 animate-pulse" />
+            <div
+              key={i}
+              className="h-36 rounded-2xl bg-slate-100 dark:bg-blue-500/5 animate-pulse"
+            />
           ))}
         </div>
         <div className="grid md:grid-cols-2 gap-4">
@@ -318,9 +496,11 @@ export default function DashboardWidgets({ refreshKey }: { refreshKey?: number }
 
   if (!tests.length) {
     return (
-      <div className="bg-white dark:bg-[#000000] border border-slate-200 dark:border-blue-500/20 rounded-2xl p-8 text-center space-y-3 shadow-sm">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl p-8 text-center space-y-3 shadow-sm dark:shadow-xl dark:shadow-black/20">
         <Zap className="h-8 w-8 text-blue-400 mx-auto" />
-        <p className="font-sans text-sm text-slate-500 dark:text-slate-400">No test data yet. Start testing keys to see analytics.</p>
+        <p className="font-sans text-sm text-slate-500 dark:text-slate-400">
+          No test data yet. Start testing keys to see analytics.
+        </p>
       </div>
     );
   }
@@ -334,7 +514,11 @@ export default function DashboardWidgets({ refreshKey }: { refreshKey?: number }
           label="Total Tests"
           value={stats!.totalTests.toString()}
           subValue={`${stats!.monthlyTests} this month`}
-          trend={stats!.testsTrend !== 0 ? { value: stats!.testsTrend, up: stats!.testsTrend > 0 } : undefined}
+          trend={
+            stats!.testsTrend !== 0
+              ? { value: stats!.testsTrend, up: stats!.testsTrend > 0 }
+              : undefined
+          }
           sparkData={stats!.dailyCounts}
           sparkColor="#3B82F6"
         />
@@ -360,7 +544,13 @@ export default function DashboardWidgets({ refreshKey }: { refreshKey?: number }
           value={`${stats!.healthAvg}/100`}
           subValue="Average across keys"
           sparkData={stats!.dailyHealth}
-          sparkColor={stats!.healthAvg >= 80 ? "#3B82F6" : stats!.healthAvg >= 50 ? "#F59E0B" : "#EF4444"}
+          sparkColor={
+            stats!.healthAvg >= 80
+              ? "#3B82F6"
+              : stats!.healthAvg >= 50
+                ? "#F59E0B"
+                : "#EF4444"
+          }
         />
       </div>
 

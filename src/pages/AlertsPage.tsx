@@ -30,13 +30,21 @@ const AlertsPage = () => {
   const fetchAlerts = async () => {
     if (!user) return;
     setLoading(true);
-    const { data, error } = await supabase.from("alerts").select("id, key_nickname, expiry_date, reminder_days, notified, created_at").order("expiry_date", { ascending: true });
+    const { data, error } = await supabase
+      .from("alerts")
+      .select(
+        "id, key_nickname, expiry_date, reminder_days, notified, created_at",
+      )
+      .eq("user_id", user.id)
+      .order("expiry_date", { ascending: true });
     if (error) toast.error(error.message);
     else setAlerts((data as Alert[]) || []);
     setLoading(false);
   };
 
-  useEffect(() => { fetchAlerts(); }, [user]);
+  useEffect(() => {
+    fetchAlerts();
+  }, [user]);
 
   const createAlert = async () => {
     if (!user || !nickname.trim() || !expiryDate) return;
@@ -62,11 +70,12 @@ const AlertsPage = () => {
     if (error) toast.error(error.message);
     else {
       toast.success("Alert deleted");
-      setAlerts(prev => prev.filter(a => a.id !== id));
+      setAlerts((prev) => prev.filter((a) => a.id !== id));
     }
   };
 
-  const getDaysUntil = (date: string) => differenceInDays(new Date(date), new Date());
+  const getDaysUntil = (date: string) =>
+    differenceInDays(new Date(date), new Date());
 
   const getUrgency = (date: string) => {
     const days = getDaysUntil(date);
@@ -78,14 +87,34 @@ const AlertsPage = () => {
 
   const urgencyBadge = (urgency: string) => {
     switch (urgency) {
-      case "expired": return <span className="font-mono text-xs bg-red-950 text-red-400 border border-red-800/50 rounded-md px-2 py-0.5">Expired</span>;
-      case "critical": return <span className="font-mono text-xs bg-red-950 text-red-400 border border-red-800/50 rounded-md px-2 py-0.5 flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> Critical</span>;
-      case "warning": return <span className="font-mono text-xs bg-amber-950 text-amber-400 border border-amber-800/50 rounded-md px-2 py-0.5">Expiring Soon</span>;
-      default: return <span className="font-mono text-xs bg-green-950 text-green-400 border border-green-800/50 rounded-md px-2 py-0.5">Active</span>;
+      case "expired":
+        return (
+          <span className="font-mono text-xs bg-red-950 text-red-400 border border-red-800/50 rounded-md px-2 py-0.5">
+            Expired
+          </span>
+        );
+      case "critical":
+        return (
+          <span className="font-mono text-xs bg-red-950 text-red-400 border border-red-800/50 rounded-md px-2 py-0.5 flex items-center gap-1">
+            <AlertTriangle className="h-3 w-3" /> Critical
+          </span>
+        );
+      case "warning":
+        return (
+          <span className="font-mono text-xs bg-amber-950 text-amber-400 border border-amber-800/50 rounded-md px-2 py-0.5">
+            Expiring Soon
+          </span>
+        );
+      default:
+        return (
+          <span className="font-mono text-xs bg-green-950 text-green-400 border border-green-800/50 rounded-md px-2 py-0.5">
+            Active
+          </span>
+        );
     }
   };
 
-  const urgentAlerts = alerts.filter(a => getDaysUntil(a.expiry_date) <= 7);
+  const urgentAlerts = alerts.filter((a) => getDaysUntil(a.expiry_date) <= 7);
 
   return (
     <DashboardLayout>
@@ -99,7 +128,7 @@ const AlertsPage = () => {
                 {urgentAlerts.length} key(s) expiring within 7 days
               </p>
               <p className="font-mono text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {urgentAlerts.map(a => a.key_nickname).join(", ")}
+                {urgentAlerts.map((a) => a.key_nickname).join(", ")}
               </p>
             </div>
           </div>
@@ -112,7 +141,9 @@ const AlertsPage = () => {
           </h2>
           <div className="grid sm:grid-cols-3 gap-3">
             <div>
-              <Label className="font-sans text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">Key Nickname</Label>
+              <Label className="font-sans text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                Key Nickname
+              </Label>
               <Input
                 placeholder="e.g. Production OpenAI"
                 value={nickname}
@@ -121,7 +152,9 @@ const AlertsPage = () => {
               />
             </div>
             <div>
-              <Label className="font-sans text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">Expiry Date</Label>
+              <Label className="font-sans text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                Expiry Date
+              </Label>
               <Input
                 type="date"
                 value={expiryDate}
@@ -130,7 +163,9 @@ const AlertsPage = () => {
               />
             </div>
             <div>
-              <Label className="font-sans text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">Remind Before</Label>
+              <Label className="font-sans text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                Remind Before
+              </Label>
               <select
                 value={reminderDays}
                 onChange={(e) => setReminderDays(e.target.value)}
@@ -154,33 +189,50 @@ const AlertsPage = () => {
         {/* Alerts list */}
         {loading ? (
           <div className="space-y-3">
-            {[1, 2].map(i => <div key={i} className="bg-white dark:bg-[#000000] border border-slate-200 dark:border-blue-500/20 rounded-2xl p-4 h-16 animate-pulse" />)}
+            {[1, 2].map((i) => (
+              <div
+                key={i}
+                className="bg-white dark:bg-[#000000] border border-slate-200 dark:border-blue-500/20 rounded-2xl p-4 h-16 animate-pulse"
+              />
+            ))}
           </div>
         ) : alerts.length === 0 ? (
           <div className="bg-white dark:bg-[#000000] border border-slate-200 dark:border-blue-500/20 rounded-2xl p-8 text-center">
             <Bell className="h-8 w-8 mx-auto mb-2 text-slate-300 dark:text-blue-500/20" />
-            <p className="font-sans text-sm text-slate-500 dark:text-slate-400">No alerts set. Create one above.</p>
+            <p className="font-sans text-sm text-slate-500 dark:text-slate-400">
+              No alerts set. Create one above.
+            </p>
           </div>
         ) : (
           <div className="space-y-2">
-            {alerts.map(alert => {
+            {alerts.map((alert) => {
               const urgency = getUrgency(alert.expiry_date);
               const daysLeft = getDaysUntil(alert.expiry_date);
               return (
-                <div key={alert.id}
+                <div
+                  key={alert.id}
                   className={`bg-white dark:bg-[#000000] border rounded-2xl p-4 flex items-center justify-between card-hover-lift transition-all ${
-                    urgency === "expired" || urgency === "critical" ? "border-red-200 dark:border-red-800/40" :
-                    urgency === "warning" ? "border-amber-200 dark:border-amber-800/40" : "border-slate-200 dark:border-blue-500/20"
-                  }`}>
+                    urgency === "expired" || urgency === "critical"
+                      ? "border-red-200 dark:border-red-800/40"
+                      : urgency === "warning"
+                        ? "border-amber-200 dark:border-amber-800/40"
+                        : "border-slate-200 dark:border-blue-500/20"
+                  }`}
+                >
                   <div className="flex items-center gap-3">
                     <Clock className="h-4 w-4 text-slate-400 dark:text-slate-500" />
                     <div>
-                      <p className="font-sans text-sm font-medium text-slate-800 dark:text-slate-300">{alert.key_nickname}</p>
+                      <p className="font-sans text-sm font-medium text-slate-800 dark:text-slate-300">
+                        {alert.key_nickname}
+                      </p>
                       <div className="flex items-center gap-2 mt-0.5">
                         {urgencyBadge(urgency)}
                         <span className="font-mono text-xs text-slate-400 dark:text-slate-600">
-                          {daysLeft < 0 ? `Expired ${Math.abs(daysLeft)}d ago` :
-                           daysLeft === 0 ? "Expires today" : `${daysLeft}d left`}
+                          {daysLeft < 0
+                            ? `Expired ${Math.abs(daysLeft)}d ago`
+                            : daysLeft === 0
+                              ? "Expires today"
+                              : `${daysLeft}d left`}
                         </span>
                         <span className="font-mono text-xs text-slate-400 dark:text-slate-600">
                           · {format(new Date(alert.expiry_date), "MMM d, yyyy")}
@@ -188,7 +240,12 @@ const AlertsPage = () => {
                       </div>
                     </div>
                   </div>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30" onClick={() => deleteAlert(alert.id)}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-slate-400 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
+                    onClick={() => deleteAlert(alert.id)}
+                  >
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </div>

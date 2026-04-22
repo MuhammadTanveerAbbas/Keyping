@@ -9,7 +9,13 @@ import { Users, Plus, Copy, Trash2, Crown } from "lucide-react";
 import { toast } from "sonner";
 
 type Team = { id: string; name: string; owner_id: string; created_at: string };
-type Member = { id: string; team_id: string; user_id: string; role: string; joined_at: string };
+type Member = {
+  id: string;
+  team_id: string;
+  user_id: string;
+  role: string;
+  joined_at: string;
+};
 
 const TeamWorkspacePage = () => {
   const { user } = useAuth();
@@ -23,20 +29,62 @@ const TeamWorkspacePage = () => {
   const fetchTeams = async () => {
     if (!user) return;
     setLoading(true);
-    const { data, error } = await supabase.from("teams").select("*").order("created_at", { ascending: false });
-    if (error) toast.error(error.message);
-    else setTeams((data as Team[]) || []);
+    // Fetch teams where user is owner
+    const { data: ownedTeams, error: ownedError } = await supabase
+      .from("teams")
+      .select("*")
+      .eq("owner_id", user.id)
+      .order("created_at", { ascending: false });
+    if (ownedError) {
+      toast.error(ownedError.message);
+      setLoading(false);
+      return;
+    }
+
+    // Fetch teams where user is a member (but not owner)
+    const { data: memberRows, error: memberError } = await supabase
+      .from("team_members")
+      .select("team_id")
+      .eq("user_id", user.id);
+    if (memberError) {
+      toast.error(memberError.message);
+      setLoading(false);
+      return;
+    }
+
+    const memberTeamIds = (memberRows || []).map((r: any) => r.team_id);
+    let memberTeams: Team[] = [];
+    if (memberTeamIds.length > 0) {
+      const { data: mt } = await supabase
+        .from("teams")
+        .select("*")
+        .in("id", memberTeamIds)
+        .neq("owner_id", user.id);
+      memberTeams = (mt as Team[]) || [];
+    }
+
+    const allTeams = [...((ownedTeams as Team[]) || []), ...memberTeams];
+    allTeams.sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    );
+    setTeams(allTeams);
     setLoading(false);
   };
 
   const fetchMembers = async (teamId: string) => {
-    const { data, error } = await supabase.from("team_members").select("*").eq("team_id", teamId);
+    const { data, error } = await supabase
+      .from("team_members")
+      .select("*")
+      .eq("team_id", teamId);
     if (!error && data) {
-      setMembers(prev => ({ ...prev, [teamId]: data as Member[] }));
+      setMembers((prev) => ({ ...prev, [teamId]: data as Member[] }));
     }
   };
 
-  useEffect(() => { fetchTeams(); }, [user]);
+  useEffect(() => {
+    fetchTeams();
+  }, [user]);
   useEffect(() => {
     if (selectedTeam) fetchMembers(selectedTeam);
   }, [selectedTeam]);
@@ -44,12 +92,20 @@ const TeamWorkspacePage = () => {
   const createTeam = async () => {
     if (!user || !newTeamName.trim()) return;
     setCreating(true);
-    const { data: team, error } = await supabase.from("teams").insert({
-      name: newTeamName.trim(),
-      owner_id: user.id,
-    }).select().single();
+    const { data: team, error } = await supabase
+      .from("teams")
+      .insert({
+        name: newTeamName.trim(),
+        owner_id: user.id,
+      })
+      .select()
+      .single();
 
-    if (error) { toast.error(error.message); setCreating(false); return; }
+    if (error) {
+      toast.error(error.message);
+      setCreating(false);
+      return;
+    }
 
     await supabase.from("team_members").insert({
       team_id: (team as Team).id,
@@ -68,7 +124,7 @@ const TeamWorkspacePage = () => {
     if (error) toast.error(error.message);
     else {
       toast.success("Team deleted");
-      setTeams(prev => prev.filter(t => t.id !== teamId));
+      setTeams((prev) => prev.filter((t) => t.id !== teamId));
       if (selectedTeam === teamId) setSelectedTeam(null);
     }
   };
@@ -109,24 +165,36 @@ const TeamWorkspacePage = () => {
         {/* Teams list */}
         {loading ? (
           <div className="space-y-3">
-            {[1, 2].map(i => <div key={i} className="bg-[#111111] border border-[#222222] rounded-xl p-4 h-16 animate-pulse" />)}
+            {[1, 2].map((i) => (
+              <div
+                key={i}
+                className="bg-[#111111] border border-[#222222] rounded-xl p-4 h-16 animate-pulse"
+              />
+            ))}
           </div>
         ) : teams.length === 0 ? (
           <div className="bg-[#111111] border border-[#222222] rounded-xl p-8 text-center">
             <Users className="h-8 w-8 mx-auto mb-2 text-slate-700" />
-            <p className="font-sans text-sm text-slate-500">No teams yet. Create one above.</p>
+            <p className="font-sans text-sm text-slate-500">
+              No teams yet. Create one above.
+            </p>
           </div>
         ) : (
           <div className="space-y-3">
-            {teams.map(team => (
-              <div key={team.id} className="bg-[#111111] border border-[#222222] rounded-xl card-hover-lift card-accent">
+            {teams.map((team) => (
+              <div
+                key={team.id}
+                className="bg-[#111111] border border-[#222222] rounded-xl card-hover-lift card-accent"
+              >
                 <div className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
                       <Users className="h-5 w-5 text-white/70" />
                     </div>
                     <div>
-                      <h3 className="font-sans font-semibold text-white text-sm">{team.name}</h3>
+                      <h3 className="font-sans font-semibold text-white text-sm">
+                        {team.name}
+                      </h3>
                       <div className="flex items-center gap-2">
                         {isOwner(team) && (
                           <span className="font-mono text-[10px] bg-white/5 text-white/70 border border-white/10 rounded px-1.5 py-0.5 flex items-center gap-1">
@@ -151,7 +219,11 @@ const TeamWorkspacePage = () => {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setSelectedTeam(selectedTeam === team.id ? null : team.id)}
+                      onClick={() =>
+                        setSelectedTeam(
+                          selectedTeam === team.id ? null : team.id,
+                        )
+                      }
                       className="text-slate-400 hover:text-white hover:bg-white/[0.04] font-sans text-xs rounded-lg border border-[#222222]"
                     >
                       {selectedTeam === team.id ? "Hide" : "View"}
@@ -171,19 +243,30 @@ const TeamWorkspacePage = () => {
 
                 {selectedTeam === team.id && (
                   <div className="px-4 pb-4 border-t border-[#222222] pt-3">
-                    <p className="font-sans text-xs text-slate-500 mb-2 font-semibold uppercase tracking-wide">Members</p>
+                    <p className="font-sans text-xs text-slate-500 mb-2 font-semibold uppercase tracking-wide">
+                      Members
+                    </p>
                     {(members[team.id] || []).length === 0 ? (
-                      <p className="font-sans text-xs text-slate-600">No members yet.</p>
+                      <p className="font-sans text-xs text-slate-600">
+                        No members yet.
+                      </p>
                     ) : (
                       <div className="space-y-2">
-                        {(members[team.id] || []).map(m => (
-                          <div key={m.id} className="flex items-center justify-between text-sm">
+                        {(members[team.id] || []).map((m) => (
+                          <div
+                            key={m.id}
+                            className="flex items-center justify-between text-sm"
+                          >
                             <div className="flex items-center gap-2">
                               <div className="h-6 w-6 rounded-full bg-[#161616] border border-[#222222] flex items-center justify-center font-mono text-xs text-slate-400">
                                 {m.user_id.slice(0, 2)}
                               </div>
-                              <span className="font-mono text-xs text-slate-400">{m.user_id.slice(0, 8)}...</span>
-                              <span className="font-mono text-[10px] bg-[#161616] border border-[#222222] text-slate-500 rounded px-1.5 py-0.5">{m.role}</span>
+                              <span className="font-mono text-xs text-slate-400">
+                                {m.user_id.slice(0, 8)}...
+                              </span>
+                              <span className="font-mono text-[10px] bg-[#161616] border border-[#222222] text-slate-500 rounded px-1.5 py-0.5">
+                                {m.role}
+                              </span>
                             </div>
                           </div>
                         ))}
