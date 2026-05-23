@@ -1,4 +1,4 @@
 project_id = "imojrbwweyodwmxnotud"
 
 [functions.test-api-key]
-verify_jwt = false
+verify_jwt = true

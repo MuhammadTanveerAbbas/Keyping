@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { PROVIDERS } from "@/lib/providers";
 import { BarChart3, Zap, Clock, TrendingUp } from "lucide-react";
+import { toast } from "sonner";
 import {
   BarChart,
   Bar,
@@ -62,8 +63,9 @@ const StatsPage = () => {
       .eq("user_id", user.id)
       .order("tested_at", { ascending: false })
       .limit(500)
-      .then(({ data }) => {
-        setTests((data as KeyTest[]) || []);
+      .then(({ data, error }) => {
+        if (error) toast.error("Failed to load stats: " + error.message);
+        else setTests((data as KeyTest[]) || []);
         setLoading(false);
       });
   }, [user]);
@@ -185,8 +187,17 @@ const StatsPage = () => {
         </div>
 
         {loading ? (
-          <div className="bg-white dark:bg-[#000000] border border-slate-200 dark:border-blue-500/20 rounded-2xl p-8 text-center font-sans text-sm text-slate-500 dark:text-slate-400">
-            Loading stats...
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="bg-white dark:bg-[#000000] border border-slate-200 dark:border-blue-500/20 rounded-2xl p-4 h-24 animate-pulse" />
+              ))}
+            </div>
+            <div className="bg-white dark:bg-[#000000] border border-slate-200 dark:border-blue-500/20 rounded-2xl p-5 h-64 animate-pulse" />
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="bg-white dark:bg-[#000000] border border-slate-200 dark:border-blue-500/20 rounded-2xl p-5 h-64 animate-pulse" />
+              <div className="bg-white dark:bg-[#000000] border border-slate-200 dark:border-blue-500/20 rounded-2xl p-5 h-64 animate-pulse" />
+            </div>
           </div>
         ) : tests.length === 0 ? (
           <div className="bg-white dark:bg-[#000000] border border-slate-200 dark:border-blue-500/20 rounded-2xl p-8 text-center font-sans text-sm text-slate-500 dark:text-slate-400">

@@ -136,7 +136,10 @@ function CountUp({ target, suffix = "" }: { target: number; suffix?: string }) {
 function LiveStats() {
   const [count, setCount] = useState<number | null>(null);
   useEffect(() => {
-    supabase.from("key_tests").select("id", { count: "exact", head: true }).then(({ count: c }) => setCount(c ?? 0));
+    supabase.from("key_tests").select("id", { count: "exact", head: true }).then(({ count: c, error }) => {
+      if (error) console.warn("Failed to fetch live stats:", error.message);
+      else setCount(c ?? 0);
+    });
   }, []);
 
   const stats = [

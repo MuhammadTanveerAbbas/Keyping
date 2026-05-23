@@ -1,15 +1,8 @@
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Search } from "lucide-react";
-import { useEffect } from "react";
+import { Home, Search } from "lucide-react";
 
-const NotFound = () => {
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    document.title = "404 - Page Not Found | KeyPing";
-  }, []);
-
+export function NotFoundPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-6 p-8 bg-white dark:bg-[#000000]">
       <div className="relative">
@@ -26,14 +19,12 @@ const NotFound = () => {
       <p className="font-sans text-sm text-slate-500 dark:text-slate-400 text-center max-w-md">
         The page you're looking for doesn't exist or has been moved.
       </p>
-      <Button
-        onClick={() => navigate("/")}
-        className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white dark:text-black font-sans font-semibold rounded-xl"
-      >
-        <ArrowLeft className="h-4 w-4 mr-2" /> Go home
-      </Button>
+      <Link to="/">
+        <Button className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white dark:text-black font-sans font-semibold rounded-xl">
+          <Home className="h-4 w-4 mr-2" />
+          Go home
+        </Button>
+      </Link>
     </div>
   );
-};
-
-export default NotFound;
+}

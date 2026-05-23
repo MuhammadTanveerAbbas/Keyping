@@ -6,6 +6,17 @@ import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Loader2, Plus, Trash2, Download, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { HealthScoreRing } from "@/components/HealthScoreRing";
@@ -56,8 +67,9 @@ const BulkTestPage = () => {
       });
       if (error) throw error;
       updateRow(row.id, { testing: false, result: data });
-    } catch (err: any) {
-      updateRow(row.id, { testing: false, result: { status: "invalid", error: err.message } });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      updateRow(row.id, { testing: false, result: { status: "invalid", error: message } });
     }
   };
 
@@ -143,10 +155,29 @@ const BulkTestPage = () => {
                     )}
                   </div>
                 )}
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
-                  onClick={() => removeRow(row.id)} disabled={rows.length <= 1}>
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
+                      disabled={rows.length <= 1}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="bg-white dark:bg-[#000000] border border-slate-200 dark:border-blue-500/20">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Remove key?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will remove this key from the test list. Test history is not affected.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel className="font-sans text-sm rounded-xl">Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => removeRow(row.id)}
+                        className="bg-red-600 hover:bg-red-700 dark:bg-red-500 text-white font-sans text-sm rounded-xl">
+                        Remove
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </div>
           ))}

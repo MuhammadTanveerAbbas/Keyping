@@ -89,9 +89,10 @@ export default function ApiKeyTester({ onSave }: { onSave?: () => void } = {}) {
       if (saveOption !== "testOnly" && data?.status) {
         setShowSaveDialog(true);
       }
-    } catch (err: any) {
-      toast.error(err.message || "Test failed");
-      setResult({ status: "invalid", error: err.message });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Test failed";
+      toast.error(message);
+      setResult({ status: "invalid", error: message });
     } finally {
       setTesting(false);
     }
@@ -108,8 +109,8 @@ export default function ApiKeyTester({ onSave }: { onSave?: () => void } = {}) {
         nickname: nickname || null,
         notes: notes || null,
         status: result.status,
-        scopes: result.scopes ? (result.scopes as any) : null,
-        rate_limit_info: result.rateLimit ? (result.rateLimit as any) : null,
+        scopes: result.scopes ?? null,
+        rate_limit_info: result.rateLimit ?? null,
         health_score: result.healthScore ?? null,
         latency_ms: result.latencyMs ?? null,
       });
@@ -119,8 +120,9 @@ export default function ApiKeyTester({ onSave }: { onSave?: () => void } = {}) {
       setNickname("");
       setNotes("");
       onSave?.();
-    } catch (err: any) {
-      toast.error("Failed to save: " + err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to save result";
+      toast.error(message);
     }
   };
 

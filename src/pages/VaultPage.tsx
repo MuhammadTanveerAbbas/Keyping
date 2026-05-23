@@ -11,7 +11,7 @@ export default function VaultPage() {
   const { user } = useAuth();
   const [revealedKeys, setRevealedKeys] = useState<Set<string>>(new Set());
 
-  const { data: savedKeys, isLoading } = useQuery({
+  const { data: savedKeys, isLoading, error: vaultError } = useQuery({
     queryKey: ["vault-keys", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -29,7 +29,7 @@ export default function VaultPage() {
   const toggleReveal = (id: string) => {
     setRevealedKeys((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) { next.delete(id); } else { next.add(id); }
       return next;
     });
   };
@@ -123,6 +123,16 @@ export default function VaultPage() {
                     className="h-14 rounded-xl bg-slate-100 dark:bg-blue-500/5 animate-pulse"
                   />
                 ))}
+              </div>
+            ) : vaultError ? (
+              <div className="text-center py-12">
+                <Shield className="h-10 w-10 mx-auto mb-3 text-red-300 dark:text-red-500/20" />
+                <p className="font-sans font-medium text-red-500 dark:text-red-400">
+                  Failed to load vault
+                </p>
+                <p className="font-sans text-sm text-slate-400 dark:text-slate-500 mt-1">
+                  {vaultError.message}
+                </p>
               </div>
             ) : !savedKeys?.length ? (
               <div className="text-center py-12">

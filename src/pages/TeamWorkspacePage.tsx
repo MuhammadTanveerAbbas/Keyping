@@ -5,6 +5,17 @@ import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Users, Plus, Copy, Trash2, Crown } from "lucide-react";
 import { toast } from "sonner";
 
@@ -52,7 +63,7 @@ const TeamWorkspacePage = () => {
       return;
     }
 
-    const memberTeamIds = (memberRows || []).map((r: any) => r.team_id);
+    const memberTeamIds = (memberRows || []).map((r: { team_id: string }) => r.team_id);
     let memberTeams: Team[] = [];
     if (memberTeamIds.length > 0) {
       const { data: mt } = await supabase
@@ -229,14 +240,28 @@ const TeamWorkspacePage = () => {
                       {selectedTeam === team.id ? "Hide" : "View"}
                     </Button>
                     {isOwner(team) && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-slate-600 hover:text-red-400 hover:bg-red-950/30"
-                        onClick={() => deleteTeam(team.id)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-600 hover:text-red-400 hover:bg-red-950/30">
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="bg-[#111111] border border-[#222222]">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete team?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This permanently deletes the team and all member associations. This cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel className="font-sans text-sm rounded-lg">Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => deleteTeam(team.id)}
+                              className="bg-red-600 hover:bg-red-700 text-white font-sans text-sm rounded-lg">
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     )}
                   </div>
                 </div>

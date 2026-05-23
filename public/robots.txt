@@ -1,14 +1,7 @@
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
-
+# https://keyping.app
 User-agent: *
 Allow: /
+Disallow: /dashboard/
+Disallow: /api/
+
+Sitemap: https://keyping.app/sitemap.xml

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +16,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
   User,
   Bell,
   Palette,
@@ -26,6 +38,7 @@ import {
   Sun,
   Moon,
   Clock,
+  AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -43,6 +56,7 @@ const SettingsPage = () => {
   const [autoDelete, setAutoDelete] = useState(false);
   const [retentionDays, setRetentionDays] = useState("90");
   const [deletingData, setDeletingData] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   const handleSaveProfile = async () => {
     if (!user) return;
@@ -406,6 +420,59 @@ const SettingsPage = () => {
                 <Trash2 className="h-3.5 w-3.5" />{" "}
                 {deletingData ? "Deleting..." : "Delete All Data"}
               </Button>
+            </div>
+            <div className="border-t border-red-100 dark:border-red-900/30 pt-4">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-1.5 text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/30 font-sans text-xs rounded-xl border border-red-200 dark:border-red-800/40"
+                  >
+                    <AlertTriangle className="h-3.5 w-3.5" /> Delete Account
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="bg-white dark:bg-[#000000] border border-slate-200 dark:border-red-800/40">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete your account?</AlertDialogTitle>
+                    <AlertDialogDescription className="space-y-2">
+                      <p>This permanently deletes your account and all associated data:</p>
+                      <ul className="list-disc pl-4 text-sm text-slate-500 dark:text-slate-400">
+                        <li>All test history and saved keys</li>
+                        <li>Team memberships and owned teams</li>
+                        <li>Alerts and notification preferences</li>
+                        <li>Your Supabase authentication profile</li>
+                      </ul>
+                      <p className="font-medium text-red-500 dark:text-red-400">This action cannot be undone.</p>
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel disabled={deletingAccount}
+                      className="font-sans text-sm rounded-xl">Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      disabled={deletingAccount}
+                      className="bg-red-600 hover:bg-red-700 dark:bg-red-500 text-white font-sans text-sm rounded-xl"
+                      onClick={async () => {
+                        if (!user) return;
+                        setDeletingAccount(true);
+                        try {
+                          const { error: deleteError } = await supabase.rpc("delete_user_account");
+                          if (deleteError) throw deleteError;
+                          await supabase.auth.signOut();
+                          toast.success("Account deleted");
+                          window.location.href = "/";
+                        } catch (err: unknown) {
+                          const message = err instanceof Error ? err.message : "Failed to delete account";
+                          toast.error(message);
+                          setDeletingAccount(false);
+                        }
+                      }}
+                    >
+                      {deletingAccount ? "Deleting..." : "Delete Account"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </div>
         </div>

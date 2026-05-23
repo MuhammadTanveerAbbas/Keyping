@@ -104,8 +104,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       .from("key_tests")
       .select("id", { count: "exact", head: true })
       .eq("user_id", user.id)
-      .then(({ count }) => {
-        setTotalTests(count || 0);
+      .then(({ count, error }) => {
+        if (!error) setTotalTests(count || 0);
       });
   }, [user, location.pathname]);
 

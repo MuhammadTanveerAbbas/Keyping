@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { PROVIDERS } from "@/lib/providers";
+import type { Json } from "@/integrations/supabase/types";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -24,6 +25,11 @@ import { HealthScoreRing } from "@/components/HealthScoreRing";
 import { ProviderIcon, ProviderIconBadge } from "@/components/ProviderIcon";
 import { StatusBadge } from "@/components/StatusBadge";
 
+type RateLimitInfo = {
+  remaining?: number;
+  resetAt?: string;
+};
+
 type KeyTest = {
   id: string;
   provider: string;
@@ -31,8 +37,8 @@ type KeyTest = {
   nickname: string | null;
   notes: string | null;
   status: string;
-  scopes: any;
-  rate_limit_info: any;
+  scopes: Json;
+  rate_limit_info: Json;
   tested_at: string;
   health_score: number | null;
   latency_ms: number | null;
@@ -264,7 +270,7 @@ export default function KeyHistory() {
                               Rate limit remaining:{" "}
                             </span>
                             <span className="font-mono text-slate-800 dark:text-slate-300">
-                              {(t.rate_limit_info as any).remaining ?? "N/A"}
+                              {(t.rate_limit_info as RateLimitInfo | null)?.remaining ?? "N/A"}
                             </span>
                           </p>
                         )}

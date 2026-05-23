@@ -126,6 +126,9 @@ export default function AuthPage() {
     setSigningIn(true);
     try {
       await signInWithGoogle();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Google sign-in failed";
+      toast.error(message);
     } finally {
       setSigningIn(false);
     }

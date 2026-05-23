@@ -1,10 +1,22 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+const ALLOWED_ORIGINS = [
+  "https://keyping.app",
+  "https://www.keyping.app",
+  "https://keyping.vercel.app",
+  "http://localhost:8080",
+  "http://localhost:5173",
+];
+
+function getCorsHeaders(origin: string | null) {
+  const allowed = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowed,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Max-Age": "86400",
+  };
+}
 
 type ProviderConfig = {
   url: string;
@@ -131,10 +143,8 @@ const providers: Record<string, ProviderConfig> = {
   aws: {
     url: "https://sts.amazonaws.com/?Action=GetCallerIdentity&Version=2011-06-15",
     method: "GET",
-    headers: (key) => {
-      // For AWS, the key format is ACCESS_KEY_ID:SECRET_ACCESS_KEY
-      // We'll use a simple check via STS
-      return { Authorization: `AWS4-HMAC-SHA256 ${key}` };
+    headers: () => {
+      return { Authorization: "AWS4-HMAC-SHA256" };
     },
     parseResult: async (res) => {
       if (res.ok) return { status: "valid" };
@@ -155,9 +165,42 @@ const providers: Record<string, ProviderConfig> = {
   },
 };
 
+async function verifyAuth(req: Request): Promise<{ userId: string } | null> {
+  const authHeader = req.headers.get("authorization");
+  if (!authHeader || !authHeader.startsWith("Bearer ")) return null;
+
+  const jwt = authHeader.slice(7);
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+
+  if (!supabaseUrl || !supabaseAnonKey) return null;
+
+  try {
+    const response = await fetch(`${supabaseUrl}/auth/v1/user`, {
+      headers: { Authorization: `Bearer ${jwt}`, apikey: supabaseAnonKey },
+    });
+    if (!response.ok) return null;
+    const userData = await response.json();
+    return { userId: userData.id };
+  } catch {
+    return null;
+  }
+}
+
 serve(async (req) => {
+  const origin = req.headers.get("origin");
+  const corsHeaders = getCorsHeaders(origin);
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  const auth = await verifyAuth(req);
+  if (!auth) {
+    return new Response(
+      JSON.stringify({ status: "invalid", error: "Authentication required" }),
+      { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
   }
 
   try {
@@ -166,7 +209,7 @@ serve(async (req) => {
     if (!provider || !apiKey) {
       return new Response(
         JSON.stringify({ status: "invalid", error: "Provider and API key are required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
@@ -180,7 +223,7 @@ serve(async (req) => {
       if (!customEndpoint) {
         return new Response(
           JSON.stringify({ status: "invalid", error: "Custom endpoint URL required" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
       url = customEndpoint;
@@ -199,7 +242,7 @@ serve(async (req) => {
       if (!config) {
         return new Response(
           JSON.stringify({ status: "invalid", error: `Unknown provider: ${provider}` }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
       url = config.url;
@@ -212,21 +255,19 @@ serve(async (req) => {
     const fetchOptions: RequestInit = { method, headers };
     if (body && method !== "GET") fetchOptions.body = body;
 
-    // Measure latency
     const startTime = Date.now();
     const response = await fetch(url, fetchOptions);
     const latencyMs = Date.now() - startTime;
 
     const result = await parseResult(response);
 
-    // Calculate health score
     let healthScore = 0;
     if (result.status === "valid") healthScore += 50;
     else if (result.status === "limited") healthScore += 25;
-    
+
     if (result.scopes && result.scopes.length > 0) healthScore += 15;
     else if (result.status === "valid") healthScore += 10;
-    
+
     if (result.rateLimit?.remaining !== undefined) {
       if (result.rateLimit.remaining > 100) healthScore += 20;
       else if (result.rateLimit.remaining > 10) healthScore += 10;
@@ -246,8 +287,8 @@ serve(async (req) => {
     });
   } catch (error) {
     return new Response(
-      JSON.stringify({ status: "invalid", error: error.message || "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ status: "invalid", error: "Validation failed" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 });

@@ -1,30 +1,51 @@
-import { createClient } from '@supabase/supabase-js';
-import type { Database } from '../src/integrations/supabase/types';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const supabase = createClient<Database>(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_ANON_KEY!
+const vercelUrl = Deno.env.get('VERCEL_URL');
+const corsOrigin = vercelUrl
+  ? `https://${vercelUrl}`
+  : 'https://keyping.vercel.app';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': corsOrigin,
+  'Access-Control-Allow-Headers': 'authorization, content-type',
+  'Content-Type': 'application/json',
+};
+
+const supabase = createClient(
+  Deno.env.get('SUPABASE_URL')!,
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
 );
 
 export const config = {
   runtime: 'edge',
-  cron: {
-    schedule: 'every 5 days'
-  }
+  cron: { schedule: 'every 5 days' },
 };
 
 export default async function handler(req: Request) {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
   const authHeader = req.headers.get('authorization');
-  
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return new Response('Unauthorized', { status: 401 });
+
+  if (authHeader !== `Bearer ${Deno.env.get('CRON_SECRET')}`) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: corsHeaders,
+    });
   }
 
-  const { error } = await supabase.from('users').select('id').limit(1);
-  
+  const { error } = await supabase.from('key_tests').select('id').limit(1);
+
   if (error) {
-    return new Response(`Error: ${error.message}`, { status: 500 });
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: corsHeaders,
+    });
   }
 
-  return new Response('OK', { status: 200 });
+  return new Response(JSON.stringify({ status: 'ok' }), {
+    status: 200,
+    headers: corsHeaders,
+  });
 }

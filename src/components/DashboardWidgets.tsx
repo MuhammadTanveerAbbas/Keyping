@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, type ComponentType } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { PROVIDERS } from "@/lib/providers";
@@ -81,7 +81,7 @@ function StatCard({
   sparkColor,
   className,
 }: {
-  icon: any;
+  icon: ComponentType<{ className?: string }>;
   label: string;
   value: string;
   subValue?: string;
@@ -379,6 +379,7 @@ export default function DashboardWidgets({
 
   useEffect(() => {
     if (!user) return;
+    setLoading(true);
     supabase
       .from("key_tests")
       .select(
@@ -387,8 +388,9 @@ export default function DashboardWidgets({
       .eq("user_id", user.id)
       .order("tested_at", { ascending: false })
       .limit(500)
-      .then(({ data }) => {
-        setTests((data as KeyTest[]) || []);
+      .then(({ data, error }) => {
+        if (error) toast.error("Failed to load dashboard: " + error.message);
+        else setTests((data as KeyTest[]) || []);
         setLoading(false);
       });
   }, [user, refreshKey]);
