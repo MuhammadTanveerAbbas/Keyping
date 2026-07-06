@@ -70,6 +70,22 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function AppLayout() {
+  const { pathname } = useLocation();
+  const showFooter = !pathname.startsWith("/dashboard");
+
+  return (
+    <div className="flex min-h-screen flex-col">
+      <div className="flex-1">
+        <ErrorBoundary>
+          <AppRoutes />
+        </ErrorBoundary>
+      </div>
+      {showFooter && <Footer />}
+    </div>
+  );
+}
+
 const AppRoutes = () => {
   const location = useLocation();
   return (
@@ -113,14 +129,7 @@ const App = () => {
             <Toaster />
             <Sonner richColors theme="system" />
             <BrowserRouter>
-              <div className="flex min-h-screen flex-col">
-                <div className="flex-1">
-                  <ErrorBoundary>
-                    <AppRoutes />
-                  </ErrorBoundary>
-                </div>
-                <Footer />
-              </div>
+              <AppLayout />
             </BrowserRouter>
           </TooltipProvider>
         </AuthProvider>
