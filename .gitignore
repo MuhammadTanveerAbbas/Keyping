@@ -49,3 +49,4 @@ supabase/.temp
 
 # Vite
 *.local
+.env*

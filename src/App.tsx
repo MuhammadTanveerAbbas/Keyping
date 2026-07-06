@@ -9,6 +9,8 @@ import { AuthProvider, useAuth } from "@/lib/auth";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { GlobalError } from "@/components/GlobalError";
+import { SupabaseConfigError } from "@/components/SupabaseConfigError";
+import { isSupabaseConfigured } from "@/integrations/supabase/client";
 import Landing from "./pages/Landing";
 import { Footer } from "@/components/Footer";
 
@@ -97,7 +99,12 @@ const AppRoutes = () => {
   );
 };
 
-const App = () => (
+const App = () => {
+  if (!isSupabaseConfigured) {
+    return <SupabaseConfigError />;
+  }
+
+  return (
   <GlobalError>
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange={false}>
       <QueryClientProvider client={queryClient}>
@@ -120,6 +127,7 @@ const App = () => (
       </QueryClientProvider>
     </ThemeProvider>
   </GlobalError>
-);
+  );
+};
 
 export default App;
