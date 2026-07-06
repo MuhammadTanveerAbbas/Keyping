@@ -16,7 +16,6 @@ import {
   PanelLeftClose,
   PanelLeft,
   Command,
-  Home,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -24,47 +23,8 @@ import { supabase } from "@/integrations/supabase/client";
 import PageTransition from "@/components/PageTransition";
 import CommandPalette from "@/components/CommandPalette";
 import { ThemeToggle } from "@/components/ThemeToggle";
-
-function KeyPingLogo({ size = 28 }: { size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 32 32"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <rect width="32" height="32" rx="8" fill="url(#kp-sb-g)" />
-      <circle
-        cx="12"
-        cy="14"
-        r="5"
-        stroke="white"
-        strokeWidth="2.2"
-        fill="none"
-      />
-      <circle cx="12" cy="14" r="2" fill="white" />
-      <rect x="16.5" y="13" width="9" height="2.2" rx="1.1" fill="white" />
-      <rect x="22" y="15.2" width="2" height="2.5" rx="0.8" fill="white" />
-      <rect x="18.5" y="15.2" width="2" height="1.8" rx="0.8" fill="white" />
-      <circle cx="26" cy="8" r="3" fill="#22D3EE" opacity="0.9" />
-      <circle cx="26" cy="8" r="1.5" fill="white" />
-      <defs>
-        <linearGradient
-          id="kp-sb-g"
-          x1="0"
-          y1="0"
-          x2="32"
-          y2="32"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop offset="0%" stopColor="#3B82F6" />
-          <stop offset="100%" stopColor="#1D4ED8" />
-        </linearGradient>
-      </defs>
-    </svg>
-  );
-}
+import { KeyPingLogo } from "@/components/KeyPingLogo";
+import { pageMeta } from "@/components/dashboard/pageMeta";
 
 const navItems = [
   { to: "/dashboard", icon: Zap, label: "Tester", end: true },
@@ -78,18 +38,6 @@ const navItems = [
   { to: "/dashboard/settings", icon: Settings, label: "Settings", end: false },
 ];
 
-const pageTitles: Record<string, string> = {
-  "/dashboard": "API Key Tester",
-  "/dashboard/bulk": "Bulk Test",
-  "/dashboard/vault": "Key Vault",
-  "/dashboard/team": "Team Workspace",
-  "/dashboard/stats": "Stats",
-  "/dashboard/history": "Test History",
-  "/dashboard/alerts": "Alerts",
-  "/dashboard/docs": "Documentation",
-  "/dashboard/settings": "Settings",
-};
-
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -97,6 +45,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [totalTests, setTotalTests] = useState<number>(0);
+
+  const meta = pageMeta[location.pathname] ?? { title: "Dashboard" };
 
   useEffect(() => {
     if (!user) return;
@@ -113,32 +63,29 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     await signOut();
     navigate("/");
   };
-  const pathSegments = location.pathname.split("/").filter(Boolean);
 
   const sidebarContent = (
-    <div className="flex flex-col h-full">
-      {/* Logo */}
-      <div className="px-4 py-4 border-b border-slate-200 dark:border-slate-800">
+    <div className="flex h-full flex-col">
+      <div className="border-b border-slate-200 dark:border-slate-800 px-4 py-4">
         <button
+          type="button"
           onClick={() => setCollapsed(!collapsed)}
-          className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
+          className="flex items-center gap-2.5 rounded-lg transition-opacity hover:opacity-80"
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
-          <div className="shrink-0">
-            <KeyPingLogo size={28} />
-          </div>
+          <KeyPingLogo size={28} />
           {!collapsed && (
-            <span className="font-display text-base font-bold text-slate-900 dark:text-blue-400">
+            <span className="font-display text-base font-semibold text-slate-900 dark:text-white">
               KeyPing
             </span>
           )}
         </button>
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 p-3 space-y-0.5">
+      <nav className="flex-1 space-y-0.5 p-3">
         {!collapsed && (
-          <p className="font-mono text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-widest px-3 mt-2 mb-2">
-            Main
+          <p className="mb-2 mt-1 px-3 text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+            Menu
           </p>
         )}
         {navItems.map(({ to, icon: Icon, label, end }) => (
@@ -147,12 +94,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             to={to}
             end={end}
             onClick={() => setSidebarOpen(false)}
+            title={collapsed ? label : undefined}
             className={({ isActive }) =>
               cn(
-                "flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-sans font-medium transition-all duration-150 outline-none ring-0 border-0 [border:none] [box-shadow:none] focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0",
+                "flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900",
                 isActive
-                  ? "bg-blue-50 text-blue-600 dark:bg-white/5 dark:text-white"
-                  : "text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-white/5",
+                  ? "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white"
+                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-slate-100",
               )
             }
           >
@@ -162,67 +111,63 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         ))}
       </nav>
 
-      {/* Collapse toggle */}
       <div className="px-3 pb-2">
         <button
+          type="button"
           onClick={() => setCollapsed(!collapsed)}
-          className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-all w-full border border-dashed border-slate-200 dark:border-slate-700/50"
+          className="flex w-full items-center gap-2.5 rounded-lg border border-dashed border-slate-200 px-3 py-2.5 text-sm text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-slate-200"
         >
           {collapsed ? (
             <PanelLeft className="h-4 w-4 shrink-0" />
           ) : (
             <>
               <PanelLeftClose className="h-4 w-4 shrink-0" />
-              <span className="font-sans text-xs">Collapse</span>
+              <span className="text-xs">Collapse</span>
             </>
           )}
         </button>
       </div>
 
-      {/* User row */}
-      <div className="p-3 border-t border-slate-200 dark:border-slate-800 space-y-2">
+      <div className="space-y-2 border-t border-slate-200 p-3 dark:border-slate-800">
         {!collapsed ? (
           <>
-            <div className="flex items-center gap-3 px-2 py-2 rounded-lg cursor-default">
-              <div className="relative shrink-0">
-                <div className="h-8 w-8 rounded-lg bg-blue-100 dark:bg-blue-500/20 border border-blue-200 dark:border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400 text-sm font-bold">
-                  {user?.user_metadata?.full_name?.[0]?.toUpperCase() ||
-                    user?.email?.[0]?.toUpperCase() ||
-                    "U"}
-                </div>
-                <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-green-400 ring-2 ring-white dark:ring-black" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-sans text-xs font-semibold text-slate-700 dark:text-slate-300 truncate">
-                  {user?.user_metadata?.full_name || "User"}
-                </p>
-                <p className="font-mono text-[10px] text-slate-400 dark:text-blue-400/40 truncate">
-                  Free plan
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={handleSignOut}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs text-slate-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors w-full font-sans"
-            >
-              <LogOut className="h-3.5 w-3.5" /> Sign out
-            </button>
-          </>
-        ) : (
-          <div className="flex flex-col items-center gap-2">
-            <div className="relative">
-              <div className="h-8 w-8 rounded-lg bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400 text-xs font-bold">
+            <div className="flex items-center gap-3 rounded-lg px-2 py-2">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-sm font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
                 {user?.user_metadata?.full_name?.[0]?.toUpperCase() ||
                   user?.email?.[0]?.toUpperCase() ||
                   "U"}
               </div>
-              <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-green-400 ring-2 ring-white dark:ring-black" />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xs font-medium text-slate-800 dark:text-slate-200">
+                  {user?.user_metadata?.full_name || "Account"}
+                </p>
+                <p className="truncate text-[11px] text-slate-500 dark:text-slate-500">
+                  {user?.email}
+                </p>
+              </div>
             </div>
             <button
+              type="button"
               onClick={handleSignOut}
-              className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+              className="flex w-full min-h-[44px] items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30 dark:hover:text-red-400"
             >
-              <LogOut className="h-3.5 w-3.5" />
+              <LogOut className="h-4 w-4" /> Sign out
+            </button>
+          </>
+        ) : (
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+              {user?.user_metadata?.full_name?.[0]?.toUpperCase() ||
+                user?.email?.[0]?.toUpperCase() ||
+                "U"}
+            </div>
+            <button
+              type="button"
+              onClick={handleSignOut}
+              aria-label="Sign out"
+              className="flex h-11 w-11 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30 dark:hover:text-red-400"
+            >
+              <LogOut className="h-4 w-4" />
             </button>
           </div>
         )}
@@ -231,84 +176,63 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex overflow-x-hidden">
+    <div className="flex min-h-screen overflow-x-hidden bg-slate-100 dark:bg-slate-950">
       <CommandPalette />
 
-      {/* Desktop sidebar */}
       <aside
         className={cn(
-          "hidden md:flex flex-col border-r border-slate-200 dark:border-white/5 bg-white dark:bg-black backdrop-blur-xl transition-all duration-300 shrink-0",
-          collapsed ? "w-16" : "w-60",
+          "hidden shrink-0 flex-col border-r border-slate-200 bg-white transition-all duration-200 dark:border-slate-800 dark:bg-slate-900 md:flex",
+          collapsed ? "w-[4.5rem]" : "w-60",
         )}
       >
         {sidebarContent}
       </aside>
 
-      {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
           <div
-            className="absolute inset-0 bg-black/50 dark:bg-black/75 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => setSidebarOpen(false)}
+            aria-hidden
           />
-          <aside className="absolute left-0 top-0 h-full w-64 max-w-[80vw] border-r border-slate-200 dark:border-white/5 bg-white dark:bg-black backdrop-blur-xl">
+          <aside className="absolute left-0 top-0 h-full w-72 max-w-[85vw] border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
             {sidebarContent}
           </aside>
         </div>
       )}
 
-      {/* Main */}
-      <div className="flex-1 flex flex-col min-h-screen min-w-0">
-        {/* Topbar */}
-        <header className="bg-white/80 dark:bg-slate-950/50 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 h-14 px-4 sm:px-6 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-3 min-w-0">
+      <div className="flex min-h-screen min-w-0 flex-1 flex-col">
+        <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-white/95 px-4 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/95 sm:px-6">
+          <div className="flex min-w-0 items-center gap-3">
             <Button
               variant="ghost"
               size="icon"
-              className="md:hidden h-9 w-9 text-slate-500 shrink-0"
+              className="h-10 w-10 shrink-0 text-slate-600 md:hidden"
               onClick={() => setSidebarOpen(true)}
+              aria-label="Open menu"
             >
               <Menu className="h-5 w-5" />
             </Button>
-            <div className="md:hidden flex items-center gap-2 min-w-0">
-              <KeyPingLogo size={24} />
-              <span className="font-display text-sm font-bold text-slate-900 dark:text-white truncate">
-                KeyPing
-              </span>
+            <div className="min-w-0">
+              <p className="truncate font-display text-sm font-semibold text-slate-900 dark:text-white sm:text-base">
+                {meta.title}
+              </p>
+              {totalTests > 0 && (
+                <p className="hidden text-xs text-slate-500 dark:text-slate-400 sm:block">
+                  {totalTests.toLocaleString()} tests saved
+                </p>
+              )}
             </div>
-            <span className="hidden md:inline font-mono text-sm text-slate-400 dark:text-blue-400/60 truncate">
-              keyping
-              {pathSegments.map((seg, i) => (
-                <span key={i}>
-                  <span className="mx-1 text-slate-300 dark:text-blue-500/30">
-                    /
-                  </span>
-                  <span
-                    className={
-                      i === pathSegments.length - 1
-                        ? "text-slate-700 dark:text-slate-300"
-                        : "text-slate-400 dark:text-blue-400/60"
-                    }
-                  >
-                    {seg}
-                  </span>
-                </span>
-              ))}
-            </span>
-            {totalTests > 0 && (
-              <span className="hidden sm:inline font-mono text-[10px] text-slate-400 dark:text-blue-400/40 border border-slate-200 dark:border-blue-500/20 rounded px-2 py-0.5 shrink-0">
-                {totalTests} tests
-              </span>
-            )}
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             <button
+              type="button"
               onClick={() =>
                 document.dispatchEvent(
                   new KeyboardEvent("keydown", { key: "k", metaKey: true }),
                 )
               }
-              className="hidden sm:flex items-center gap-1.5 font-mono text-xs text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 hover:border-slate-300 dark:hover:border-slate-700 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+              className="hidden items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs text-slate-500 transition-colors hover:border-slate-300 hover:text-slate-700 dark:border-slate-700 dark:text-slate-400 dark:hover:border-slate-600 dark:hover:text-slate-200 sm:flex"
             >
               <Command className="h-3 w-3" />
               <span>K</span>
@@ -317,24 +241,24 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             <Button
               variant="ghost"
               size="icon"
-              className="h-9 w-9 text-slate-500 dark:text-blue-400/60 hover:text-slate-700 dark:hover:text-blue-400"
+              className="h-10 w-10 text-slate-600 dark:text-slate-400"
               onClick={() => navigate("/dashboard/alerts")}
+              aria-label="Alerts"
             >
               <Bell className="h-4 w-4" />
             </Button>
             <Button
               size="sm"
-              className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white dark:text-black font-sans font-semibold text-xs rounded-lg px-3 sm:px-4 dark:shadow-[0_0_15px_rgba(59,130,246,0.3)] dark:hover:shadow-[0_0_22px_rgba(59,130,246,0.55)] transition-all border-0 h-9 min-w-[44px]"
+              className="h-10 min-w-[44px] rounded-lg bg-blue-600 px-3 font-medium text-white hover:bg-blue-700 sm:px-4"
               onClick={() => navigate("/dashboard")}
             >
-              <span className="hidden sm:inline">+ Add Key</span>
-              <span className="sm:hidden">+</span>
+              <span className="hidden sm:inline">New test</span>
+              <span className="sm:hidden">Test</span>
             </Button>
           </div>
         </header>
 
-        {/* Content */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto">
+        <main className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
           <PageTransition>{children}</PageTransition>
         </main>
       </div>

@@ -1,10 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+} from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,8 +25,20 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Users, Plus, Copy, Trash2, Crown } from "lucide-react";
+import {
+  PageHeader,
+  PageShell,
+  Panel,
+  Notice,
+  SkeletonBlock,
+  EmptyState,
+  dashInput,
+  dashPrimaryBtn,
+  dashGhostBtn,
+} from "@/components/dashboard/ui";
+import { Users, Copy, Trash2, Crown } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 type Team = { id: string; name: string; owner_id: string; created_at: string };
 type Member = {
@@ -28,19 +49,26 @@ type Member = {
   joined_at: string;
 };
 
+const teamFormSchema = z.object({
+  name: z.string().min(1, "Team name is required").max(100, "Team name too long"),
+});
+
 const TeamWorkspacePage = () => {
   const { user } = useAuth();
   const [teams, setTeams] = useState<Team[]>([]);
   const [members, setMembers] = useState<Record<string, Member[]>>({});
   const [loading, setLoading] = useState(true);
-  const [newTeamName, setNewTeamName] = useState("");
-  const [creating, setCreating] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
 
-  const fetchTeams = async () => {
+  const form = useForm<z.infer<typeof teamFormSchema>>({
+    resolver: zodResolver(teamFormSchema),
+    defaultValues: { name: "" },
+  });
+  const creating = form.formState.isSubmitting;
+
+  const fetchTeams = useCallback(async () => {
     if (!user) return;
     setLoading(true);
-    // Fetch teams where user is owner
     const { data: ownedTeams, error: ownedError } = await supabase
       .from("teams")
       .select("*")
@@ -52,7 +80,6 @@ const TeamWorkspacePage = () => {
       return;
     }
 
-    // Fetch teams where user is a member (but not owner)
     const { data: memberRows, error: memberError } = await supabase
       .from("team_members")
       .select("team_id")
@@ -81,9 +108,9 @@ const TeamWorkspacePage = () => {
     );
     setTeams(allTeams);
     setLoading(false);
-  };
+  }, [user]);
 
-  const fetchMembers = async (teamId: string) => {
+  const fetchMembers = useCallback(async (teamId: string) => {
     const { data, error } = await supabase
       .from("team_members")
       .select("*")
@@ -91,22 +118,22 @@ const TeamWorkspacePage = () => {
     if (!error && data) {
       setMembers((prev) => ({ ...prev, [teamId]: data as Member[] }));
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchTeams();
-  }, [user]);
+  }, [fetchTeams]);
+
   useEffect(() => {
     if (selectedTeam) fetchMembers(selectedTeam);
-  }, [selectedTeam]);
+  }, [selectedTeam, fetchMembers]);
 
-  const createTeam = async () => {
-    if (!user || !newTeamName.trim()) return;
-    setCreating(true);
+  const createTeam = async (values: z.infer<typeof teamFormSchema>) => {
+    if (!user) return;
     const { data: team, error } = await supabase
       .from("teams")
       .insert({
-        name: newTeamName.trim(),
+        name: values.name.trim(),
         owner_id: user.id,
       })
       .select()
@@ -114,7 +141,6 @@ const TeamWorkspacePage = () => {
 
     if (error) {
       toast.error(error.message);
-      setCreating(false);
       return;
     }
 
@@ -125,8 +151,7 @@ const TeamWorkspacePage = () => {
     });
 
     toast.success("Team created!");
-    setNewTeamName("");
-    setCreating(false);
+    form.reset();
     fetchTeams();
   };
 
@@ -150,113 +175,116 @@ const TeamWorkspacePage = () => {
 
   return (
     <DashboardLayout>
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Create team */}
-        <div className="bg-[#111111] border border-[#222222] rounded-xl p-5 space-y-4 card-accent">
-          <h2 className="font-sans text-sm font-semibold text-white flex items-center gap-2">
-            <Plus className="h-4 w-4 text-white/70" /> Create a Team
-          </h2>
-          <div className="flex gap-3">
-            <Input
-              placeholder="Team name..."
-              value={newTeamName}
-              onChange={(e) => setNewTeamName(e.target.value)}
-              className="flex-1 bg-[#161616] border border-[#222222] focus:border-white/30 text-slate-200 placeholder:text-slate-600 rounded-lg"
-            />
-            <Button
-              onClick={createTeam}
-              disabled={creating || !newTeamName.trim()}
-              className="bg-white hover:bg-white/90 text-white font-sans font-semibold text-sm rounded-lg shadow-[0_0_0_1px_rgba(255,255,255,0.12)] hover:shadow-[0_0_30px_rgba(59,130,246,0.4)] transition-all border-0"
-            >
-              Create
-            </Button>
-          </div>
-        </div>
+      <PageShell width="md">
+        <PageHeader
+          title="Team Workspace"
+          description="Create teams and copy invite links. Teammates must sign in with Google, then open the link while logged in."
+        />
+
+        <Notice variant="info">
+          Shared results and automatic join-by-link are planned. Today, invite links help teammates find your team page after they sign up.
+        </Notice>
+
+        <Panel title="Create team">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(createTeam)} className="flex flex-col gap-3 sm:flex-row">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem className="flex-1">
+                    <FormControl>
+                      <Input placeholder="Team name" {...field} className={dashInput} />
+                    </FormControl>
+                    <FormMessage className="text-xs text-red-500" />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit" disabled={creating} className={dashPrimaryBtn + " sm:self-start h-10"}>
+                {creating ? "Creating..." : "Create"}
+              </Button>
+            </form>
+          </Form>
+        </Panel>
 
         {/* Teams list */}
         {loading ? (
           <div className="space-y-3">
-            {[1, 2].map((i) => (
-              <div
-                key={i}
-                className="bg-[#111111] border border-[#222222] rounded-xl p-4 h-16 animate-pulse"
-              />
-            ))}
+            <SkeletonBlock className="h-20" />
+            <SkeletonBlock className="h-20" />
           </div>
         ) : teams.length === 0 ? (
-          <div className="bg-[#111111] border border-[#222222] rounded-xl p-8 text-center">
-            <Users className="h-8 w-8 mx-auto mb-2 text-slate-700" />
-            <p className="font-sans text-sm text-slate-500">
-              No teams yet. Create one above.
-            </p>
-          </div>
+          <Panel>
+            <EmptyState icon={Users} title="No teams yet" description="Create a team above to get started." />
+          </Panel>
         ) : (
           <div className="space-y-3">
             {teams.map((team) => (
-              <div
-                key={team.id}
-                className="bg-[#111111] border border-[#222222] rounded-xl card-hover-lift card-accent"
-              >
-                <div className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
-                      <Users className="h-5 w-5 text-white/70" />
+              <Panel key={team.id} noPadding>
+                <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800">
+                      <Users className="h-5 w-5 text-slate-600 dark:text-slate-400" />
                     </div>
-                    <div>
-                      <h3 className="font-sans font-semibold text-white text-sm">
+                    <div className="min-w-0">
+                      <h3 className="truncate text-sm font-semibold text-slate-900 dark:text-white">
                         {team.name}
                       </h3>
-                      <div className="flex items-center gap-2">
+                      <div className="mt-0.5 flex flex-wrap items-center gap-2">
                         {isOwner(team) && (
-                          <span className="font-mono text-[10px] bg-white/5 text-white/70 border border-white/10 rounded px-1.5 py-0.5 flex items-center gap-1">
+                          <span className="inline-flex items-center gap-1 rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 font-mono text-[10px] text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
                             <Crown className="h-2.5 w-2.5" /> Owner
                           </span>
                         )}
-                        <span className="font-sans text-xs text-slate-500">
+                        <span className="text-xs text-slate-500 dark:text-slate-400">
                           {members[team.id]?.length || 1} member(s)
                         </span>
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => copyInviteLink(team.id)}
-                      className="gap-1.5 text-slate-400 hover:text-white/70 hover:bg-white/4 font-sans text-xs rounded-lg border border-[#222222] hover:border-white/15"
+                      className={cn("gap-1.5 h-9", dashGhostBtn)}
                     >
-                      <Copy className="h-3 w-3" /> Invite Link
+                      <Copy className="h-3 w-3" /> Invite link
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() =>
-                        setSelectedTeam(
-                          selectedTeam === team.id ? null : team.id,
-                        )
+                        setSelectedTeam(selectedTeam === team.id ? null : team.id)
                       }
-                      className="text-slate-400 hover:text-white hover:bg-white/[0.04] font-sans text-xs rounded-lg border border-[#222222]"
+                      className={cn("h-9", dashGhostBtn)}
                     >
-                      {selectedTeam === team.id ? "Hide" : "View"}
+                      {selectedTeam === team.id ? "Hide" : "Members"}
                     </Button>
                     {isOwner(team) && (
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-600 hover:text-red-400 hover:bg-red-950/30">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-9 w-9 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30 dark:hover:text-red-400"
+                          >
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>
                         </AlertDialogTrigger>
-                        <AlertDialogContent className="bg-[#111111] border border-[#222222]">
+                        <AlertDialogContent className="border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
                           <AlertDialogHeader>
                             <AlertDialogTitle>Delete team?</AlertDialogTitle>
-                            <AlertDialogDescription>
+                            <AlertDialogDescription className="text-slate-500 dark:text-slate-400">
                               This permanently deletes the team and all member associations. This cannot be undone.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel className="font-sans text-sm rounded-lg">Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => deleteTeam(team.id)}
-                              className="bg-red-600 hover:bg-red-700 text-white font-sans text-sm rounded-lg">
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => deleteTeam(team.id)}
+                              className="bg-red-600 hover:bg-red-700 text-white"
+                            >
                               Delete
                             </AlertDialogAction>
                           </AlertDialogFooter>
@@ -267,43 +295,36 @@ const TeamWorkspacePage = () => {
                 </div>
 
                 {selectedTeam === team.id && (
-                  <div className="px-4 pb-4 border-t border-[#222222] pt-3">
-                    <p className="font-sans text-xs text-slate-500 mb-2 font-semibold uppercase tracking-wide">
+                  <div className="border-t border-slate-100 px-4 pb-4 pt-3 dark:border-slate-800">
+                    <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                       Members
                     </p>
                     {(members[team.id] || []).length === 0 ? (
-                      <p className="font-sans text-xs text-slate-600">
-                        No members yet.
-                      </p>
+                      <p className="text-xs text-slate-500">No members yet.</p>
                     ) : (
                       <div className="space-y-2">
                         {(members[team.id] || []).map((m) => (
-                          <div
-                            key={m.id}
-                            className="flex items-center justify-between text-sm"
-                          >
-                            <div className="flex items-center gap-2">
-                              <div className="h-6 w-6 rounded-full bg-[#161616] border border-[#222222] flex items-center justify-center font-mono text-xs text-slate-400">
-                                {m.user_id.slice(0, 2)}
-                              </div>
-                              <span className="font-mono text-xs text-slate-400">
-                                {m.user_id.slice(0, 8)}...
-                              </span>
-                              <span className="font-mono text-[10px] bg-[#161616] border border-[#222222] text-slate-500 rounded px-1.5 py-0.5">
-                                {m.role}
-                              </span>
+                          <div key={m.id} className="flex items-center gap-2 text-sm">
+                            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 font-mono text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                              {m.user_id.slice(0, 2).toUpperCase()}
                             </div>
+                            <span className="font-mono text-xs text-slate-500 dark:text-slate-400">
+                              {m.user_id.slice(0, 8)}…
+                            </span>
+                            <span className="rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 font-mono text-[10px] text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                              {m.role}
+                            </span>
                           </div>
                         ))}
                       </div>
                     )}
                   </div>
                 )}
-              </div>
+              </Panel>
             ))}
           </div>
         )}
-      </div>
+      </PageShell>
     </DashboardLayout>
   );
 };

@@ -1,9 +1,9 @@
 import { useAuth } from "@/lib/auth";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   Key, Shield, Zap, ArrowRight, Lock, Clock, BarChart3, ChevronRight,
   Bot, Brain, CreditCard, Github, Twitter, StickyNote, Database, Wrench, Cloud,
-  CheckCircle2, Mail, Heart, TrendingUp, Activity, AlertTriangle, Sparkles,
+  CheckCircle2, TrendingUp, Activity, AlertTriangle, Sparkles,
 } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { PROVIDERS } from "@/lib/providers";
@@ -11,6 +11,7 @@ import { motion, useInView } from "framer-motion";
 import { type LucideIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { KeyPingLogo } from "@/components/KeyPingLogo";
 
 const providerIcons: Record<string, LucideIcon> = {
   openai: Bot, groq: Zap, anthropic: Brain, stripe: CreditCard,
@@ -20,41 +21,22 @@ const providerIcons: Record<string, LucideIcon> = {
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
-function KeyPingLogo({ size = 32 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="32" height="32" rx="8" fill="url(#kp-grad-land)" />
-      <circle cx="12" cy="14" r="5" stroke="white" strokeWidth="2.2" fill="none" />
-      <circle cx="12" cy="14" r="2" fill="white" />
-      <rect x="16.5" y="13" width="9" height="2.2" rx="1.1" fill="white" />
-      <rect x="22" y="15.2" width="2" height="2.5" rx="0.8" fill="white" />
-      <rect x="18.5" y="15.2" width="2" height="1.8" rx="0.8" fill="white" />
-      <circle cx="26" cy="8" r="3" fill="#22D3EE" opacity="0.9" />
-      <circle cx="26" cy="8" r="1.5" fill="white" />
-      <defs>
-        <linearGradient id="kp-grad-land" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#3B82F6" />
-          <stop offset="100%" stopColor="#1D4ED8" />
-        </linearGradient>
-      </defs>
-    </svg>
-  );
-}
+const HERO_TERMINAL = {
+  cmd: "> keyping test sk-proj-abc123...",
+  outputs: [
+    { text: "✓ Provider detected: OpenAI", color: "text-blue-400" },
+    { text: "✓ Key valid", color: "text-green-400" },
+    { text: "✓ Rate limit: 90,000 TPM remaining", color: "text-white" },
+    { text: "✓ Scopes: chat, embeddings, fine-tuning", color: "text-white" },
+    { text: "✓ Health Score: 94/100", color: "text-green-400 animate-pulse", icon: true },
+  ],
+};
 
 function HeroTerminal() {
-  const lines = [
-    { cmd: "> keyping test sk-proj-abc123...", outputs: [
-      { text: "✓ Provider detected: OpenAI", color: "text-blue-400" },
-      { text: "✓ Key valid", color: "text-green-400" },
-      { text: "✓ Rate limit: 90,000 TPM remaining", color: "text-white" },
-      { text: "✓ Scopes: chat, embeddings, fine-tuning", color: "text-white" },
-      { text: "✓ Health Score: 94/100", color: "text-green-400 animate-pulse", icon: true },
-    ]},
-  ];
   const [charIdx, setCharIdx] = useState(0);
   const [showOutputs, setShowOutputs] = useState(false);
   const [outputIdx, setOutputIdx] = useState(0);
-  const cmd = lines[0].cmd;
+  const cmd = HERO_TERMINAL.cmd;
 
   useEffect(() => {
     if (charIdx < cmd.length) {
@@ -67,7 +49,7 @@ function HeroTerminal() {
 
   useEffect(() => {
     if (!showOutputs) return;
-    if (outputIdx < lines[0].outputs.length) {
+    if (outputIdx < HERO_TERMINAL.outputs.length) {
       const t = setTimeout(() => setOutputIdx(i => i + 1), 350);
       return () => clearTimeout(t);
     }
@@ -75,7 +57,7 @@ function HeroTerminal() {
       setCharIdx(0); setShowOutputs(false); setOutputIdx(0);
     }, 3500);
     return () => clearTimeout(t);
-  }, [showOutputs, outputIdx, lines]);
+  }, [showOutputs, outputIdx]);
 
   return (
     <div className="bg-gradient-to-br from-[#000000] to-[#0a0a0a] border border-blue-500/40 rounded-2xl w-full max-w-2xl mx-auto overflow-hidden shadow-[0_0_40px_rgba(59,130,246,0.25)] hover:shadow-[0_0_50px_rgba(59,130,246,0.35)] transition-shadow relative scanline-overlay">
@@ -96,13 +78,13 @@ function HeroTerminal() {
             <span className="inline-block w-2 h-5 bg-blue-400 animate-pulse ml-0.5" />
           )}
         </div>
-        {showOutputs && lines[0].outputs.slice(0, outputIdx).map((line, i) => (
+        {showOutputs && HERO_TERMINAL.outputs.slice(0, outputIdx).map((line, i) => (
           <motion.div key={i} initial={{ opacity: 0, x: -4 }} animate={{ opacity: 1, x: 0 }} className={`mt-2 ${line.color} flex items-center gap-2`}>
             <span>{line.text}</span>
             {line.icon && <CheckCircle2 className="h-4 w-4 text-green-400 inline-block animate-pulse" />}
           </motion.div>
         ))}
-        {outputIdx === lines[0].outputs.length && showOutputs && (
+        {outputIdx === HERO_TERMINAL.outputs.length && showOutputs && (
           <div className="flex items-center gap-1 mt-2">
             <span className="text-green-400">$</span>
             <span className="inline-block w-2 h-5 bg-blue-400 terminal-cursor ml-0.5" />
@@ -137,16 +119,22 @@ function LiveStats() {
   const [count, setCount] = useState<number | null>(null);
   useEffect(() => {
     supabase.from("key_tests").select("id", { count: "exact", head: true }).then(({ count: c, error }) => {
-      if (error) console.warn("Failed to fetch live stats:", error.message);
-      else setCount(c ?? 0);
+      if (!error) setCount(c ?? 0);
     });
   }, []);
 
+  const supportedCount = PROVIDERS.filter((p) => p.id !== "custom").length;
+
   const stats = [
-    { label: "Supported Providers", value: 10, suffix: "+" },
-    { label: "Average Validation Time", value: 2, suffix: "s" },
-    { label: "Uptime", value: 99, suffix: ".9%" },
-    { label: "Keys Validated", value: count ?? 50, suffix: "K+" },
+    { label: "Supported Providers", display: String(supportedCount), animate: false },
+    {
+      label: "Keys Validated",
+      display: count === null ? "—" : count.toLocaleString(),
+      animate: count !== null && count > 0,
+      target: count ?? 0,
+    },
+    { label: "Validation Method", display: "Live API", animate: false },
+    { label: "Key Storage", display: "Preview only", animate: false },
   ];
 
   return (
@@ -156,10 +144,14 @@ function LiveStats() {
       <div className="max-w-5xl mx-auto relative z-10">
         <h2 className="font-display text-3xl font-bold text-slate-900 dark:text-white text-center mb-12">Built for teams that move fast</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-          {stats.map(({ label, value, suffix }) => (
+          {stats.map(({ label, display, animate, target }) => (
             <div key={label} className="flex flex-col items-center">
               <p className="font-display text-4xl font-bold text-slate-900 dark:text-white">
-                <CountUp target={value} suffix={suffix} />
+                {animate && target !== undefined ? (
+                  <CountUp target={target} suffix="" />
+                ) : (
+                  display
+                )}
               </p>
               <p className="font-mono text-xs text-blue-500/70 dark:text-blue-300/70 uppercase tracking-widest mt-2">{label}</p>
             </div>
@@ -206,17 +198,17 @@ const WHY_CARDS = [
 const PRICING = [
   {
     name: "Free", price: "$0", period: "/mo",
-    features: ["50 validations/day", "3 providers", "No history"],
+    features: ["API key validation", "All supported providers", "Test history & stats", "Google sign-in"],
     cta: "Get Started", ctaVariant: "outline" as const, popular: false, locked: false,
   },
   {
     name: "Pro", price: "$12", period: "/mo",
-    features: ["Unlimited validations", "All providers", "Full history", "Expiry alerts", "Bulk testing"],
+    features: ["Higher usage limits", "Expiry alerts", "Bulk testing", "Export reports"],
     cta: "Available Soon", ctaVariant: "solid" as const, popular: true, locked: true,
   },
   {
     name: "Team", price: "$39", period: "/mo",
-    features: ["Everything in Pro", "Team workspaces", "API access", "Priority support"],
+    features: ["Everything in Pro", "Team workspaces", "Shared results", "Priority support"],
     cta: "Coming Soon", ctaVariant: "outline" as const, popular: false, locked: true,
   },
 ];
@@ -249,7 +241,7 @@ function HealthBarChart() {
             transition={{ duration: 0.6, ease: [0.16,1,0.3,1] }}
           >
             <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 font-mono text-xs text-green-600 dark:text-green-400 mb-5">
-              <Activity className="h-3.5 w-3.5" /> LIVE HEALTH SCORES
+              <Activity className="h-3.5 w-3.5" /> EXAMPLE OUTPUT
             </span>
             <h2 className="font-display text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white leading-tight mb-4">
               Know your key's health<br />
@@ -277,8 +269,8 @@ function HealthBarChart() {
           {/* Right  animated bars */}
           <div ref={ref} className="bg-slate-50 dark:bg-[#050505] border border-slate-200 dark:border-blue-500/20 rounded-2xl p-6 shadow-sm dark:shadow-[0_0_30px_rgba(59,130,246,0.08)]">
             <div className="flex items-center justify-between mb-5">
-              <span className="font-display text-sm font-bold text-slate-700 dark:text-white">Provider Health Scores</span>
-              <span className="font-mono text-xs text-slate-400 dark:text-blue-400/50 bg-slate-100 dark:bg-blue-500/10 px-2 py-0.5 rounded-full">Live</span>
+              <span className="font-display text-sm font-bold text-slate-700 dark:text-white">Example Health Scores</span>
+              <span className="font-mono text-xs text-slate-400 dark:text-blue-400/50 bg-slate-100 dark:bg-blue-500/10 px-2 py-0.5 rounded-full">Demo</span>
             </div>
             <div className="space-y-4">
               {HEALTH_BARS.map(({ name, score, color, icon: Icon }, i) => (
@@ -354,8 +346,8 @@ function LatencyRaceChart() {
           {/* Left  chart */}
           <div ref={ref} className="bg-white dark:bg-[#050505] border border-slate-200 dark:border-blue-500/20 rounded-2xl p-6 shadow-sm dark:shadow-[0_0_30px_rgba(59,130,246,0.08)] order-2 lg:order-1">
             <div className="flex items-center justify-between mb-5">
-              <span className="font-display text-sm font-bold text-slate-700 dark:text-white">Response Latency</span>
-              <span className="font-mono text-xs text-slate-400 dark:text-blue-400/50">milliseconds</span>
+              <span className="font-display text-sm font-bold text-slate-700 dark:text-white">Example Response Times</span>
+              <span className="font-mono text-xs text-slate-400 dark:text-blue-400/50">sample data</span>
             </div>
             <div className="space-y-3">
               {sorted.map(({ name, ms, color }, i) => (
@@ -419,7 +411,7 @@ function LatencyRaceChart() {
             transition={{ duration: 0.6, ease: [0.16,1,0.3,1] }}
           >
             <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 font-mono text-xs text-blue-600 dark:text-blue-400 mb-5">
-              <Clock className="h-3.5 w-3.5" /> LATENCY BENCHMARKS
+              <Clock className="h-3.5 w-3.5" /> EXAMPLE LATENCY
             </span>
             <h2 className="font-display text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white leading-tight mb-4">
               See exactly how fast<br />
@@ -430,10 +422,10 @@ function LatencyRaceChart() {
             </p>
             <div className="grid grid-cols-2 gap-3">
               {[
-                { label: "Fastest recorded", value: "67ms", sub: "Groq", color: "text-green-500 dark:text-green-400" },
-                { label: "Avg across providers", value: "132ms", sub: "All providers", color: "text-blue-500 dark:text-blue-400" },
-                { label: "Slowest threshold", value: ">2s", sub: "Flagged as slow", color: "text-red-500 dark:text-red-400" },
-                { label: "Measurement precision", value: "±5ms", sub: "Edge function", color: "text-purple-500 dark:text-purple-400" },
+                { label: "Typical range", value: "< 2s", sub: "Most providers", color: "text-green-500 dark:text-green-400" },
+                { label: "Measured at", value: "Edge", sub: "Supabase function", color: "text-blue-500 dark:text-blue-400" },
+                { label: "Slow threshold", value: "> 2s", sub: "Flagged in UI", color: "text-red-500 dark:text-red-400" },
+                { label: "Includes", value: "RTT", sub: "Round-trip time", color: "text-purple-500 dark:text-purple-400" },
               ].map(({ label, value, sub, color }) => (
                 <div key={label} className="bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-blue-500/10 rounded-xl p-3">
                   <p className={`font-display text-xl font-bold ${color}`}>{value}</p>
@@ -487,7 +479,7 @@ function ActivityGraph() {
           transition={{ duration: 0.5 }}
         >
           <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/20 font-mono text-xs text-purple-600 dark:text-purple-400 mb-5">
-            <TrendingUp className="h-3.5 w-3.5" /> VALIDATION ANALYTICS
+            <TrendingUp className="h-3.5 w-3.5" /> EXAMPLE ANALYTICS
           </span>
           <h2 className="font-display text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-3">
             Track every validation,<br />
@@ -503,7 +495,7 @@ function ActivityGraph() {
           {/* Top bar */}
           <div className="px-6 py-4 border-b border-slate-200 dark:border-blue-500/10 flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <span className="font-display text-sm font-bold text-slate-700 dark:text-white">Weekly Validations</span>
+              <span className="font-display text-sm font-bold text-slate-700 dark:text-white">Example Weekly Validations</span>
               <div className="flex items-center gap-3">
                 <span className="flex items-center gap-1.5 font-mono text-xs text-slate-500 dark:text-slate-400">
                   <span className="h-2 w-2 rounded-full bg-blue-500" /> Valid
@@ -514,15 +506,7 @@ function ActivityGraph() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <motion.span
-                className="font-display text-sm font-bold text-green-500 dark:text-green-400"
-                initial={{ opacity: 0 }}
-                animate={inView ? { opacity: 1 } : {}}
-                transition={{ delay: 1.2 }}
-              >
-                ↑ 28%
-              </motion.span>
-              <span className="font-mono text-xs text-slate-400 dark:text-blue-400/40">vs last week</span>
+              <span className="font-mono text-xs text-slate-400 dark:text-blue-400/40">Illustrative data</span>
             </div>
           </div>
 
@@ -636,12 +620,12 @@ function ActivityGraph() {
           </div>
         </div>
 
-        {/* Floating alert illustration */}
+        {/* Example alert types */}
         <div className="mt-6 grid sm:grid-cols-3 gap-4">
           {[
-            { icon: CheckCircle2, color: "text-green-500 dark:text-green-400", bg: "bg-green-50 dark:bg-green-500/10 border-green-200 dark:border-green-500/20", title: "All keys healthy", sub: "Last checked 2 min ago", delay: 0 },
-            { icon: AlertTriangle, color: "text-amber-500 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20", title: "Stripe key expiring", sub: "7 days remaining", delay: 0.1 },
-            { icon: TrendingUp, color: "text-blue-500 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/20", title: "Rate limit at 82%", sub: "OpenAI · resets in 1h", delay: 0.2 },
+            { icon: CheckCircle2, color: "text-green-500 dark:text-green-400", bg: "bg-green-50 dark:bg-green-500/10 border-green-200 dark:border-green-500/20", title: "Valid key result", sub: "Example notification", delay: 0 },
+            { icon: AlertTriangle, color: "text-amber-500 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20", title: "Expiry reminder", sub: "Example notification", delay: 0.1 },
+            { icon: TrendingUp, color: "text-blue-500 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/20", title: "Rate limit warning", sub: "Example notification", delay: 0.2 },
           ].map(({ icon: Icon, color, bg, title, sub, delay }) => (
             <motion.div
               key={title}
@@ -758,7 +742,7 @@ const Landing = () => {
               <span className="h-1 w-1 rounded-full bg-blue-400 animate-pulse" />
             </motion.div>
             
-            <motion.h1 {...fadeUp} className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-[1.1] mb-5">
+            <motion.h1 {...fadeUp} className="font-display text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-[1.1] mb-5">
               Ping Any API Key.<br />
               <span className="bg-gradient-to-r from-blue-600 to-blue-500 dark:from-blue-400 dark:to-blue-300 bg-clip-text text-transparent">Know It Works.</span>
             </motion.h1>
@@ -822,6 +806,7 @@ const Landing = () => {
         </section>
 
         {/* How it works */}
+        <section id="how" className="py-0" />
         {/* Stats */}
         <LiveStats />
 
@@ -836,13 +821,20 @@ const Landing = () => {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
               {PROVIDERS.filter(p => p.id !== "custom").map((p, i) => {
                 const Icon = providerIcons[p.id] || Key;
+                const limited = p.id === "aws" || p.id === "supabase";
                 return (
                   <motion.div key={p.id} initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}
                     whileHover={{ y: -2 }}
-                    className="bg-white dark:bg-[#000000] border border-slate-200 dark:border-blue-500/20 rounded-xl p-4 flex flex-col items-center gap-2 hover:border-blue-500 dark:hover:border-blue-500 hover:shadow-md dark:hover:shadow-[0_0_15px_rgba(59,130,246,0.15)] transition-all cursor-default group">
-                    <Icon className="h-5 w-5 text-slate-400 dark:text-blue-400/60 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors" />
-                    <span className="font-mono text-xs text-slate-500 dark:text-blue-300/50 group-hover:text-slate-700 dark:group-hover:text-blue-300 transition-colors">{p.name}</span>
-                    <span className="font-mono text-[10px] text-blue-500 dark:text-blue-500/60 bg-blue-50 dark:bg-blue-500/5 border border-blue-100 dark:border-blue-500/10 rounded-full px-2 py-0.5">Auto-detected</span>
+                    className="bg-white dark:bg-[#000000] border border-slate-200 dark:border-blue-500/20 rounded-xl p-4 flex flex-col items-center gap-2 hover:border-blue-500 dark:hover:border-blue-500 hover:shadow-md dark:hover:shadow-[0_0_15px_rgba(59,130,246,0.15)] transition-all cursor-default group min-w-0">
+                    <Icon className="h-5 w-5 text-slate-400 dark:text-blue-400/60 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors shrink-0" />
+                    <span className="font-mono text-xs text-slate-500 dark:text-blue-300/50 group-hover:text-slate-700 dark:group-hover:text-blue-300 transition-colors text-center truncate w-full">{p.name}</span>
+                    <span className={`font-mono text-[10px] rounded-full px-2 py-0.5 border ${
+                      limited
+                        ? "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/5 border-amber-100 dark:border-amber-500/10"
+                        : "text-blue-500 dark:text-blue-500/60 bg-blue-50 dark:bg-blue-500/5 border-blue-100 dark:border-blue-500/10"
+                    }`}>
+                      {limited ? "Limited" : "Auto-detected"}
+                    </span>
                   </motion.div>
                 );
               })}
@@ -865,7 +857,7 @@ const Landing = () => {
               {PRICING.map(({ name, price, period, features, cta, ctaVariant, popular, locked }) => (
                 <div key={name} className={`relative rounded-2xl border p-6 text-left transition-all ${
                   popular
-                    ? "bg-white dark:bg-[#000000] border-blue-500 dark:border-blue-500/60 scale-105 shadow-lg dark:shadow-[0_0_30px_rgba(59,130,246,0.15)]"
+                    ? "bg-white dark:bg-[#000000] border-blue-500 dark:border-blue-500/60 md:scale-105 shadow-lg dark:shadow-[0_0_30px_rgba(59,130,246,0.15)]"
                     : "bg-white dark:bg-[#000000] border-slate-200 dark:border-blue-500/20"
                 }`}>
                   {popular && (
@@ -908,6 +900,9 @@ const Landing = () => {
             </div>
           </div>
         </section>
+
+        {/* Security section anchor */}
+        <section id="security-features" className="py-0" />
 
         {/* Why KeyPing */}
         <section id="features" className="py-24 px-4 sm:px-6 bg-white dark:bg-[#000000] relative overflow-hidden">
@@ -983,54 +978,6 @@ const Landing = () => {
             </button>
           </div>
         </section>
-
-        {/* Footer */}
-        <footer className="bg-slate-50 dark:bg-[#000000] border-t border-slate-200 dark:border-blue-500/20 py-12 px-4 sm:px-6">
-          <div className="max-w-5xl mx-auto">
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-8 mb-8">
-              <div className="space-y-3">
-                <div className="flex items-center gap-2.5">
-                  <KeyPingLogo size={28} />
-                  <span className="font-display text-base font-bold text-slate-900 dark:text-white">KeyPing</span>
-                </div>
-                <p className="font-sans text-sm text-slate-500 dark:text-slate-400">Ping any API key. Know it works.</p>
-                <p className="font-mono text-xs text-slate-400 dark:text-blue-400/40">© 2025 Muhammad Tanveer Abbas</p>
-              </div>
-              <div className="space-y-3">
-                <h4 className="font-sans text-sm font-semibold text-slate-800 dark:text-white">Product</h4>
-                <div className="flex flex-col gap-2">
-                  <Link to="/dashboard" className="font-sans text-sm text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Dashboard</Link>
-                  <a href="#providers" className="font-sans text-sm text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Providers</a>
-                  <a href="#pricing" className="font-sans text-sm text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Pricing</a>
-                </div>
-              </div>
-              <div className="space-y-3">
-                <h4 className="font-sans text-sm font-semibold text-slate-800 dark:text-white">Resources</h4>
-                <div className="flex flex-col gap-2">
-                  <Link to="/dashboard/docs" className="font-sans text-sm text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Documentation</Link>
-                  <a href="https://themvpguy.vercel.app/" target="_blank" rel="noopener noreferrer" className="font-sans text-sm text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Blog</a>
-                  <a href="mailto:contact@keyping.dev" className="font-sans text-sm text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Support</a>
-                </div>
-              </div>
-              <div className="space-y-3">
-                <h4 className="font-sans text-sm font-semibold text-slate-800 dark:text-white">Legal</h4>
-                <div className="flex flex-col gap-2">
-                  <Link to="/privacy" className="font-sans text-sm text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Privacy Policy</Link>
-                  <Link to="/terms" className="font-sans text-sm text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Terms of Service</Link>
-                  <a href="mailto:contact@keyping.dev" className="font-sans text-sm text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1"><Mail className="h-3.5 w-3.5" /> Contact</a>
-                </div>
-              </div>
-            </div>
-            <div className="border-t border-slate-200 dark:border-blue-500/10 pt-6 flex justify-between items-center">
-              <p className="font-mono text-xs text-slate-400 dark:text-blue-400/40">
-                <a href="https://themvpguy.vercel.app/" target="_blank" rel="noopener noreferrer" className="hover:text-blue-500 transition-colors">themvpguy.vercel.app</a>
-              </p>
-              <p className="font-mono text-xs text-slate-400 dark:text-blue-400/40 flex items-center gap-1">
-                Built with <Heart className="h-3 w-3 text-red-500 mx-1" /> for developers
-              </p>
-            </div>
-          </div>
-        </footer>
       </main>
     </div>
   );

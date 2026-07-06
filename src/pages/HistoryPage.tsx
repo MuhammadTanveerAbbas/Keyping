@@ -1,11 +1,16 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import KeyHistory from "@/components/KeyHistory";
+import { PageHeader, PageShell } from "@/components/dashboard/ui";
 
 const HistoryPage = () => (
   <DashboardLayout>
-    <div className="max-w-4xl mx-auto">
+    <PageShell width="md">
+      <PageHeader
+        title="Test History"
+        description="Filter and expand saved results. Full keys are never stored."
+      />
       <KeyHistory />
-    </div>
+    </PageShell>
   </DashboardLayout>
 );
 

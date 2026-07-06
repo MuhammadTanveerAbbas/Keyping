@@ -335,11 +335,11 @@ svg {
   }
 
   /* ── Skeleton ── */
-  .skeleton-emerald {
+  .skeleton-muted {
     @apply animate-pulse rounded-xl;
     background: #f1f5f9;
   }
-  .dark .skeleton-emerald {
+  .dark .skeleton-muted {
     background: #0d0d0d;
   }
 
@@ -414,17 +414,25 @@ svg {
     border: 1px solid #1a1a2e;
   }
 
-  /* ── Orb ── */
-  .orb {
-    display: none;
-  }
+  /* ── Orb (reserved for future use) ── */
 }
 
-/* ── Hide scrollbars ── */
+/* ── Subtle scrollbar styling ── */
 * {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--border)) transparent;
 }
 *::-webkit-scrollbar {
-  display: none;
+  width: 6px;
+  height: 6px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 3px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground));
 }

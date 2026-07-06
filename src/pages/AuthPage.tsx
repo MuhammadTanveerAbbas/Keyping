@@ -2,48 +2,9 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { motion } from "framer-motion";
-import { Eye, EyeOff } from "lucide-react";
-
-function KeyPingLogo({ size = 40 }: { size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 32 32"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <rect width="32" height="32" rx="8" fill="url(#kp-auth-g)" />
-      <circle
-        cx="12"
-        cy="14"
-        r="5"
-        stroke="white"
-        strokeWidth="2.2"
-        fill="none"
-      />
-      <circle cx="12" cy="14" r="2" fill="white" />
-      <rect x="16.5" y="13" width="9" height="2.2" rx="1.1" fill="white" />
-      <rect x="22" y="15.2" width="2" height="2.5" rx="0.8" fill="white" />
-      <rect x="18.5" y="15.2" width="2" height="1.8" rx="0.8" fill="white" />
-      <circle cx="26" cy="8" r="3" fill="#22D3EE" opacity="0.9" />
-      <circle cx="26" cy="8" r="1.5" fill="white" />
-      <defs>
-        <linearGradient
-          id="kp-auth-g"
-          x1="0"
-          y1="0"
-          x2="32"
-          y2="32"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop offset="0%" stopColor="#3B82F6" />
-          <stop offset="100%" stopColor="#1D4ED8" />
-        </linearGradient>
-      </defs>
-    </svg>
-  );
-}
+import { Eye, EyeOff, Lock } from "lucide-react";
+import { toast } from "sonner";
+import { KeyPingLogo } from "@/components/KeyPingLogo";
 
 function AuthTerminal() {
   const lines = [
@@ -183,7 +144,7 @@ export default function AuthPage() {
         {/* Bottom tagline */}
         <div className="relative z-10 p-8">
           <p className="font-mono text-xs text-blue-400/30">
-            🔒 Your keys never leave our edge functions
+            <Lock className="h-3 w-3 inline-block mr-1" /> Your keys never leave our edge functions
           </p>
         </div>
       </div>
@@ -318,7 +279,7 @@ export default function AuthPage() {
           </p>
 
           <p className="font-mono text-[10px] text-slate-400 dark:text-blue-400/30 text-center mt-6">
-            🔒 Your keys never leave our edge functions
+            <Lock className="h-3 w-3 inline-block mr-1" /> Your keys never leave our edge functions
           </p>
         </motion.div>
       </div>

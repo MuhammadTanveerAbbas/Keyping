@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { PROVIDERS } from "@/lib/providers";
@@ -20,6 +20,13 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  dashSelectTrigger,
+  dashSelectContent,
+  EmptyState,
+  Panel,
+  SkeletonBlock,
+} from "@/components/dashboard/ui";
 import { format } from "date-fns";
 import { HealthScoreRing } from "@/components/HealthScoreRing";
 import { ProviderIcon, ProviderIconBadge } from "@/components/ProviderIcon";
@@ -52,7 +59,7 @@ export default function KeyHistory() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const fetchTests = async () => {
+  const fetchTests = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     let query = supabase
@@ -70,11 +77,11 @@ export default function KeyHistory() {
     if (error) toast.error(error.message);
     else setTests((data as KeyTest[]) || []);
     setLoading(false);
-  };
+  }, [user, filterProvider, filterStatus]);
 
   useEffect(() => {
     fetchTests();
-  }, [user, filterProvider, filterStatus]);
+  }, [fetchTests]);
 
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from("key_tests").delete().eq("id", id);
@@ -108,10 +115,10 @@ export default function KeyHistory() {
       {/* Filters */}
       <div className="flex flex-wrap gap-3">
         <Select value={filterProvider} onValueChange={setFilterProvider}>
-          <SelectTrigger className="w-40 bg-white dark:bg-[#0A0A0A] border-slate-300 dark:border-blue-500/20 text-slate-900 dark:text-white rounded-xl">
+          <SelectTrigger className={`w-40 ${dashSelectTrigger}`}>
             <SelectValue placeholder="Provider" />
           </SelectTrigger>
-          <SelectContent className="bg-white dark:bg-[#0A0A0A] border-slate-200 dark:border-blue-500/20">
+          <SelectContent className={dashSelectContent}>
             <SelectItem value="all">All providers</SelectItem>
             {PROVIDERS.filter((p) => p.id !== "custom").map((p) => (
               <SelectItem key={p.id} value={p.id}>
@@ -122,10 +129,10 @@ export default function KeyHistory() {
         </Select>
 
         <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-36 bg-white dark:bg-[#0A0A0A] border-slate-300 dark:border-blue-500/20 text-slate-900 dark:text-white rounded-xl">
+          <SelectTrigger className={`w-36 ${dashSelectTrigger}`}>
             <SelectValue placeholder="Status" />
           </SelectTrigger>
-          <SelectContent className="bg-white dark:bg-[#0A0A0A] border-slate-200 dark:border-blue-500/20">
+          <SelectContent className={dashSelectContent}>
             <SelectItem value="all">All statuses</SelectItem>
             <SelectItem value="valid">Valid</SelectItem>
             <SelectItem value="invalid">Invalid</SelectItem>
@@ -137,19 +144,13 @@ export default function KeyHistory() {
       {/* List */}
       {loading ? (
         <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="bg-white dark:bg-[#000000] border border-slate-200 dark:border-blue-500/20 rounded-2xl p-4 h-16 animate-pulse"
-            />
-          ))}
+          <SkeletonBlock className="h-16" />
+          <SkeletonBlock className="h-16" />
         </div>
       ) : tests.length === 0 ? (
-        <div className="bg-white dark:bg-[#000000] border border-slate-200 dark:border-blue-500/20 rounded-2xl p-8 text-center">
-          <p className="font-mono text-sm text-slate-400 dark:text-blue-400/40">
-            &gt; No saved tests yet.
-          </p>
-        </div>
+        <Panel>
+          <EmptyState icon={CheckCircle2} title="No saved tests" description="Results appear here after you save a test from the tester." />
+        </Panel>
       ) : (
         <div className="space-y-2">
           {tests.map((t) => {
@@ -157,7 +158,7 @@ export default function KeyHistory() {
             return (
               <div
                 key={t.id}
-                className="bg-white dark:bg-[#000000] border border-slate-200 dark:border-blue-500/20 rounded-2xl card-hover-lift"
+                className="rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
               >
                 <button
                   className="w-full flex items-center justify-between p-4 text-left"
@@ -254,7 +255,7 @@ export default function KeyHistory() {
                               <span className="text-slate-500 dark:text-slate-400">
                                 Scopes:{" "}
                               </span>
-                              {t.scopes.map((s: string) => (
+                              {(t.scopes as string[]).map((s) => (
                                 <span
                                   key={s}
                                   className="font-mono text-xs bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 text-blue-600 dark:text-blue-400 rounded px-2 py-0.5 mr-1 mb-1 inline-block"

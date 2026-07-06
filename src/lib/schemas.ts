@@ -1,5 +1,11 @@
 import { z } from "zod";
 
+const scopesSchema = z.array(z.string()).optional();
+const rateLimitInfoSchema = z.object({
+  remaining: z.number().optional(),
+  resetAt: z.string().optional(),
+}).optional();
+
 export const apiKeyTestSchema = z.object({
   provider: z.string().min(1, "Provider is required"),
   apiKey: z.string().min(1, "API key is required"),
@@ -16,8 +22,8 @@ export const saveKeyTestSchema = z.object({
   nickname: nicknameSchema,
   notes: notesSchema,
   status: z.enum(["valid", "invalid", "limited"]),
-  scopes: z.any().optional(),
-  rate_limit_info: z.any().optional(),
+  scopes: scopesSchema,
+  rate_limit_info: rateLimitInfoSchema,
   health_score: z.number().min(0).max(100).nullable().optional(),
   latency_ms: z.number().min(0).nullable().optional(),
   user_id: z.string().uuid(),

@@ -17,6 +17,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  PageHeader,
+  PageShell,
+  dashInput,
+  dashSelectTrigger,
+  dashSelectContent,
+  dashPrimaryBtn,
+  dashGhostBtn,
+} from "@/components/dashboard/ui";
 import { Loader2, Plus, Trash2, Download, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { HealthScoreRing } from "@/components/HealthScoreRing";
@@ -113,20 +122,30 @@ const BulkTestPage = () => {
 
   return (
     <DashboardLayout>
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="space-y-4">
-          {rows.map((row, i) => (
-            <div key={row.id}
-              className={`bg-white dark:bg-[#000000] border rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3 ${
-                row.result?.status === "invalid" ? "border-red-200 dark:border-red-800/40" : "border-slate-200 dark:border-blue-500/20"
-              }`}>
-              <span className="font-mono text-xs text-slate-400 dark:text-slate-600 w-6 shrink-0">{i + 1}.</span>
+      <PageShell width="md">
+        <PageHeader
+          title="Bulk Test"
+          description="Validate up to 10 keys at once. Results stay in this session until you export a PDF."
+        />
 
-              <Select value={row.provider} onValueChange={(v) => updateRow(row.id, { provider: v })}>
-                <SelectTrigger className="w-full sm:w-40 bg-white dark:bg-[#0A0A0A] border-slate-300 dark:border-blue-500/20 text-slate-900 dark:text-white rounded-xl">
-                  <SelectValue placeholder="Provider..." />
-                </SelectTrigger>
-                <SelectContent className="bg-white dark:bg-[#0A0A0A] border-slate-200 dark:border-blue-500/20">
+        <div className="space-y-3">
+          {rows.map((row, i) => (
+            <div
+              key={row.id}
+              className={`rounded-xl border bg-white p-4 dark:bg-slate-900 ${
+                row.result?.status === "invalid"
+                  ? "border-red-200 dark:border-red-900/50"
+                  : "border-slate-200 dark:border-slate-800"
+              }`}
+            >
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <span className="w-6 shrink-0 text-xs tabular-nums text-slate-400">{i + 1}.</span>
+
+                <Select value={row.provider} onValueChange={(v) => updateRow(row.id, { provider: v })}>
+                  <SelectTrigger className={`w-full sm:w-44 ${dashSelectTrigger}`}>
+                    <SelectValue placeholder="Provider" />
+                  </SelectTrigger>
+                  <SelectContent className={dashSelectContent}>
                   {PROVIDERS.map((p) => (
                     <SelectItem key={p.id} value={p.id}>
                       <span className="flex items-center gap-2">
@@ -138,8 +157,13 @@ const BulkTestPage = () => {
                 </SelectContent>
               </Select>
 
-              <Input type="password" placeholder="API key..." value={row.apiKey} onChange={(e) => updateRow(row.id, { apiKey: e.target.value })}
-                className="flex-1 font-mono text-sm bg-white dark:bg-[#0A0A0A] border-slate-300 dark:border-blue-500/20 focus:border-blue-500 dark:focus:border-blue-500 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-blue-400/30 rounded-xl" />
+              <Input
+                type="password"
+                placeholder="API key"
+                value={row.apiKey}
+                onChange={(e) => updateRow(row.id, { apiKey: e.target.value })}
+                className={`flex-1 font-mono text-sm ${dashInput}`}
+              />
 
               <div className="flex items-center gap-2 shrink-0">
                 {row.testing && <Loader2 className="h-4 w-4 animate-spin text-blue-500" />}
@@ -180,26 +204,24 @@ const BulkTestPage = () => {
                 </AlertDialog>
               </div>
             </div>
+          </div>
           ))}
         </div>
 
-        <div className="flex flex-wrap gap-3">
-          <Button variant="ghost" onClick={addRow} disabled={rows.length >= 10}
-            className="gap-2 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/5 font-sans text-sm rounded-xl border border-slate-200 dark:border-blue-500/20 hover:border-blue-300 dark:hover:border-blue-500/40">
-            <Plus className="h-4 w-4" /> Add Key
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={addRow} disabled={rows.length >= 10} className={dashGhostBtn + " border-slate-200 dark:border-slate-700"}>
+            <Plus className="h-4 w-4 mr-1.5" /> Add row
           </Button>
-          <Button onClick={testAll} disabled={testingAll}
-            className="gap-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white dark:text-black font-sans font-semibold text-sm rounded-xl dark:shadow-[0_0_15px_rgba(59,130,246,0.3)] transition-all border-0">
-            {testingAll ? <><Loader2 className="h-4 w-4 animate-spin dark:text-black" /> Testing...</> : <><Zap className="h-4 w-4" /> Test All</>}
+          <Button onClick={testAll} disabled={testingAll} className={dashPrimaryBtn}>
+            {testingAll ? <><Loader2 className="h-4 w-4 animate-spin mr-1.5" /> Testing...</> : <><Zap className="h-4 w-4 mr-1.5" /> Test all</>}
           </Button>
           {hasResults && (
-            <Button variant="ghost" onClick={exportPdf}
-              className="gap-2 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/5 font-sans text-sm rounded-xl border border-slate-200 dark:border-blue-500/20">
-              <Download className="h-4 w-4" /> Export PDF
+            <Button variant="outline" onClick={exportPdf} className={dashGhostBtn + " border-slate-200 dark:border-slate-700"}>
+              <Download className="h-4 w-4 mr-1.5" /> Export PDF
             </Button>
           )}
         </div>
-      </div>
+      </PageShell>
     </DashboardLayout>
   );
 };

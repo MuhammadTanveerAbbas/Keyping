@@ -144,25 +144,14 @@ const providers: Record<string, ProviderConfig> = {
     url: "https://sts.amazonaws.com/?Action=GetCallerIdentity&Version=2011-06-15",
     method: "GET",
     headers: () => {
-      return { Authorization: "AWS4-HMAC-SHA256" };
+      return { Authorization: "Bearer unsupported" };
     },
-    parseResult: async (res) => {
-      if (res.ok) return { status: "valid" };
-      if (res.status === 403) return { status: "invalid", error: "Invalid credentials" };
-      if (res.status === 401) return { status: "invalid", error: "Invalid credentials" };
-      return { status: "invalid", error: `HTTP ${res.status}` };
+    parseResult: async () => {
+      return { status: "invalid", error: "AWS key validation requires SigV4 signing which is not currently supported. Use the AWS CLI or SDK to verify keys." };
     },
   },
-  supabase: {
-    url: "",
-    method: "GET",
-    headers: (key) => ({ apikey: key }),
-    parseResult: async (res) => {
-      if (res.ok || res.status === 200) return { status: "valid" };
-      if (res.status === 401 || res.status === 403) return { status: "invalid", error: "Invalid key" };
-      return { status: "invalid", error: `HTTP ${res.status}` };
-    },
-  },
+  // NOTE: Supabase is intentionally omitted — keys cannot be validated
+  // without knowing the project URL.
 };
 
 async function verifyAuth(req: Request): Promise<{ userId: string } | null> {
@@ -223,6 +212,31 @@ serve(async (req) => {
       if (!customEndpoint) {
         return new Response(
           JSON.stringify({ status: "invalid", error: "Custom endpoint URL required" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+      // SSRF protection: require HTTPS and reject private hostnames
+      let parsedUrl: URL;
+      try {
+        parsedUrl = new URL(customEndpoint);
+      } catch {
+        return new Response(
+          JSON.stringify({ status: "invalid", error: "Invalid endpoint URL" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+      if (parsedUrl.protocol !== "https:") {
+        return new Response(
+          JSON.stringify({ status: "invalid", error: "Endpoint URL must use HTTPS" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+      const privateHostnames = ["localhost", "127.0.0.1", "0.0.0.0", "::1", "[::1]"];
+      const privatePrefixes = ["10.", "172.16.", "172.17.", "172.18.", "172.19.", "172.20.", "172.21.", "172.22.", "172.23.", "172.24.", "172.25.", "172.26.", "172.27.", "172.28.", "172.29.", "172.30.", "172.31.", "192.168.", "169.254."];
+      const host = parsedUrl.hostname.toLowerCase();
+      if (privateHostnames.includes(host) || privatePrefixes.some(p => host.startsWith(p))) {
+        return new Response(
+          JSON.stringify({ status: "invalid", error: "Endpoint URL must point to a public server" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }

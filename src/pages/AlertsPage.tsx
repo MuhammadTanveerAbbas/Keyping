@@ -1,13 +1,34 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Bell, Plus, Trash2, AlertTriangle, Clock } from "lucide-react";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Bell, Trash2, AlertTriangle, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { format, differenceInDays } from "date-fns";
+import {
+  PageHeader,
+  PageShell,
+  Panel,
+  Notice,
+  EmptyState,
+  SkeletonBlock,
+  dashInput,
+  dashPrimaryBtn,
+} from "@/components/dashboard/ui";
 
 type Alert = {
   id: string;
@@ -18,16 +39,28 @@ type Alert = {
   created_at: string;
 };
 
+const alertFormSchema = z.object({
+  key_nickname: z.string().min(1, "Key nickname is required").max(200, "Nickname too long"),
+  expiry_date: z.string().min(1, "Expiry date is required"),
+  reminder_days: z.coerce.number().min(1).max(365),
+});
+
 const AlertsPage = () => {
   const { user } = useAuth();
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
-  const [nickname, setNickname] = useState("");
-  const [expiryDate, setExpiryDate] = useState("");
-  const [reminderDays, setReminderDays] = useState("7");
-  const [creating, setCreating] = useState(false);
 
-  const fetchAlerts = async () => {
+  const form = useForm<z.infer<typeof alertFormSchema>>({
+    resolver: zodResolver(alertFormSchema),
+    defaultValues: {
+      key_nickname: "",
+      expiry_date: "",
+      reminder_days: 7,
+    },
+  });
+  const creating = form.formState.isSubmitting;
+
+  const fetchAlerts = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     const { data, error } = await supabase
@@ -40,29 +73,26 @@ const AlertsPage = () => {
     if (error) toast.error(error.message);
     else setAlerts((data as Alert[]) || []);
     setLoading(false);
-  };
+  }, [user]);
 
   useEffect(() => {
     fetchAlerts();
-  }, [user]);
+  }, [fetchAlerts]);
 
-  const createAlert = async () => {
-    if (!user || !nickname.trim() || !expiryDate) return;
-    setCreating(true);
+  const createAlert = async (values: z.infer<typeof alertFormSchema>) => {
+    if (!user) return;
     const { error } = await supabase.from("alerts").insert({
       user_id: user.id,
-      key_nickname: nickname.trim(),
-      expiry_date: new Date(expiryDate).toISOString(),
-      reminder_days: parseInt(reminderDays) || 7,
+      key_nickname: values.key_nickname.trim(),
+      expiry_date: new Date(values.expiry_date).toISOString(),
+      reminder_days: values.reminder_days,
     });
     if (error) toast.error(error.message);
     else {
       toast.success("Alert created!");
-      setNickname("");
-      setExpiryDate("");
+      form.reset();
       fetchAlerts();
     }
-    setCreating(false);
   };
 
   const deleteAlert = async (id: string) => {
@@ -118,91 +148,97 @@ const AlertsPage = () => {
 
   return (
     <DashboardLayout>
-      <div className="max-w-3xl mx-auto space-y-6">
-        {/* Alert banner */}
+      <PageShell width="sm">
+        <PageHeader
+          title="Expiry Alerts"
+          description="Set reminders for key expiry dates. Alerts appear on this page when due — email delivery is not enabled yet."
+        />
+
         {urgentAlerts.length > 0 && (
-          <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/40 rounded-2xl p-4 flex items-start gap-3">
-            <AlertTriangle className="h-5 w-5 text-amber-500 dark:text-amber-400 shrink-0 mt-0.5" />
-            <div>
-              <p className="font-sans text-sm font-semibold text-slate-900 dark:text-white">
-                {urgentAlerts.length} key(s) expiring within 7 days
-              </p>
-              <p className="font-mono text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {urgentAlerts.map((a) => a.key_nickname).join(", ")}
-              </p>
-            </div>
-          </div>
+          <Notice variant="warning">
+            <strong>{urgentAlerts.length} key(s)</strong> expiring within 7 days:{" "}
+            {urgentAlerts.map((a) => a.key_nickname).join(", ")}
+          </Notice>
         )}
 
-        {/* Create alert */}
-        <div className="bg-white dark:bg-[#000000] border border-slate-200 dark:border-blue-500/20 rounded-2xl p-5 space-y-4 shadow-sm dark:shadow-[0_0_15px_rgba(59,130,246,0.04)]">
-          <h2 className="font-display text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <Plus className="h-4 w-4 text-blue-500" /> Set Key Expiry Reminder
-          </h2>
-          <div className="grid sm:grid-cols-3 gap-3">
-            <div>
-              <Label className="font-sans text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                Key Nickname
-              </Label>
-              <Input
-                placeholder="e.g. Production OpenAI"
-                value={nickname}
-                onChange={(e) => setNickname(e.target.value)}
-                className="bg-white dark:bg-[#0A0A0A] border-slate-300 dark:border-blue-500/20 focus:border-blue-500 dark:focus:border-blue-500 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-blue-400/30 rounded-xl mt-1"
-              />
-            </div>
-            <div>
-              <Label className="font-sans text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                Expiry Date
-              </Label>
-              <Input
-                type="date"
-                value={expiryDate}
-                onChange={(e) => setExpiryDate(e.target.value)}
-                className="bg-white dark:bg-[#0A0A0A] border-slate-300 dark:border-blue-500/20 focus:border-blue-500 dark:focus:border-blue-500 text-slate-900 dark:text-white rounded-xl mt-1 [color-scheme:light] dark:[color-scheme:dark]"
-              />
-            </div>
-            <div>
-              <Label className="font-sans text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                Remind Before
-              </Label>
-              <select
-                value={reminderDays}
-                onChange={(e) => setReminderDays(e.target.value)}
-                className="flex h-10 w-full rounded-xl border border-slate-300 dark:border-blue-500/20 bg-white dark:bg-[#0A0A0A] px-3 py-2 font-sans text-sm text-slate-900 dark:text-white mt-1 focus:border-blue-500 dark:focus:border-blue-500 focus:outline-none"
-              >
-                <option value="1">1 day before</option>
-                <option value="3">3 days before</option>
-                <option value="7">7 days before</option>
-              </select>
-            </div>
-          </div>
-          <Button
-            onClick={createAlert}
-            disabled={creating || !nickname.trim() || !expiryDate}
-            className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white dark:text-black font-sans font-semibold text-sm rounded-xl dark:shadow-[0_0_15px_rgba(59,130,246,0.3)] transition-all border-0"
-          >
-            Create Reminder
-          </Button>
-        </div>
+        <Panel title="New reminder" description="In-app only for now">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(createAlert)} className="space-y-4">
+              <div className="grid gap-3 sm:grid-cols-3">
+                <FormField
+                  control={form.control}
+                  name="key_nickname"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                        Key nickname
+                      </FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g. Production OpenAI" {...field} className={dashInput} />
+                      </FormControl>
+                      <FormMessage className="text-xs text-red-500" />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="expiry_date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                        Expiry date
+                      </FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} className={dashInput} />
+                      </FormControl>
+                      <FormMessage className="text-xs text-red-500" />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="reminder_days"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                        Remind before
+                      </FormLabel>
+                      <FormControl>
+                        <select
+                          {...field}
+                          onChange={(e) => field.onChange(parseInt(e.target.value))}
+                          className={dashInput + " w-full px-3 text-sm"}
+                        >
+                          <option value="1">1 day before</option>
+                          <option value="3">3 days before</option>
+                          <option value="7">7 days before</option>
+                        </select>
+                      </FormControl>
+                      <FormMessage className="text-xs text-red-500" />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <Button type="submit" disabled={creating} className={dashPrimaryBtn}>
+                {creating ? "Creating..." : "Create reminder"}
+              </Button>
+            </form>
+          </Form>
+        </Panel>
 
-        {/* Alerts list */}
         {loading ? (
           <div className="space-y-3">
-            {[1, 2].map((i) => (
-              <div
-                key={i}
-                className="bg-white dark:bg-[#000000] border border-slate-200 dark:border-blue-500/20 rounded-2xl p-4 h-16 animate-pulse"
-              />
-            ))}
+            <SkeletonBlock className="h-16" />
+            <SkeletonBlock className="h-16" />
           </div>
         ) : alerts.length === 0 ? (
-          <div className="bg-white dark:bg-[#000000] border border-slate-200 dark:border-blue-500/20 rounded-2xl p-8 text-center">
-            <Bell className="h-8 w-8 mx-auto mb-2 text-slate-300 dark:text-blue-500/20" />
-            <p className="font-sans text-sm text-slate-500 dark:text-slate-400">
-              No alerts set. Create one above.
-            </p>
-          </div>
+          <Panel>
+            <EmptyState
+              icon={Bell}
+              title="No reminders yet"
+              description="Add an expiry date above to track keys before they lapse."
+            />
+          </Panel>
         ) : (
           <div className="space-y-2">
             {alerts.map((alert) => {
@@ -211,12 +247,12 @@ const AlertsPage = () => {
               return (
                 <div
                   key={alert.id}
-                  className={`bg-white dark:bg-[#000000] border rounded-2xl p-4 flex items-center justify-between card-hover-lift transition-all ${
+                  className={`flex items-center justify-between rounded-xl border bg-white p-4 dark:bg-slate-900 ${
                     urgency === "expired" || urgency === "critical"
-                      ? "border-red-200 dark:border-red-800/40"
+                      ? "border-red-200 dark:border-red-900/50"
                       : urgency === "warning"
-                        ? "border-amber-200 dark:border-amber-800/40"
-                        : "border-slate-200 dark:border-blue-500/20"
+                        ? "border-amber-200 dark:border-amber-900/50"
+                        : "border-slate-200 dark:border-slate-800"
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -253,7 +289,7 @@ const AlertsPage = () => {
             })}
           </div>
         )}
-      </div>
+      </PageShell>
     </DashboardLayout>
   );
 };

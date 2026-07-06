@@ -1,24 +1,7 @@
 import { Link } from "react-router-dom";
 import { ThemeToggle } from "@/components/ThemeToggle";
-
-function KeyPingLogo({ size = 28 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="32" height="32" rx="8" fill="url(#kp-priv-g)" />
-      <circle cx="12" cy="14" r="5" stroke="white" strokeWidth="2.2" fill="none" />
-      <circle cx="12" cy="14" r="2" fill="white" />
-      <rect x="16.5" y="13" width="9" height="2.2" rx="1.1" fill="white" />
-      <rect x="22" y="15.2" width="2" height="2.5" rx="0.8" fill="white" />
-      <rect x="18.5" y="15.2" width="2" height="1.8" rx="0.8" fill="white" />
-      <defs>
-        <linearGradient id="kp-priv-g" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#3B82F6" />
-          <stop offset="100%" stopColor="#1D4ED8" />
-        </linearGradient>
-      </defs>
-    </svg>
-  );
-}
+import { KeyPingLogo } from "@/components/KeyPingLogo";
+import { Lock } from "lucide-react";
 
 const sections = [
   { id: "collect", title: "1. Information We Collect", content: "We collect API keys temporarily during validation (never stored permanently  validated in-flight and discarded), usage data (validation counts, timestamps), and account data (email, name via Google OAuth)." },
@@ -56,8 +39,8 @@ export default function Privacy() {
 
         {/* Security callout */}
         <div className="flex gap-3 p-4 rounded-xl border bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-500/5 dark:border-blue-500/30 dark:text-blue-300 dark:shadow-[inset_0_0_20px_rgba(59,130,246,0.03)] mb-8">
-          <span>🔒</span>
-          <p className="font-sans text-sm">We take your API key security seriously. Keys are never stored  only validated in transit via encrypted Edge Functions and immediately discarded.</p>
+          <Lock className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+          <p className="font-sans text-sm">We take your API key security seriously. Keys are never stored — only validated in transit via encrypted Edge Functions and immediately discarded.</p>
         </div>
 
         {/* Table of contents */}
@@ -84,8 +67,8 @@ export default function Privacy() {
 
         {/* Footer note */}
         <div className="flex gap-3 p-4 rounded-xl border bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-500/5 dark:border-blue-500/30 dark:text-blue-300 mt-12">
-          <span>🔒</span>
-          <p className="font-sans text-sm">We take your API key security seriously. Keys are never stored  only validated in transit.</p>
+          <Lock className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+          <p className="font-sans text-sm">We take your API key security seriously. Keys are never stored — only validated in transit.</p>
         </div>
 
         <div className="mt-8 pt-8 border-t border-slate-200 dark:border-blue-500/10 flex items-center justify-between">

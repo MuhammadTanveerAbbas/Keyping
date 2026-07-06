@@ -1,24 +1,7 @@
 import { Link } from "react-router-dom";
 import { ThemeToggle } from "@/components/ThemeToggle";
-
-function KeyPingLogo({ size = 28 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="32" height="32" rx="8" fill="url(#kp-terms-g)" />
-      <circle cx="12" cy="14" r="5" stroke="white" strokeWidth="2.2" fill="none" />
-      <circle cx="12" cy="14" r="2" fill="white" />
-      <rect x="16.5" y="13" width="9" height="2.2" rx="1.1" fill="white" />
-      <rect x="22" y="15.2" width="2" height="2.5" rx="0.8" fill="white" />
-      <rect x="18.5" y="15.2" width="2" height="1.8" rx="0.8" fill="white" />
-      <defs>
-        <linearGradient id="kp-terms-g" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#3B82F6" />
-          <stop offset="100%" stopColor="#1D4ED8" />
-        </linearGradient>
-      </defs>
-    </svg>
-  );
-}
+import { KeyPingLogo } from "@/components/KeyPingLogo";
+import { Lock } from "lucide-react";
 
 const sections = [
   { id: "acceptance", title: "1. Acceptance of Terms", content: "By accessing or using KeyPing, you agree to be bound by these Terms of Service. If you do not agree, please do not use the service." },
@@ -58,7 +41,7 @@ export default function Terms() {
 
         {/* Key handling callout */}
         <div className="flex gap-3 p-4 rounded-xl border bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-500/5 dark:border-blue-500/30 dark:text-blue-300 dark:shadow-[inset_0_0_20px_rgba(59,130,246,0.03)] mb-8">
-          <span>🔒</span>
+          <Lock className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
           <p className="font-sans text-sm">We never store your API keys. Keys are validated in-transit via encrypted Edge Functions and immediately discarded.</p>
         </div>
 

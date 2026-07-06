@@ -3,8 +3,17 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { PROVIDERS } from "@/lib/providers";
-import { BarChart3, Zap, Clock, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
+import {
+  PageHeader,
+  PageShell,
+  Panel,
+  Stat,
+  StatGrid,
+  EmptyState,
+  SkeletonBlock,
+} from "@/components/dashboard/ui";
+import { BarChart3, Zap, Clock, TrendingUp } from "lucide-react";
 import {
   BarChart,
   Bar,
@@ -95,8 +104,9 @@ const StatsPage = () => {
   const providerLatency: Record<string, number[]> = {};
   tests.forEach((t) => {
     if (t.latency_ms !== null) {
-      providerLatency[t.provider] = providerLatency[t.provider] || [];
-      providerLatency[t.provider].push(t.latency_ms);
+      const bucket = providerLatency[t.provider] ?? [];
+      bucket.push(t.latency_ms);
+      providerLatency[t.provider] = bucket;
     }
   });
   const latencyData = Object.entries(providerLatency)
@@ -163,54 +173,38 @@ const StatsPage = () => {
 
   return (
     <DashboardLayout>
-      <div className="max-w-5xl mx-auto space-y-6">
-        {/* Stat cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <PageShell>
+        <PageHeader
+          title="Stats"
+          description="Trends and breakdowns from your saved validation history."
+        />
+
+        <StatGrid>
           {statCards.map(({ icon: Icon, label, value }) => (
-            <div
-              key={label}
-              className="bg-white dark:bg-[#000000] border border-slate-200 dark:border-blue-500/20 rounded-2xl p-4 flex items-center gap-3 card-hover-lift shadow-sm dark:shadow-[0_0_15px_rgba(59,130,246,0.05)]"
-            >
-              <div className="h-10 w-10 rounded-lg bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 flex items-center justify-center shrink-0">
-                <Icon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div>
-                <p className="font-sans text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                  {label}
-                </p>
-                <p className="font-display text-xl font-bold text-slate-900 dark:text-white">
-                  {value}
-                </p>
-              </div>
-            </div>
+            <Stat key={label} icon={Icon} label={label} value={value || "—"} />
           ))}
-        </div>
+        </StatGrid>
 
         {loading ? (
           <div className="space-y-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="bg-white dark:bg-[#000000] border border-slate-200 dark:border-blue-500/20 rounded-2xl p-4 h-24 animate-pulse" />
-              ))}
-            </div>
-            <div className="bg-white dark:bg-[#000000] border border-slate-200 dark:border-blue-500/20 rounded-2xl p-5 h-64 animate-pulse" />
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="bg-white dark:bg-[#000000] border border-slate-200 dark:border-blue-500/20 rounded-2xl p-5 h-64 animate-pulse" />
-              <div className="bg-white dark:bg-[#000000] border border-slate-200 dark:border-blue-500/20 rounded-2xl p-5 h-64 animate-pulse" />
+            <SkeletonBlock className="h-64" />
+            <div className="grid gap-4 md:grid-cols-2">
+              <SkeletonBlock className="h-64" />
+              <SkeletonBlock className="h-64" />
             </div>
           </div>
         ) : tests.length === 0 ? (
-          <div className="bg-white dark:bg-[#000000] border border-slate-200 dark:border-blue-500/20 rounded-2xl p-8 text-center font-sans text-sm text-slate-500 dark:text-slate-400">
-            No test data yet. Start testing keys to see your stats.
-          </div>
+          <Panel>
+            <EmptyState
+              icon={BarChart3}
+              title="No stats yet"
+              description="Run your first key test to populate charts and summaries."
+            />
+          </Panel>
         ) : (
           <>
-            {/* Tests per day */}
-            <div className="bg-white dark:bg-[#000000] border border-slate-200 dark:border-blue-500/20 rounded-2xl p-5 shadow-sm dark:shadow-[0_0_15px_rgba(59,130,246,0.04)]">
-              <h3 className="font-display text-sm font-bold text-slate-900 dark:text-white mb-4">
-                Tests per Day (Last 30 Days)
-              </h3>
-              <ResponsiveContainer width="100%" height={200}>
+            <Panel title="Tests per day" description="Last 30 days">
+              <ResponsiveContainer width="100%" height={220}>
                 <LineChart data={lineData}>
                   <CartesianGrid
                     strokeDasharray="3 3"
@@ -253,14 +247,11 @@ const StatsPage = () => {
                   />
                 </LineChart>
               </ResponsiveContainer>
-            </div>
+            </Panel>
 
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="bg-white dark:bg-[#000000] border border-slate-200 dark:border-blue-500/20 rounded-2xl p-5 shadow-sm dark:shadow-[0_0_15px_rgba(59,130,246,0.04)]">
-                <h3 className="font-display text-sm font-bold text-slate-900 dark:text-white mb-4">
-                  Provider Distribution
-                </h3>
-                <ResponsiveContainer width="100%" height={200}>
+            <div className="grid gap-4 md:grid-cols-2">
+              <Panel title="Provider distribution">
+                <ResponsiveContainer width="100%" height={220}>
                   <PieChart>
                     <Pie
                       data={pieData}
@@ -294,13 +285,10 @@ const StatsPage = () => {
                     />
                   </PieChart>
                 </ResponsiveContainer>
-              </div>
+              </Panel>
 
-              <div className="bg-white dark:bg-[#000000] border border-slate-200 dark:border-blue-500/20 rounded-2xl p-5 shadow-sm dark:shadow-[0_0_15px_rgba(59,130,246,0.04)]">
-                <h3 className="font-display text-sm font-bold text-slate-900 dark:text-white mb-4">
-                  Health Score Distribution
-                </h3>
-                <ResponsiveContainer width="100%" height={200}>
+              <Panel title="Health score distribution">
+                <ResponsiveContainer width="100%" height={220}>
                   <BarChart data={healthDist}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
                     <XAxis
@@ -336,15 +324,12 @@ const StatsPage = () => {
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
-              </div>
+              </Panel>
             </div>
 
             {latencyData.length > 0 && (
-              <div className="bg-white dark:bg-[#000000] border border-slate-200 dark:border-blue-500/20 rounded-2xl p-5 shadow-sm dark:shadow-[0_0_15px_rgba(59,130,246,0.04)]">
-                <h3 className="font-display text-sm font-bold text-slate-900 dark:text-white mb-4">
-                  Average Latency by Provider
-                </h3>
-                <ResponsiveContainer width="100%" height={200}>
+              <Panel title="Average latency by provider" description="Milliseconds per provider">
+                <ResponsiveContainer width="100%" height={220}>
                   <BarChart data={latencyData} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
                     <XAxis
@@ -385,11 +370,11 @@ const StatsPage = () => {
                     />
                   </BarChart>
                 </ResponsiveContainer>
-              </div>
+              </Panel>
             )}
           </>
         )}
-      </div>
+      </PageShell>
     </DashboardLayout>
   );
 };

@@ -176,11 +176,25 @@ SET search_path = public
 AS $$
 DECLARE
   _user_id uuid;
+  _team_record RECORD;
 BEGIN
   _user_id := auth.uid();
   IF _user_id IS NULL THEN
     RAISE EXCEPTION 'Not authenticated';
   END IF;
+
+  -- Block deletion if user is the last owner of any team
+  FOR _team_record IN
+    SELECT t.id, t.name
+    FROM public.teams t
+    WHERE t.owner_id = _user_id
+      AND (
+        SELECT COUNT(*) FROM public.team_members tm
+        WHERE tm.team_id = t.id AND tm.role = 'owner'
+      ) = 1
+  LOOP
+    RAISE EXCEPTION 'Cannot delete account: you are the last owner of team "%". Transfer ownership or delete the team first.', _team_record.name;
+  END LOOP;
 
   DELETE FROM public.shared_results WHERE shared_by = _user_id;
   DELETE FROM public.team_members   WHERE user_id   = _user_id;

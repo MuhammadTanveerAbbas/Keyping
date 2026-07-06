@@ -15,8 +15,6 @@ import {
   ArrowDownRight,
 } from "lucide-react";
 import {
-  LineChart,
-  Line,
   ResponsiveContainer,
   AreaChart,
   Area,
@@ -24,6 +22,8 @@ import {
 } from "recharts";
 import { format, subDays, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { Panel, EmptyState, SkeletonBlock } from "@/components/dashboard/ui";
 
 type KeyTest = {
   id: string;
@@ -93,14 +93,14 @@ function StatCard({
   return (
     <div
       className={cn(
-        "bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl p-3 space-y-2 card-hover-lift shadow-sm dark:shadow-xl dark:shadow-black/20",
+        "rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-2",
         className,
       )}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded-lg bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 flex items-center justify-center shrink-0">
-            <Icon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          <div className="h-7 w-7 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
+            <Icon className="h-4 w-4 text-slate-600 dark:text-slate-400" />
           </div>
           <span className="font-sans text-xs text-slate-500 dark:text-slate-400">
             {label}
@@ -162,16 +162,8 @@ function LatencyTrendChart({ tests }: { tests: KeyTest[] }) {
   }, [tests]);
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl p-4 space-y-2 shadow-sm dark:shadow-xl dark:shadow-black/20">
-      <div className="flex items-center justify-between">
-        <h3 className="font-display text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-          <Clock className="h-4 w-4 text-blue-500 dark:text-blue-400" />
-          Latency Trend (14 days)
-        </h3>
-        <span className="font-mono text-[10px] text-slate-400 dark:text-blue-400/40 border border-slate-200 dark:border-blue-500/20 rounded px-2 py-0.5">
-          ms
-        </span>
-      </div>
+    <Panel title="Latency trend" description="14-day average (ms)" noPadding>
+      <div className="p-4 pt-2">
       <ResponsiveContainer width="100%" height={110}>
         <AreaChart
           data={data}
@@ -204,7 +196,8 @@ function LatencyTrendChart({ tests }: { tests: KeyTest[] }) {
           />
         </AreaChart>
       </ResponsiveContainer>
-    </div>
+      </div>
+    </Panel>
   );
 }
 
@@ -215,15 +208,16 @@ function ProviderUptime({ tests }: { tests: KeyTest[] }) {
       { total: number; valid: number; lastTest?: KeyTest }
     > = {};
     tests.forEach((t) => {
-      if (!map[t.provider]) map[t.provider] = { total: 0, valid: 0 };
-      map[t.provider].total++;
-      if (t.status === "valid") map[t.provider].valid++;
+      const entry = map[t.provider] ?? { total: 0, valid: 0 };
+      entry.total++;
+      if (t.status === "valid") entry.valid++;
       if (
-        !map[t.provider].lastTest ||
-        new Date(t.tested_at) > new Date(map[t.provider].lastTest!.tested_at)
+        !entry.lastTest ||
+        new Date(t.tested_at) > new Date(entry.lastTest.tested_at)
       ) {
-        map[t.provider].lastTest = t;
+        entry.lastTest = t;
       }
+      map[t.provider] = entry;
     });
     return Object.entries(map)
       .map(([id, { total, valid, lastTest }]) => ({
@@ -243,11 +237,7 @@ function ProviderUptime({ tests }: { tests: KeyTest[] }) {
   if (!providers.length) return null;
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl p-4 space-y-3 shadow-sm dark:shadow-xl dark:shadow-black/20">
-      <h3 className="font-display text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-        <Shield className="h-4 w-4 text-blue-500 dark:text-blue-400" />
-        Provider Uptime
-      </h3>
+    <Panel title="Provider uptime" description="Valid tests / total per provider">
       <div className="space-y-3">
         {providers.slice(0, 6).map((p) => (
           <div key={p.id} className="space-y-1.5">
@@ -302,7 +292,7 @@ function ProviderUptime({ tests }: { tests: KeyTest[] }) {
           </div>
         ))}
       </div>
-    </div>
+    </Panel>
   );
 }
 
@@ -311,11 +301,7 @@ function RecentActivity({ tests }: { tests: KeyTest[] }) {
   if (!recent.length) return null;
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl p-4 space-y-2 shadow-sm dark:shadow-xl dark:shadow-black/20">
-      <h3 className="font-display text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-        <Activity className="h-4 w-4 text-blue-500 dark:text-blue-400" />
-        Recent Activity
-      </h3>
+    <Panel title="Recent activity">
       <div className="space-y-2">
         {recent.map((t) => (
           <div
@@ -364,7 +350,7 @@ function RecentActivity({ tests }: { tests: KeyTest[] }) {
           </div>
         ))}
       </div>
-    </div>
+    </Panel>
   );
 }
 
@@ -479,18 +465,15 @@ export default function DashboardWidgets({
 
   if (loading) {
     return (
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="space-y-3">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-36 rounded-2xl bg-slate-100 dark:bg-blue-500/5 animate-pulse"
-            />
+            <SkeletonBlock key={i} className="h-28" />
           ))}
         </div>
-        <div className="grid md:grid-cols-2 gap-4">
-          <div className="h-52 rounded-2xl bg-slate-100 dark:bg-blue-500/5 animate-pulse" />
-          <div className="h-52 rounded-2xl bg-slate-100 dark:bg-blue-500/5 animate-pulse" />
+        <div className="grid md:grid-cols-2 gap-3">
+          <SkeletonBlock className="h-52" />
+          <SkeletonBlock className="h-52" />
         </div>
       </div>
     );
@@ -498,12 +481,13 @@ export default function DashboardWidgets({
 
   if (!tests.length) {
     return (
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl p-8 text-center space-y-3 shadow-sm dark:shadow-xl dark:shadow-black/20">
-        <Zap className="h-8 w-8 text-blue-400 mx-auto" />
-        <p className="font-sans text-sm text-slate-500 dark:text-slate-400">
-          No test data yet. Start testing keys to see analytics.
-        </p>
-      </div>
+      <Panel>
+        <EmptyState
+          icon={Zap}
+          title="No analytics yet"
+          description="Save a test result to see trends, uptime, and activity here."
+        />
+      </Panel>
     );
   }
 
