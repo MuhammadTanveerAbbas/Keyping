@@ -1,82 +1,82 @@
 import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  ReactNode,
+ createContext,
+ useContext,
+ useEffect,
+ useState,
+ ReactNode,
 } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
 type AuthContextType = {
-  session: Session | null;
-  user: User | null;
-  loading: boolean;
-  signInWithGoogle: () => Promise<void>;
-  signOut: () => Promise<void>;
+ session: Session | null;
+ user: User | null;
+ loading: boolean;
+ signInWithGoogle: () => Promise<void>;
+ signOut: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+ const [session, setSession] = useState<Session | null>(null);
+ const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Resolve existing session first  prevents flicker on reload
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-      // Strip OAuth tokens from the URL hash after Supabase processes them
-      if (window.location.hash.includes("access_token")) {
-        window.history.replaceState(null, "", window.location.pathname);
-      }
-    });
+ useEffect(() => {
+  // Resolve existing session first prevents flicker on reload
+  supabase.auth.getSession().then(({ data: { session } }) => {
+   setSession(session);
+   setLoading(false);
+   // Strip OAuth tokens from the URL hash after Supabase processes them
+   if (window.location.hash.includes("access_token")) {
+    window.history.replaceState(null, "", window.location.pathname);
+   }
+  });
 
-    // Then listen for auth state changes (login, logout, token refresh)
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setLoading(false);
-      // Strip OAuth tokens from the URL hash after Supabase processes them
-      if (window.location.hash.includes("access_token")) {
-        window.history.replaceState(null, "", window.location.pathname);
-      }
-    });
+  // Then listen for auth state changes (login, logout, token refresh)
+  const {
+   data: { subscription },
+  } = supabase.auth.onAuthStateChange((_event, session) => {
+   setSession(session);
+   setLoading(false);
+   // Strip OAuth tokens from the URL hash after Supabase processes them
+   if (window.location.hash.includes("access_token")) {
+    window.history.replaceState(null, "", window.location.pathname);
+   }
+  });
 
-    return () => subscription.unsubscribe();
-  }, []);
+  return () => subscription.unsubscribe();
+ }, []);
 
-  const signInWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: window.location.origin },
-    });
-    if (error) throw error;
-  };
+ const signInWithGoogle = async () => {
+  const { error } = await supabase.auth.signInWithOAuth({
+   provider: "google",
+   options: { redirectTo: window.location.origin },
+  });
+  if (error) throw error;
+ };
 
-  const signOut = async () => {
-    await supabase.auth.signOut();
-  };
+ const signOut = async () => {
+  await supabase.auth.signOut();
+ };
 
-  return (
-    <AuthContext.Provider
-      value={{
-        session,
-        user: session?.user ?? null,
-        loading,
-        signInWithGoogle,
-        signOut,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+ return (
+  <AuthContext.Provider
+   value={{
+    session,
+    user: session?.user ?? null,
+    loading,
+    signInWithGoogle,
+    signOut,
+   }}
+  >
+   {children}
+  </AuthContext.Provider>
+ );
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error("useAuth must be used within AuthProvider");
-  return context;
+ const context = useContext(AuthContext);
+ if (!context) throw new Error("useAuth must be used within AuthProvider");
+ return context;
 }
