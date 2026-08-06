@@ -15,9 +15,9 @@ export const pageMeta: Record<string, { title: string; description?: string }> =
     title: "Team Workspace",
     description: "Create teams and share invite links with collaborators.",
   },
-  "/dashboard/stats": {
-    title: "Stats",
-    description: "Charts and aggregates from your validation history.",
+   "/dashboard/stats": {
+     title: "Analytics & Stats",
+     description: "Comprehensive breakdowns of your API key validation history.",
   },
   "/dashboard/history": {
     title: "Test History",

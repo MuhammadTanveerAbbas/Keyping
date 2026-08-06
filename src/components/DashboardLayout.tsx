@@ -27,11 +27,11 @@ import { KeyPingLogo } from "@/components/KeyPingLogo";
 import { pageMeta } from "@/components/dashboard/pageMeta";
 
 const navItems = [
+ { to: "/dashboard/stats", icon: BarChart3, label: "Stats", end: false },
  { to: "/dashboard", icon: Zap, label: "Tester", end: true },
  { to: "/dashboard/bulk", icon: Package, label: "Bulk Test", end: false },
  { to: "/dashboard/vault", icon: Shield, label: "Key Vault", end: false },
  { to: "/dashboard/team", icon: Users, label: "Team", end: false },
- { to: "/dashboard/stats", icon: BarChart3, label: "Stats", end: false },
  { to: "/dashboard/history", icon: History, label: "History", end: false },
  { to: "/dashboard/alerts", icon: Bell, label: "Alerts", end: false },
  { to: "/dashboard/docs", icon: BookOpen, label: "Docs", end: false },
@@ -66,7 +66,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
  const sidebarContent = (
   <div className="flex h-full flex-col">
-   <div className="border-b border-slate-200 px-4 py-4">
+   <div className="border-b border-slate-200/80 px-4 py-4">
     <button
      type="button"
      onClick={() => setCollapsed(!collapsed)}
@@ -75,7 +75,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     >
      <KeyPingLogo size={28} />
      {!collapsed && (
-      <span className="font-display text-base font-semibold text-slate-900">
+      <span className="font-display text-base font-bold text-slate-900 tracking-tight">
        KeyPing
       </span>
      )}
@@ -84,7 +84,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
    <nav className="flex-1 space-y-0.5 p-3">
     {!collapsed && (
-     <p className="mb-2 mt-1 px-3 text-[11px] font-medium uppercase tracking-wide text-slate-400">
+     <p className="mb-2 mt-1 px-3 text-[11px] font-semibold uppercase tracking-widest text-slate-500">
       Menu
      </p>
     )}
@@ -97,15 +97,15 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       title={collapsed ? label : undefined}
       className={({ isActive }) =>
        cn(
-        "flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+        "flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[13px] font-semibold transition-all duration-150",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2",
         isActive
-          ? "bg-blue-50 text-blue-700 border-l-2 border-blue-500 pl-[10px]"
-          : "text-slate-600 hover:bg-slate-50/80 hover:text-slate-900",
+         ? "bg-blue-50 text-blue-700 shadow-sm"
+         : "text-slate-700 hover:bg-slate-100 hover:text-slate-900",
        )
       }
      >
-      <Icon className="h-4 w-4 shrink-0" />
+      <Icon className={cn("h-4 w-4 shrink-0", location.pathname === to ? "text-blue-600" : "")} />
       {!collapsed && <span>{label}</span>}
      </NavLink>
     ))}
@@ -115,30 +115,30 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     <button
      type="button"
      onClick={() => setCollapsed(!collapsed)}
-      className="flex w-full items-center gap-2.5 rounded-lg border border-dashed border-slate-200 px-3 py-2.5 text-sm text-slate-500 opacity-60 hover:opacity-100 transition-colors hover:bg-slate-50 hover:text-slate-700"
+      className="flex w-full items-center gap-2.5 rounded-lg border border-dashed border-slate-300 px-3 py-2.5 text-sm font-medium text-slate-600 hover:border-slate-400 hover:bg-slate-50 hover:text-slate-800 transition-colors"
     >
      {collapsed ? (
       <PanelLeft className="h-4 w-4 shrink-0" />
      ) : (
       <>
        <PanelLeftClose className="h-4 w-4 shrink-0" />
-       <span className="text-xs">Collapse</span>
+       <span className="text-xs font-medium">Collapse</span>
       </>
      )}
     </button>
    </div>
 
-   <div className="space-y-2 border-t border-slate-100 p-3">
+   <div className="space-y-2 border-t border-slate-200/80 p-3">
     {!collapsed ? (
      <>
       <div className="flex items-center gap-3 rounded-lg px-2 py-2">
-       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-sm font-semibold text-slate-700">
+       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 text-sm font-bold text-white shadow-sm">
         {user?.user_metadata?.full_name?.[0]?.toUpperCase() ||
          user?.email?.[0]?.toUpperCase() ||
          "U"}
        </div>
        <div className="min-w-0 flex-1">
-        <p className="truncate text-xs font-medium text-slate-800">
+        <p className="truncate text-xs font-semibold text-slate-900">
          {user?.user_metadata?.full_name || "Account"}
         </p>
         <p className="truncate text-[11px] text-slate-500">
@@ -149,14 +149,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       <button
        type="button"
        onClick={handleSignOut}
-       className="flex w-full min-h-[44px] items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-500 transition-colors hover:bg-red-50 hover:text-red-600"
+       className="flex w-full min-h-[44px] items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-red-50 hover:text-red-700"
       >
        <LogOut className="h-4 w-4" /> Sign out
       </button>
      </>
     ) : (
      <div className="flex flex-col items-center gap-2">
-      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-xs font-semibold text-slate-700">
+      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 text-xs font-bold text-white shadow-sm">
        {user?.user_metadata?.full_name?.[0]?.toUpperCase() ||
         user?.email?.[0]?.toUpperCase() ||
         "U"}
@@ -165,7 +165,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
        type="button"
        onClick={handleSignOut}
        aria-label="Sign out"
-       className="flex h-11 w-11 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-red-50 hover:text-red-600"
+       className="flex h-11 w-11 items-center justify-center rounded-lg text-slate-600 transition-colors hover:bg-red-50 hover:text-red-700"
       >
        <LogOut className="h-4 w-4" />
       </button>
@@ -176,12 +176,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
  );
 
  return (
-  <div className="flex min-h-screen overflow-x-hidden bg-slate-100">
+  <div className="flex min-h-screen overflow-x-hidden bg-slate-50">
    <CommandPalette />
 
    <aside
     className={cn(
-     "hidden shrink-0 flex-col border-r border-slate-200 bg-white/95 backdrop-blur-sm shadow-sm transition-all duration-200 md:flex",
+     "hidden shrink-0 flex-col border-r border-slate-200/80 bg-white backdrop-blur-sm shadow-sm transition-all duration-200 md:flex",
      collapsed ? "w-[4.5rem]" : "w-60",
     )}
    >
@@ -202,23 +202,23 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
    )}
 
    <div className="flex min-h-screen min-w-0 flex-1 flex-col">
-    <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-white/90 px-4 backdrop-blur-sm shadow-sm sm:px-6">
+    <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center justify-between border-b border-slate-200/80 bg-white/95 px-4 backdrop-blur-sm sm:px-6">
      <div className="flex min-w-0 items-center gap-3">
       <Button
        variant="ghost"
        size="icon"
-       className="h-10 w-10 shrink-0 text-slate-600 md:hidden"
+       className="h-10 w-10 shrink-0 text-slate-700 md:hidden"
        onClick={() => setSidebarOpen(true)}
        aria-label="Open menu"
       >
        <Menu className="h-5 w-5" />
       </Button>
       <div className="min-w-0">
-       <p className="truncate font-display text-sm font-semibold text-slate-900 sm:text-base">
+       <p className="truncate font-display text-sm font-bold text-slate-900 sm:text-base">
         {meta.title}
        </p>
        {totalTests > 0 && (
-        <p className="hidden text-xs text-slate-500 sm:block">
+        <p className="hidden text-xs font-medium text-slate-500 sm:block">
          {totalTests.toLocaleString()} tests saved
         </p>
        )}
@@ -232,7 +232,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
          new KeyboardEvent("keydown", { key: "k", metaKey: true }),
         )
        }
-        className="hidden items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs text-slate-500 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-700 active:scale-95 sm:flex"
+       className="hidden items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800 active:scale-95 sm:flex"
       >
        <Command className="h-3 w-3" />
        <span>K</span>
@@ -241,7 +241,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       <Button
        variant="ghost"
        size="icon"
-       className="h-10 w-10 text-slate-600"
+       className="h-10 w-10 text-slate-700"
        onClick={() => navigate("/dashboard/alerts")}
        aria-label="Alerts"
       >
@@ -249,7 +249,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       </Button>
       <Button
        size="sm"
-        className="h-10 min-w-[44px] rounded-lg bg-blue-600 px-3 font-medium text-white shadow-sm hover:bg-blue-700 hover:shadow-md sm:px-4"
+        className="h-10 min-w-[44px] rounded-lg bg-blue-600 px-3 font-semibold text-white shadow-sm hover:bg-blue-700 hover:shadow-md transition-all sm:px-4"
        onClick={() => navigate("/dashboard")}
       >
        <span className="hidden sm:inline">New test</span>

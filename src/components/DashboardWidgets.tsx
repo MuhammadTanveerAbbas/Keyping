@@ -102,9 +102,9 @@ function StatCard({
      <div className="h-7 w-7 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
       <Icon className="h-4 w-4 text-slate-600" />
      </div>
-     <span className="font-sans text-xs text-slate-500">
-      {label}
-     </span>
+     <span className="font-sans text-xs font-semibold text-slate-600">
+       {label}
+      </span>
     </div>
     {trend && (
      <div
@@ -128,11 +128,11 @@ function StatCard({
     <p className="font-display text-xl font-bold text-slate-900">
      {value}
     </p>
-    {subValue && (
-     <p className="font-sans text-[11px] text-slate-400 mt-0.5">
-      {subValue}
-     </p>
-    )}
+     {subValue && (
+      <p className="font-sans text-[11px] font-medium text-slate-500 mt-0.5">
+       {subValue}
+      </p>
+     )}
    </div>
    {sparkData && sparkData.length > 1 && (
     <SparkLine data={sparkData} color={sparkColor || "#3B82F6"} />
@@ -246,9 +246,9 @@ function ProviderUptime({ tests }: { tests: KeyTest[] }) {
      <div key={p.id} className="space-y-1.5">
       <div className="flex items-center justify-between text-xs">
        <div className="flex items-center gap-2">
-        <span className="font-sans font-medium text-slate-700">
-         {p.name}
-        </span>
+         <span className="font-sans font-semibold text-slate-800">
+          {p.name}
+         </span>
         {p.lastStatus === "valid" ? (
           <span className="shadow-sm rounded-full inline-flex">
            <CheckCircle2 className="h-3 w-3 text-green-500" />
@@ -324,19 +324,19 @@ function RecentActivity({ tests }: { tests: KeyTest[] }) {
        )}
       />
       <div className="flex-1 min-w-0">
-       <p className="font-sans text-xs font-medium text-slate-700 truncate">
-        {PROVIDERS.find((p) => p.id === t.provider)?.name || t.provider}
-        {t.nickname && (
-         <span className="text-slate-400">
-          {" "}
-          · {t.nickname}
-         </span>
-        )}
-       </p>
-       <p className="font-mono text-[10px] text-slate-400">
-        {format(new Date(t.tested_at), "MMM d, h:mm a")}
-        {t.latency_ms !== null && <span> · {t.latency_ms}ms</span>}
-       </p>
+        <p className="font-sans text-xs font-semibold text-slate-800 truncate">
+         {PROVIDERS.find((p) => p.id === t.provider)?.name || t.provider}
+         {t.nickname && (
+          <span className="text-slate-500 font-medium">
+           {" "}
+           · {t.nickname}
+          </span>
+         )}
+        </p>
+        <p className="font-mono text-[10px] font-medium text-slate-500">
+         {format(new Date(t.tested_at), "MMM d, h:mm a")}
+         {t.latency_ms !== null && <span> · {t.latency_ms}ms</span>}
+        </p>
       </div>
       {t.health_score !== null && (
        <span

@@ -71,7 +71,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 
 function AppLayout() {
  const { pathname } = useLocation();
- const showFooter = !pathname.startsWith("/dashboard");
+ const showFooter = !pathname.startsWith("/dashboard") && pathname !== "/auth" && pathname !== "/";
 
  return (
   <div className="flex min-h-screen flex-col">

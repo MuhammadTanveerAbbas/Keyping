@@ -2,32 +2,27 @@ import { useAuth } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
 import {
  Key, Shield, Zap, ArrowRight, Lock, Clock, BarChart3, ChevronRight,
- Bot, Brain, CreditCard, Github, Twitter, StickyNote, Database, Wrench, Cloud,
- CheckCircle2, TrendingUp, Activity, AlertTriangle, Sparkles,
+ CheckCircle2, TrendingUp, Activity, AlertTriangle,
+ EyeOff, Server, TerminalSquare,
 } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { PROVIDERS } from "@/lib/providers";
 import { motion, useInView } from "framer-motion";
-import { type LucideIcon } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { KeyPingLogo } from "@/components/KeyPingLogo";
-
-const providerIcons: Record<string, LucideIcon> = {
- openai: Bot, groq: Zap, anthropic: Brain, stripe: CreditCard,
- github: Github, twitter: Twitter, notion: StickyNote, supabase: Database,
- aws: Cloud, gemini: Sparkles, custom: Wrench,
-};
+import { BRAND_ICONS } from "@/components/BrandIcons";
+import { Footer } from "@/components/Footer";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
 const HERO_TERMINAL = {
- cmd: "> keyping test sk-proj-abc123...",
+ cmd: "$ keyping test sk-proj-abc123...",
  outputs: [
-  { text: "✓ Provider detected: OpenAI", color: "text-blue-400" },
-  { text: "✓ Key valid", color: "text-green-400" },
-  { text: "✓ Rate limit: 90,000 TPM remaining", color: "text-white" },
-  { text: "✓ Scopes: chat, embeddings, fine-tuning", color: "text-white" },
-  { text: "✓ Health Score: 94/100", color: "text-green-400 animate-pulse", icon: true },
+  { text: "▶ Provider detected: OpenAI", color: "text-cyan-400", bold: true },
+  { text: "  ✓ Status: Valid", color: "text-emerald-400", bold: false },
+  { text: "  ✓ Rate limit: 90,000 TPM remaining", color: "text-slate-300", bold: false },
+  { text: "  ✓ Scopes: chat, embeddings, fine-tuning", color: "text-slate-300", bold: false },
+  { text: "  ✓ Health Score: 94/100", color: "text-emerald-400", bold: true, icon: true },
  ],
 };
 
@@ -39,56 +34,89 @@ function HeroTerminal() {
 
  useEffect(() => {
   if (charIdx < cmd.length) {
-   const t = setTimeout(() => setCharIdx(c => c + 1), 40);
+   const t = setTimeout(() => setCharIdx(c => c + 1), 35);
    return () => clearTimeout(t);
   }
-  const t = setTimeout(() => setShowOutputs(true), 300);
+  const t = setTimeout(() => setShowOutputs(true), 400);
   return () => clearTimeout(t);
  }, [charIdx, cmd.length]);
 
  useEffect(() => {
   if (!showOutputs) return;
   if (outputIdx < HERO_TERMINAL.outputs.length) {
-   const t = setTimeout(() => setOutputIdx(i => i + 1), 350);
+   const t = setTimeout(() => setOutputIdx(i => i + 1), 280);
    return () => clearTimeout(t);
   }
   const t = setTimeout(() => {
    setCharIdx(0); setShowOutputs(false); setOutputIdx(0);
-  }, 3500);
+  }, 4000);
   return () => clearTimeout(t);
  }, [showOutputs, outputIdx]);
 
  return (
-  <div className="bg-gradient-to-br from-[#000000] to-[#0a0a0a] border border-blue-500/40 rounded-2xl w-full max-w-2xl mx-auto overflow-hidden shadow-terminal hover:shadow-terminal transition-shadow relative scanline-overlay">
-   <div className="bg-gradient-to-r from-[#050505] to-[#0a0a0a] border-b border-blue-500/30 px-5 py-3 flex items-center gap-2.5">
-    <span className="w-3 h-3 rounded-full bg-red-500/80 hover:bg-red-500 transition-colors cursor-pointer" />
-    <span className="w-3 h-3 rounded-full bg-amber-500/80 hover:bg-amber-500 transition-colors cursor-pointer" />
-    <span className="w-3 h-3 rounded-full bg-green-500/80 hover:bg-green-500 transition-colors cursor-pointer" />
-    <span className="font-mono text-xs text-blue-400/80 ml-2 flex items-center gap-2">
-     <Zap className="h-3 w-3" />
-     keyping-terminal
-    </span>
-   </div>
-   <div className="p-6 font-mono text-sm min-h-[180px] relative z-10">
-    <div className="flex items-start gap-1">
-     <span className="text-green-400 mr-1">$</span>
-     <span className="text-white">{cmd.slice(0, charIdx)}</span>
-     {charIdx < cmd.length && (
-      <span className="inline-block w-2 h-5 bg-blue-400 animate-pulse ml-0.5" />
+  <div className="relative w-full max-w-2xl mx-auto">
+   {/* Glow behind terminal */}
+   <div className="absolute -inset-4 bg-blue-500/10 rounded-3xl blur-3xl opacity-60" />
+
+   <div className="relative bg-[#0c0c14] border border-slate-700/60 rounded-2xl overflow-hidden shadow-[0_0_60px_rgba(59,130,246,0.15),0_8px_32px_rgba(0,0,0,0.4)]">
+    {/* Title bar */}
+    <div className="bg-gradient-to-b from-[#12121c] to-[#0f0f18] border-b border-slate-700/40 px-4 py-2.5 flex items-center justify-between">
+     <div className="flex items-center gap-2">
+      <span className="w-3 h-3 rounded-full bg-[#ff5f57] hover:bg-[#ff5f57]/80 transition-colors cursor-pointer shadow-[0_0_4px_rgba(255,95,87,0.4)]" />
+      <span className="w-3 h-3 rounded-full bg-[#febc2e] hover:bg-[#febc2e]/80 transition-colors cursor-pointer shadow-[0_0_4px_rgba(254,188,46,0.4)]" />
+      <span className="w-3 h-3 rounded-full bg-[#28c840] hover:bg-[#28c840]/80 transition-colors cursor-pointer shadow-[0_0_4px_rgba(40,200,64,0.4)]" />
+     </div>
+     <div className="flex items-center gap-1.5 text-slate-500">
+      <Zap className="h-3 w-3" />
+      <span className="font-mono text-[11px] tracking-wide">keyping ~ bash</span>
+     </div>
+     <div className="w-16" />
+    </div>
+
+    {/* Terminal body */}
+    <div className="p-5 font-mono text-[13px] leading-relaxed min-h-[200px] bg-[#0c0c14]">
+     {/* Command line */}
+     <div className="flex items-start">
+      <span className="text-emerald-400 mr-2 select-none">❯</span>
+      <span className="text-slate-200">{cmd.slice(0, charIdx)}</span>
+      {charIdx < cmd.length && (
+       <span className="inline-block w-[7px] h-[16px] bg-blue-400 animate-pulse ml-0.5 rounded-[1px]" />
+      )}
+     </div>
+
+     {/* Output lines */}
+     {showOutputs && (
+      <div className="mt-3 space-y-1">
+       {HERO_TERMINAL.outputs.slice(0, outputIdx).map((line, i) => (
+        <motion.div
+         key={i}
+         initial={{ opacity: 0, x: -6 }}
+         animate={{ opacity: 1, x: 0 }}
+         transition={{ duration: 0.25, ease: "easeOut" }}
+         className={`${line.color} ${line.bold ? 'font-semibold' : ''} flex items-center gap-2`}
+        >
+         <span>{line.text}</span>
+         {line.icon && <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />}
+        </motion.div>
+       ))}
+      </div>
+     )}
+
+     {/* Idle cursor after output */}
+     {outputIdx === HERO_TERMINAL.outputs.length && showOutputs && (
+      <div className="flex items-center mt-3">
+       <span className="text-emerald-400 mr-2 select-none">❯</span>
+       <span className="inline-block w-[7px] h-[16px] bg-slate-400/60 terminal-cursor rounded-[1px]" />
+      </div>
      )}
     </div>
-    {showOutputs && HERO_TERMINAL.outputs.slice(0, outputIdx).map((line, i) => (
-     <motion.div key={i} initial={{ opacity: 0, x: -4 }} animate={{ opacity: 1, x: 0 }} className={`mt-2 ${line.color} flex items-center gap-2`}>
-      <span>{line.text}</span>
-      {line.icon && <CheckCircle2 className="h-4 w-4 text-green-400 inline-block animate-pulse" />}
-     </motion.div>
-    ))}
-    {outputIdx === HERO_TERMINAL.outputs.length && showOutputs && (
-     <div className="flex items-center gap-1 mt-2">
-      <span className="text-green-400">$</span>
-      <span className="inline-block w-2 h-5 bg-blue-400 terminal-cursor ml-0.5" />
-     </div>
-    )}
+
+    {/* Status bar */}
+    <div className="border-t border-slate-700/30 px-4 py-1.5 flex items-center justify-between bg-[#0a0a12]">
+     <span className="font-mono text-[10px] text-slate-600">utf-8</span>
+     <span className="font-mono text-[10px] text-slate-600">Ln 1, Col 1</span>
+     <span className="font-mono text-[10px] text-blue-400/60">● connected</span>
+    </div>
    </div>
   </div>
  );
@@ -146,106 +174,108 @@ const PRICING = [
 ];
 
 /* ─────────────────────────────────────────────
-  SECTION 1 Provider Health Score Bar Chart
-───────────────────────────────────────────── */
-const HEALTH_BARS = [
- { name: "OpenAI",  score: 94, color: "#2563EB", icon: Bot },
- { name: "Anthropic", score: 91, color: "#9333EA", icon: Brain },
- { name: "Groq",   score: 97, color: "#16A34A", icon: Zap },
- { name: "Stripe",  score: 88, color: "#D97706", icon: CreditCard },
- { name: "GitHub",  score: 99, color: "#0891B2", icon: Github },
- { name: "Supabase", score: 85, color: "#DB2777", icon: Database },
+   SECTION 1 Provider Health Score Bar Chart
+   ───────────────────────────────────────────── */
+
+const HEALTH_FACTORS = [
+ { label: "Validity", score: 100, icon: CheckCircle2, color: "#10B981", desc: "Key is active and recognized" },
+ { label: "Rate Limit", score: 85, icon: Zap, color: "#3B82F6", desc: "90,000 TPM remaining" },
+ { label: "Scopes", score: 90, icon: Shield, color: "#8B5CF6", desc: "chat, embeddings, fine-tuning" },
+ { label: "Latency", score: 95, icon: Activity, color: "#06B6D4", desc: "142ms avg response" },
 ];
 
-function HealthBarChart() {
+function HealthScoreSection() {
  const ref = useRef<HTMLDivElement>(null);
  const inView = useInView(ref, { once: true, margin: "-80px" });
+ const overallScore = Math.round(HEALTH_FACTORS.reduce((s, f) => s + f.score, 0) / HEALTH_FACTORS.length);
 
  return (
-  <section className="py-20 px-4 sm:px-6 bg-white overflow-hidden">
-   <div className="max-w-5xl mx-auto">
-    <div className="grid lg:grid-cols-2 gap-12 items-center">
-     {/* Left copy */}
-     <motion.div
-      initial={{ opacity: 0, x: -24 }}
-      whileInView={{ opacity: 1, x: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.6, ease: [0.16,1,0.3,1] }}
-     >
-      <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-50 border border-green-200 font-mono text-xs text-green-600 mb-5">
-       <Activity className="h-3.5 w-3.5" /> EXAMPLE OUTPUT
-      </span>
-      <h2 className="font-display text-3xl sm:text-4xl font-bold text-slate-900 leading-tight mb-4">
-       Know your key's health<br />
-       <span className="text-blue-500">at a glance.</span>
-      </h2>
-      <p className="font-sans text-slate-500 leading-relaxed mb-6">
-       Every validation produces a 0–100 health score calculated from validity, rate limits, active scopes, and response latency. No more guessing.
-      </p>
-      <div className="flex flex-col gap-2">
-       {[
-        { label: "90–100", desc: "Excellent fully operational", color: "bg-green-500" },
-        { label: "70–89", desc: "Good minor limits apply",  color: "bg-blue-500" },
-        { label: "50–69", desc: "Fair degraded performance", color: "bg-yellow-400" },
-        { label: "0–49",  desc: "Poor action required",    color: "bg-red-500" },
-       ].map(({ label, desc, color }) => (
-        <div key={label} className="flex items-center gap-3">
-         <div className={`h-2.5 w-2.5 rounded-full ${color} shrink-0`} />
-         <span className="font-mono text-xs text-slate-500 w-14">{label}</span>
-         <span className="font-sans text-xs text-slate-500">{desc}</span>
-        </div>
-       ))}
-      </div>
-     </motion.div>
+  <section className="py-20 sm:py-28 px-4 sm:px-6 overflow-hidden bg-slate-50/50">
+   <div className="max-w-6xl mx-auto">
+    <motion.div className="text-center mb-14 sm:mb-16" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}>
+     <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50/80 border border-emerald-200/50 text-xs text-emerald-600 font-medium mb-5">
+      <Activity className="h-3.5 w-3.5" /> Health Score
+     </span>
+     <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 leading-tight mb-4">
+      One score that tells<br /><span className="text-blue-600">the whole story.</span>
+     </h2>
+     <p className="text-slate-500 max-w-xl mx-auto leading-relaxed">
+      Every key gets a 0–100 health score based on validity, rate limits, permissions, and response latency.
+     </p>
+    </motion.div>
 
-     {/* Right animated bars */}
-     <div ref={ref} className="bg-slate-50 border border-slate-200 rounded-2xl p-6 shadow-sm">
-      <div className="flex items-center justify-between mb-5">
-       <span className="font-display text-sm font-bold text-slate-700">Example Health Scores</span>
-       <span className="font-mono text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">Demo</span>
-      </div>
-       <div className="space-y-4 relative">
-        <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: 'repeating-linear-gradient(180deg, transparent, transparent 39px, #f1f5f9 39px, #f1f5f9 40px)' }} />
-        {HEALTH_BARS.map(({ name, score, color, icon: Icon }, i) => (
-        <div key={name}>
-         <div className="flex items-center justify-between mb-1.5">
-          <div className="flex items-center gap-2">
-           <Icon className="h-3.5 w-3.5 text-slate-400" />
-           <span className="font-sans text-sm font-medium text-slate-700">{name}</span>
-          </div>
-           <motion.span
-            className="font-mono text-sm font-bold"
-            style={{ color }}
-            initial={{ opacity: 0, scale: 0.5, y: 4 }}
-            animate={inView ? { opacity: 1, scale: 1, y: 0 } : {}}
-            transition={{ delay: i * 0.12 + 0.4, type: "spring", stiffness: 200, damping: 15 }}
-           >
-            {score}
-           </motion.span>
-          </div>
-          <div className="h-2.5 rounded-full bg-slate-100 overflow-hidden">
-           <motion.div
-            className="h-full rounded-full"
-            style={{ background: `linear-gradient(90deg, ${color}cc, ${color})`, boxShadow: `${color}44 0 0 8px, ${color}22 0 0 20px` }}
-            initial={{ width: 0 }}
-            animate={inView ? { width: `${score}%` } : {}}
-            transition={{ duration: 1, delay: i * 0.12, ease: [0.16,1,0.3,1] }}
-           />
+    <div ref={ref} className="max-w-3xl mx-auto">
+     <div className="relative">
+      <div className="absolute -inset-3 bg-gradient-to-r from-blue-500/10 via-emerald-500/10 to-blue-500/10 rounded-3xl blur-2xl opacity-50" />
+      <div className="relative bg-white border border-slate-200/80 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.06)] overflow-hidden">
+       <div className="px-5 sm:px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+         <div className="h-8 w-8 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center">
+          <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+         </div>
+         <div>
+          <p className="text-sm font-semibold text-slate-800">Key Health Report</p>
+          <p className="text-[11px] text-slate-400">sk-proj-abc123...xyz</p>
          </div>
         </div>
-       ))}
-      </div>
-      {/* Legend */}
-      <div className="mt-5 pt-4 border-t border-slate-200 flex items-center justify-between">
-       <span className="font-mono text-[10px] text-slate-400 uppercase tracking-widest">Avg Score</span>
-       <motion.span
-        className="font-display text-lg font-bold text-blue-500"
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={inView ? { opacity: 1, scale: 1 } : {}}
-        transition={{ delay: 1, duration: 0.4 }}
-       >
-        {Math.round(HEALTH_BARS.reduce((s, b) => s + b.score, 0) / HEALTH_BARS.length)}/100
-       </motion.span>
+        <span className="text-[10px] text-slate-400 bg-slate-100 px-2.5 py-1 rounded-full font-mono uppercase tracking-wider">Live Preview</span>
+       </div>
+       <div className="px-5 sm:px-6 py-6">
+        <div className="grid sm:grid-cols-2 gap-4">
+         {HEALTH_FACTORS.map(({ label, score, icon: Icon, color, desc }, i) => (
+          <motion.div key={label} initial={{ opacity: 0, y: 12 }} animate={inView ? { opacity: 1, y: 0 } : {}} transition={{ delay: 0.2 + i * 0.1, duration: 0.4 }}
+           className="flex items-start gap-3 p-3 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-colors">
+           <div className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: color + '15' }}>
+            <Icon className="h-4 w-4" style={{ color }} />
+           </div>
+           <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between mb-1">
+             <span className="text-xs font-semibold text-slate-700">{label}</span>
+             <span className="text-xs font-bold" style={{ color }}>{score}%</span>
+            </div>
+            <div className="h-1.5 w-full rounded-full bg-slate-200/60 overflow-hidden mb-1.5">
+             <motion.div className="h-full rounded-full" style={{ backgroundColor: color }}
+              initial={{ width: 0 }} animate={inView ? { width: score + '%' } : {}}
+              transition={{ duration: 0.8, delay: 0.4 + i * 0.1, ease: [0.16,1,0.3,1] }} />
+            </div>
+            <p className="text-[11px] text-slate-400 truncate">{desc}</p>
+           </div>
+          </motion.div>
+         ))}
+        </div>
+       </div>
+       <div className="px-5 sm:px-6 py-4 border-t border-slate-100 bg-gradient-to-r from-slate-50 to-white flex items-center justify-between">
+        <div className="flex items-center gap-3">
+         <div className="relative h-10 w-10">
+          <svg className="w-full h-full -rotate-90" viewBox="0 0 40 40">
+           <circle cx="20" cy="20" r="16" fill="none" stroke="#e2e8f0" strokeWidth="3" />
+           <motion.circle cx="20" cy="20" r="16" fill="none" stroke="url(#scoreGrad)" strokeWidth="3" strokeLinecap="round"
+            strokeDasharray={100.53}
+            initial={{ strokeDashoffset: 100.53 }}
+            animate={inView ? { strokeDashoffset: 100.53 * (1 - overallScore / 100) } : {}}
+            transition={{ duration: 1, delay: 0.5, ease: [0.16,1,0.3,1] }} />
+           <defs>
+            <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+             <stop offset="0%" stopColor="#3B82F6" />
+             <stop offset="100%" stopColor="#10B981" />
+            </linearGradient>
+           </defs>
+          </svg>
+          <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-slate-700">{overallScore}</span>
+         </div>
+         <div>
+          <p className="text-sm font-bold text-slate-800">Overall Health</p>
+          <p className="text-[11px] text-emerald-600 font-medium">Excellent — fully operational</p>
+         </div>
+        </div>
+        <div className="text-right">
+         <motion.p className="text-2xl font-extrabold bg-gradient-to-r from-blue-600 to-emerald-500 bg-clip-text text-transparent"
+          initial={{ opacity: 0, scale: 0.5 }} animate={inView ? { opacity: 1, scale: 1 } : {}}
+          transition={{ delay: 0.8, type: "spring", stiffness: 200, damping: 15 }}>
+          {overallScore}/100
+         </motion.p>
+        </div>
+       </div>
       </div>
      </div>
     </div>
@@ -254,360 +284,180 @@ function HealthBarChart() {
  );
 }
 
-/* ─────────────────────────────────────────────
-  SECTION 2 Latency Race Chart
-───────────────────────────────────────────── */
+
 const LATENCY_DATA = [
- { name: "Groq",   ms: 67, color: "#22C55E" },
- { name: "OpenAI",  ms: 142, color: "#3B82F6" },
- { name: "Stripe",  ms: 89, color: "#EAB308" },
- { name: "GitHub",  ms: 201, color: "#06B6D4" },
+ { name: "Groq", ms: 67, color: "#22C55E" },
+ { name: "OpenAI", ms: 142, color: "#3B82F6" },
+ { name: "Stripe", ms: 89, color: "#EAB308" },
+ { name: "GitHub", ms: 201, color: "#06B6D4" },
  { name: "Anthropic", ms: 178, color: "#A855F7" },
  { name: "Supabase", ms: 115, color: "#EC4899" },
 ];
 const MAX_MS = 250;
 
-function LatencyRaceChart() {
- const ref = useRef<HTMLDivElement>(null);
- const inView = useInView(ref, { once: true, margin: "-80px" });
- const sorted = [...LATENCY_DATA].sort((a, b) => a.ms - b.ms);
-
- return (
-  <section className="py-20 px-4 sm:px-6 bg-slate-50 border-y border-slate-100 overflow-hidden">
-   <div className="max-w-5xl mx-auto">
-    <div className="grid lg:grid-cols-2 gap-12 items-center">
-     {/* Left chart */}
-     <div ref={ref} className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm order-2 lg:order-1">
-      <div className="flex items-center justify-between mb-5">
-       <span className="font-display text-sm font-bold text-slate-700">Example Response Times</span>
-       <span className="font-mono text-xs text-slate-400">sample data</span>
-      </div>
-      <div className="space-y-3">
-        {sorted.map(({ name, ms, color }, i) => (
-         <div key={name} className="flex items-center gap-3">
-          <span className="font-sans text-xs text-slate-500 w-20 shrink-0 text-right">{name}</span>
-          <div className="flex-1 h-7 bg-slate-100 rounded-full overflow-hidden relative">
-           <motion.div
-            className="h-full rounded-full flex items-center justify-end pr-2"
-            style={{ background: `linear-gradient(90deg, ${color}bb, ${color})` }}
-            initial={{ width: 0 }}
-            animate={inView ? { width: `${(ms / MAX_MS) * 100}%` } : {}}
-            transition={{ duration: 0.9, delay: i * 0.1, ease: [0.16,1,0.3,1] }}
-           >
-            <motion.span
-             className="font-mono text-xs font-bold text-white drop-shadow-sm"
-             initial={{ opacity: 0 }}
-             animate={inView ? { opacity: 1 } : {}}
-             transition={{ delay: i * 0.1 + 0.6 }}
-            >
-             {ms}ms
-            </motion.span>
-           </motion.div>
-          </div>
-          {i === 0 && (
-           <motion.span
-            className="font-mono text-[10px] text-green-600 bg-green-50 border border-green-200 rounded-full px-2 py-0.5 shrink-0"
-            initial={{ opacity: 0, x: 8, scale: 0.9 }}
-            animate={inView ? { opacity: 1, x: 0, scale: 1 } : {}}
-            transition={{ delay: 1.1, type: "spring", stiffness: 200, damping: 15 }}
-           >
-            fastest
-           </motion.span>
-          )}
-         </div>
-        ))}
-      </div>
-      {/* X-axis ticks */}
-       <div className="mt-2 ml-[88px] flex justify-between px-0.5">
-        {[0, 50, 100, 150, 200, 250].map(v => (
-         <span key={v} className="font-mono text-[10px] text-slate-400">{v}ms</span>
-        ))}
-      </div>
-     </div>
-
-     {/* Right copy */}
-     <motion.div
-      className="order-1 lg:order-2"
-      initial={{ opacity: 0, x: 24 }}
-      whileInView={{ opacity: 1, x: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.6, ease: [0.16,1,0.3,1] }}
-     >
-      <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200 font-mono text-xs text-blue-600 mb-5">
-       <Clock className="h-3.5 w-3.5" /> EXAMPLE LATENCY
-      </span>
-      <h2 className="font-display text-3xl sm:text-4xl font-bold text-slate-900 leading-tight mb-4">
-       See exactly how fast<br />
-       <span className="text-blue-500">each provider responds.</span>
-      </h2>
-      <p className="font-sans text-slate-500 leading-relaxed mb-6">
-       KeyPing measures real round-trip latency to each provider's auth endpoint. Spot slow keys before they slow down your users.
-      </p>
-      <div className="grid grid-cols-2 gap-3">
-       {[
-        { label: "Typical range", value: "< 2s", sub: "Most providers", color: "text-green-500" },
-        { label: "Measured at", value: "Edge", sub: "Supabase function", color: "text-blue-500" },
-        { label: "Slow threshold", value: "> 2s", sub: "Flagged in UI", color: "text-red-500" },
-        { label: "Includes", value: "RTT", sub: "Round-trip time", color: "text-purple-500" },
-       ].map(({ label, value, sub, color }) => (
-        <div key={label} className="bg-slate-50 border border-slate-200 rounded-xl p-3">
-         <p className={`font-display text-xl font-bold ${color}`}>{value}</p>
-         <p className="font-sans text-xs text-slate-500 mt-0.5">{label}</p>
-         <p className="font-mono text-[10px] text-slate-400">{sub}</p>
-        </div>
-       ))}
-      </div>
-     </motion.div>
-    </div>
-   </div>
-  </section>
- );
-}
-
-/* ─────────────────────────────────────────────
-  SECTION 3 Key Activity Graph + Illustration
-───────────────────────────────────────────── */
 const ACTIVITY_DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
 const VALID_DATA  = [12, 19, 15, 28, 24, 8, 31];
 const INVALID_DATA = [2, 1, 3, 1, 4, 0, 2];
 const MAX_VAL = 35;
 
-function ActivityGraph() {
- const ref = useRef<HTMLDivElement>(null);
- const inView = useInView(ref, { once: true, margin: "-80px" });
+function AnalyticsSection() {
+ const chartRef = useRef<HTMLDivElement>(null);
+ const latencyRef = useRef<HTMLDivElement>(null);
+ const chartInView = useInView(chartRef, { once: true, margin: "-80px" });
+ const latencyInView = useInView(latencyRef, { once: true, margin: "-80px" });
+ const sorted = [...LATENCY_DATA].sort((a, b) => a.ms - b.ms);
 
-  // Build smooth SVG path curves for the area chart
-  const W = 400; const H = 120; const PAD = 10;
+ // SVG path builders
+ const W = 400; const H = 100; const PAD = 10;
+ const getPoints = (data: number[]) => data.map((v, i) => ({
+  x: PAD + (i / (data.length - 1)) * (W - PAD * 2),
+  y: H - PAD - (v / MAX_VAL) * (H - PAD * 2),
+ }));
 
-  const getPoints = (data: number[]) =>
-    data.map((v, i) => {
-      const x = PAD + (i / (data.length - 1)) * (W - PAD * 2);
-      const y = H - PAD - (v / MAX_VAL) * (H - PAD * 2);
-      return { x, y };
-    });
+ const smoothLine = (pts: { x: number; y: number }[]) => {
+  if (pts.length < 2) return "";
+  let path = `M ${pts[0]!.x},${pts[0]!.y}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+   const p0 = pts[Math.max(0, i - 1)]!; const p1 = pts[i]!;
+   const p2 = pts[i + 1]!; const p3 = pts[Math.min(pts.length - 1, i + 2)]!;
+   const t = 0.3;
+   path += ` C ${p1.x + (p2.x - p0.x) * t},${p1.y + (p2.y - p0.y) * t} ${p2.x - (p3.x - p1.x) * t},${p2.y - (p3.y - p1.y) * t} ${p2.x},${p2.y}`;
+  }
+  return path;
+ };
 
-  const smoothLine = (pts: { x: number; y: number }[]) => {
-    if (pts.length < 2) return "";
-    let path = `M ${pts[0]!.x},${pts[0]!.y}`;
-    for (let i = 0; i < pts.length - 1; i++) {
-      const p0 = pts[Math.max(0, i - 1)]!;
-      const p1 = pts[i]!;
-      const p2 = pts[i + 1]!;
-      const p3 = pts[Math.min(pts.length - 1, i + 2)]!;
-      const t = 0.3;
-      const cp1x = p1.x + (p2.x - p0.x) * t;
-      const cp1y = p1.y + (p2.y - p0.y) * t;
-      const cp2x = p2.x - (p3.x - p1.x) * t;
-      const cp2y = p2.y - (p3.y - p1.y) * t;
-      path += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${p2.x},${p2.y}`;
-    }
-    return path;
-  };
+ const smoothArea = (pts: { x: number; y: number }[]) => {
+  if (pts.length < 2) return "";
+  return `${smoothLine(pts)} L ${pts[pts.length - 1]!.x},${H - PAD} L ${pts[0]!.x},${H - PAD} Z`;
+ };
 
-  const smoothArea = (pts: { x: number; y: number }[]) => {
-    if (pts.length < 2) return "";
-    const line = smoothLine(pts);
-    const bottomY = H - PAD;
-    return `${line} L ${pts[pts.length - 1]!.x},${bottomY} L ${pts[0]!.x},${bottomY} Z`;
-  };
-
-  const validPoints = getPoints(VALID_DATA);
-  const invalidPoints = getPoints(INVALID_DATA);
-  const validLine = smoothLine(validPoints);
-  const invalidLine = smoothLine(invalidPoints);
-  const validAreaPath = smoothArea(validPoints);
-  const invalidAreaPath = smoothArea(invalidPoints);
+ const validPoints = getPoints(VALID_DATA);
+ const invalidPoints = getPoints(INVALID_DATA);
 
  return (
-  <section className="py-20 px-4 sm:px-6 bg-white overflow-hidden">
-   <div className="max-w-5xl mx-auto">
+  <section className="py-20 sm:py-28 px-4 sm:px-6 bg-white overflow-hidden">
+   <div className="max-w-6xl mx-auto">
     {/* Header */}
-    <motion.div
-     className="text-center mb-12"
-     initial={{ opacity: 0, y: 16 }}
-     whileInView={{ opacity: 1, y: 0 }}
-     viewport={{ once: true }}
-     transition={{ duration: 0.5 }}
-    >
-     <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-50 border border-purple-200 font-mono text-xs text-purple-600 mb-5">
-      <TrendingUp className="h-3.5 w-3.5" /> EXAMPLE ANALYTICS
+    <motion.div className="text-center mb-14 sm:mb-16" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}>
+     <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-50/80 border border-violet-200/50 text-xs text-violet-600 font-medium mb-5">
+      <BarChart3 className="h-3.5 w-3.5" /> Analytics & Latency
      </span>
-     <h2 className="font-display text-3xl sm:text-4xl font-bold text-slate-900 mb-3">
-      Track every validation,<br />
-      <span className="text-blue-500">spot issues early.</span>
+     <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 leading-tight mb-4">
+      Track validations.<br /><span className="text-blue-600">Measure speed.</span>
      </h2>
-     <p className="font-sans text-slate-500 max-w-lg mx-auto">
-      Your full validation history in one view. See trends, catch spikes in failures, and know when keys start degrading.
+     <p className="text-slate-500 max-w-xl mx-auto leading-relaxed">
+      See your full validation history and provider response times in one dashboard. Spot issues before they become incidents.
      </p>
     </motion.div>
 
-    {/* Main card */}
-    <div ref={ref} className="bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-     {/* Top bar */}
-     <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-      <div className="flex items-center gap-4">
-       <span className="font-display text-sm font-bold text-slate-700">Example Weekly Validations</span>
-       <div className="flex items-center gap-3">
-        <span className="flex items-center gap-1.5 font-mono text-xs text-slate-500">
-         <span className="h-2 w-2 rounded-full bg-blue-500" /> Valid
-        </span>
-        <span className="flex items-center gap-1.5 font-mono text-xs text-slate-500">
-         <span className="h-2 w-2 rounded-full bg-red-400" /> Invalid
-        </span>
-       </div>
-      </div>
-      <div className="flex items-center gap-2">
-       <span className="font-mono text-xs text-slate-400">Illustrative data</span>
-      </div>
-     </div>
+    {/* Two-column charts */}
+    <div className="grid lg:grid-cols-2 gap-6 lg:gap-8">
 
-     {/* SVG Chart */}
-     <div className="px-6 pt-4 pb-2">
-       <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: 140 }}>
+     {/* ── Chart 1: Activity Graph ── */}
+     <div ref={chartRef} className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-[0_4px_30px_rgba(0,0,0,0.04)]">
+      <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between flex-wrap gap-2">
+       <div className="flex items-center gap-3">
+        <span className="text-sm font-semibold text-slate-800">Weekly Activity</span>
+        <div className="flex items-center gap-3">
+         <span className="flex items-center gap-1.5 text-xs text-slate-500"><span className="h-2 w-2 rounded-full bg-blue-500" /> Valid</span>
+         <span className="flex items-center gap-1.5 text-xs text-slate-500"><span className="h-2 w-2 rounded-full bg-red-400" /> Invalid</span>
+        </div>
+       </div>
+       <span className="text-[10px] text-slate-400 font-mono uppercase tracking-wider">Demo</span>
+      </div>
+      <div className="px-5 pt-4 pb-2">
+       <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: 110 }}>
         <defs>
          <linearGradient id="validGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.3" />
-          <stop offset="50%" stopColor="#3B82F6" stopOpacity="0.1" />
-          <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.0" />
+          <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.25" />
+          <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.02" />
          </linearGradient>
          <linearGradient id="invalidGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#EF4444" stopOpacity="0.25" />
-          <stop offset="50%" stopColor="#EF4444" stopOpacity="0.08" />
-          <stop offset="100%" stopColor="#EF4444" stopOpacity="0.0" />
+          <stop offset="0%" stopColor="#EF4444" stopOpacity="0.2" />
+          <stop offset="100%" stopColor="#EF4444" stopOpacity="0.02" />
          </linearGradient>
-         <filter id="lineGlow">
-          <feGaussianBlur stdDeviation="2" result="blur" />
-          <feMerge>
-            <feMergeNode in="blur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-         </filter>
         </defs>
-
-        {/* Grid lines */}
-        {[0.25, 0.5, 0.75].map((t, i) => (
-         <line key={i}
-          x1={PAD} y1={PAD + (1 - t) * (H - PAD * 2)}
-          x2={W - PAD} y2={PAD + (1 - t) * (H - PAD * 2)}
-          stroke="currentColor" strokeOpacity="0.04" strokeWidth="1"
-          strokeDasharray="4 4"
-          className="text-slate-900"
-         />
-        ))}
-
-        {/* Y-axis labels */}
-        <text x={PAD - 3} y={PAD + 3} textAnchor="end" fill="#94a3b8" fontSize="8" fontFamily="monospace">{MAX_VAL}</text>
-        <text x={PAD - 3} y={PAD + (H - PAD * 2) * 0.5 + 3} textAnchor="end" fill="#94a3b8" fontSize="8" fontFamily="monospace">{Math.round(MAX_VAL / 2)}</text>
-        <text x={PAD - 3} y={H - PAD + 3} textAnchor="end" fill="#94a3b8" fontSize="8" fontFamily="monospace">0</text>
-
-        {/* Area fills */}
-        <motion.path
-         d={validAreaPath}
-         fill="url(#validGrad)"
-         initial={{ opacity: 0 }}
-         animate={inView ? { opacity: 1 } : {}}
-         transition={{ duration: 0.8, delay: 0.3 }}
-        />
-        <motion.path
-         d={invalidAreaPath}
-         fill="url(#invalidGrad)"
-         initial={{ opacity: 0 }}
-         animate={inView ? { opacity: 1 } : {}}
-         transition={{ duration: 0.8, delay: 0.5 }}
-        />
-
-        {/* Lines */}
-        <motion.path
-         d={validLine}
-         fill="none"
-         stroke="#3B82F6"
-         strokeWidth="2.5"
-         strokeLinecap="round"
-         strokeLinejoin="round"
-         filter="url(#lineGlow)"
-         initial={{ pathLength: 0, opacity: 0 }}
-         animate={inView ? { pathLength: 1, opacity: 1 } : {}}
-         transition={{ duration: 1.2, delay: 0.2, ease: "easeOut" }}
-        />
-        <motion.path
-         d={invalidLine}
-         fill="none"
-         stroke="#EF4444"
-         strokeWidth="2"
-         strokeLinecap="round"
-         strokeLinejoin="round"
-         strokeDasharray="4 3"
-         filter="url(#lineGlow)"
-         initial={{ pathLength: 0, opacity: 0 }}
-         animate={inView ? { pathLength: 1, opacity: 1 } : {}}
-         transition={{ duration: 1.2, delay: 0.4, ease: "easeOut" }}
-        />
-
-        {/* Dots on valid line */}
+        <motion.path d={smoothArea(validPoints)} fill="url(#validGrad)" initial={{ opacity: 0 }} animate={chartInView ? { opacity: 1 } : {}} transition={{ duration: 0.8, delay: 0.3 }} />
+        <motion.path d={smoothArea(invalidPoints)} fill="url(#invalidGrad)" initial={{ opacity: 0 }} animate={chartInView ? { opacity: 1 } : {}} transition={{ duration: 0.8, delay: 0.5 }} />
+        <motion.path d={smoothLine(validPoints)} fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" initial={{ pathLength: 0, opacity: 0 }} animate={chartInView ? { pathLength: 1, opacity: 1 } : {}} transition={{ duration: 1.2, delay: 0.2, ease: "easeOut" }} />
+        <motion.path d={smoothLine(invalidPoints)} fill="none" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="4 3" initial={{ pathLength: 0, opacity: 0 }} animate={chartInView ? { pathLength: 1, opacity: 1 } : {}} transition={{ duration: 1.2, delay: 0.4, ease: "easeOut" }} />
         {validPoints.map((p, i) => (
-         <motion.circle key={i} cx={p.x} cy={p.y} r="4"
-           fill="#3B82F6" stroke="white" strokeWidth="2.5"
-           className="cursor-pointer"
-           initial={{ scale: 0, opacity: 0 }}
-           animate={inView ? { scale: 1, opacity: 1 } : {}}
-           whileHover={{ scale: 1.8, transition: { duration: 0.2 } }}
-           transition={{ delay: 0.2 + i * 0.1, type: "spring", stiffness: 300 }}
-         />
+         <motion.circle key={i} cx={p.x} cy={p.y} r="3.5" fill="#3B82F6" stroke="white" strokeWidth="2" initial={{ scale: 0, opacity: 0 }} animate={chartInView ? { scale: 1, opacity: 1 } : {}} transition={{ delay: 0.2 + i * 0.08, type: "spring", stiffness: 300 }} />
         ))}
        </svg>
-
-      {/* X-axis labels */}
-      <div className="flex justify-between px-[10px] mt-1 mb-3">
-       {ACTIVITY_DAYS.map(d => (
-        <span key={d} className="font-mono text-[10px] text-slate-400">{d}</span>
-       ))}
+       <div className="flex justify-between px-1 mt-1 mb-3">
+        {ACTIVITY_DAYS.map(d => <span key={d} className="text-[10px] text-slate-400 font-medium">{d}</span>)}
+       </div>
       </div>
-     </div>
-
-     {/* Bottom stat row */}
-      <div className="grid grid-cols-3 border-t border-slate-200 bg-slate-50/50">
+      <div className="grid grid-cols-3 border-t border-slate-100">
        {[
-        { label: "Total this week", value: VALID_DATA.reduce((a,b)=>a+b,0) + INVALID_DATA.reduce((a,b)=>a+b,0), suffix: " tests", color: "text-slate-900" },
-        { label: "Success rate",  value: Math.round(VALID_DATA.reduce((a,b)=>a+b,0) / (VALID_DATA.reduce((a,b)=>a+b,0) + INVALID_DATA.reduce((a,b)=>a+b,0)) * 100), suffix: "%", color: "text-green-500" },
-        { label: "Peak day",    value: "Thu", suffix: " · 28 tests", color: "text-blue-500" },
-       ].map(({ label, value, suffix, color }, i) => (
-        <div key={label} className={`px-6 py-4 text-center ${i < 2 ? 'border-r border-slate-200' : ''}`}>
-         <motion.p
-          className={`font-display text-2xl font-bold ${color}`}
-          initial={{ opacity: 0, y: 8 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ delay: 1 + i * 0.1, duration: 0.4, ease: [0.16,1,0.3,1] }}
-         >
-          {value}{suffix}
-         </motion.p>
-         <p className="font-mono text-[10px] text-slate-400 uppercase tracking-widest mt-1">{label}</p>
+        { label: "Tests", value: VALID_DATA.reduce((a,b)=>a+b,0) + INVALID_DATA.reduce((a,b)=>a+b,0), color: "text-slate-900" },
+        { label: "Success", value: Math.round(VALID_DATA.reduce((a,b)=>a+b,0) / (VALID_DATA.reduce((a,b)=>a+b,0) + INVALID_DATA.reduce((a,b)=>a+b,0)) * 100) + "%", color: "text-emerald-600" },
+        { label: "Peak", value: "Thu", color: "text-blue-600" },
+       ].map(({ label, value, color }, i) => (
+        <div key={label} className={`px-4 py-3 text-center ${i < 2 ? 'border-r border-slate-100' : ''}`}>
+         <motion.p className={`text-lg font-bold ${color}`} initial={{ opacity: 0, y: 6 }} animate={chartInView ? { opacity: 1, y: 0 } : {}} transition={{ delay: 0.8 + i * 0.1, duration: 0.4 }}>{value}</motion.p>
+         <p className="text-[9px] text-slate-400 uppercase tracking-wider font-medium">{label}</p>
         </div>
        ))}
       </div>
-    </div>
+     </div>
 
-    {/* Example alert types */}
-    <div className="mt-6 grid sm:grid-cols-3 gap-4">
-     {[
-      { icon: CheckCircle2, color: "text-green-500", bg: "bg-green-50 border-green-200", title: "Valid key result", sub: "Example notification", delay: 0 },
-      { icon: AlertTriangle, color: "text-amber-500", bg: "bg-amber-50 border-amber-200", title: "Expiry reminder", sub: "Example notification", delay: 0.1 },
-      { icon: TrendingUp, color: "text-blue-500", bg: "bg-blue-50 border-blue-200", title: "Rate limit warning", sub: "Example notification", delay: 0.2 },
-     ].map(({ icon: Icon, color, bg, title, sub, delay }) => (
-      <motion.div
-       key={title}
-       className={`flex items-center gap-3 border rounded-xl px-4 py-3 ${bg}`}
-       initial={{ opacity: 0, y: 12 }}
-       whileInView={{ opacity: 1, y: 0 }}
-       viewport={{ once: true }}
-       transition={{ delay, duration: 0.4 }}
-      >
-       <Icon className={`h-5 w-5 shrink-0 ${color}`} />
-       <div>
-        <p className={`font-sans text-sm font-semibold ${color}`}>{title}</p>
-        <p className="font-mono text-[10px] text-slate-400">{sub}</p>
-       </div>
-      </motion.div>
-     ))}
+     {/* ── Chart 2: Latency Bars ── */}
+     <div ref={latencyRef} className="bg-white border border-slate-200/80 rounded-2xl p-5 sm:p-6 shadow-[0_4px_30px_rgba(0,0,0,0.04)]">
+      <div className="flex items-center justify-between mb-5">
+       <span className="text-sm font-semibold text-slate-800">Response Times</span>
+       <span className="text-[10px] text-slate-400 font-mono uppercase tracking-wider">Demo</span>
+      </div>
+      <div className="space-y-3">
+       {sorted.map(({ name, ms, color }, i) => {
+        const BrandIcon = BRAND_ICONS[name.toLowerCase()] || null;
+        return (
+         <div key={name} className="flex items-center gap-3">
+          <div className="flex items-center gap-2 w-24 shrink-0">
+           {BrandIcon ? <BrandIcon className="h-4 w-4 text-slate-400 shrink-0" /> : <Clock className="h-4 w-4 text-slate-400 shrink-0" />}
+           <span className="text-xs text-slate-600 font-medium truncate">{name}</span>
+          </div>
+          <div className="flex-1 h-6 bg-slate-50 rounded-full overflow-hidden relative">
+           <motion.div
+            className="h-full rounded-full flex items-center justify-end pr-2"
+            style={{ background: `linear-gradient(90deg, ${color}99, ${color})` }}
+            initial={{ width: 0 }}
+            animate={latencyInView ? { width: `${(ms / MAX_MS) * 100}%` } : {}}
+            transition={{ duration: 0.8, delay: i * 0.1, ease: [0.16,1,0.3,1] }}
+           >
+            <span className="text-[10px] font-bold text-white drop-shadow-sm">{ms}ms</span>
+           </motion.div>
+          </div>
+          {i === 0 && (
+           <motion.span className="text-[10px] text-emerald-600 bg-emerald-50 border border-emerald-200/60 rounded-full px-2 py-0.5 shrink-0 font-medium"
+            initial={{ opacity: 0, x: 8, scale: 0.9 }} animate={latencyInView ? { opacity: 1, x: 0, scale: 1 } : {}} transition={{ delay: 0.8, type: "spring", stiffness: 200, damping: 15 }}>
+            fastest
+           </motion.span>
+          )}
+         </div>
+        );
+       })}
+      </div>
+      {/* Scale */}
+      <div className="mt-3 ml-[104px] flex justify-between">
+       {[0, 50, 100, 150, 200, 250].map(v => <span key={v} className="text-[9px] text-slate-400 font-mono">{v}ms</span>)}
+      </div>
+      {/* Quick stats */}
+      <div className="mt-5 pt-4 border-t border-slate-100 grid grid-cols-3 gap-3">
+       {[
+        { label: "Fastest", value: "Groq", sub: "67ms avg" },
+        { label: "Slowest", value: "GitHub", sub: "201ms avg" },
+        { label: "Avg RTT", value: "132ms", sub: "All providers" },
+       ].map(({ label, value, sub }) => (
+        <div key={label} className="text-center">
+         <p className="text-sm font-bold text-slate-800">{value}</p>
+         <p className="text-[10px] text-slate-400">{label}</p>
+        </div>
+       ))}
+      </div>
+     </div>
+
     </div>
    </div>
   </section>
@@ -642,317 +492,342 @@ const Landing = () => {
     <div className="absolute inset-0 bg-grid-light opacity-50" />
    </div>
 
-   {/* Navbar */}
-   <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/90 border-b border-slate-200/70 px-4 sm:px-6 py-3.5 shadow-sm transition-shadow">
-    <div className="flex items-center justify-between">
-     <div className="flex items-center gap-2.5">
-      <KeyPingLogo size={32} />
-      <span className="font-display text-lg font-bold text-slate-900">KeyPing</span>
+    {/* Navbar */}
+    <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-slate-200/60 px-4 sm:px-6 py-3 transition-all">
+     <div className="max-w-6xl mx-auto flex items-center justify-between">
+      <div className="flex items-center gap-2.5">
+       <KeyPingLogo size={30} />
+       <span className="font-display text-lg font-bold text-slate-900 tracking-tight">KeyPing</span>
+      </div>
+      <nav className="hidden md:flex items-center gap-1">
+       {[["Features","#features"],["Providers","#providers"],["Pricing","#pricing"]].map(([label, href]) => (
+         <a key={label} href={href} className="font-sans text-[13px] text-slate-500 hover:text-slate-900 hover:bg-slate-100/80 px-3.5 py-2 rounded-lg transition-all duration-200">{label}</a>
+       ))}
+      </nav>
+      <div className="flex items-center gap-2 sm:gap-2.5">
+       <ThemeToggle />
+       <button
+        onClick={() => navigate(user ? "/dashboard" : "/auth")}
+         className="hidden sm:flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white font-sans font-medium text-[13px] rounded-lg px-4 py-2 shadow-sm shadow-blue-500/20 transition-all duration-200 hover:shadow-md hover:shadow-blue-500/25"
+       >
+        {user ? "Dashboard" : "Get Started"} <ArrowRight className="h-3.5 w-3.5" />
+       </button>
+       {/* Mobile hamburger */}
+       <button
+         className="md:hidden p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+        onClick={() => setMobileMenuOpen(o => !o)}
+        aria-label="Toggle menu"
+       >
+        {mobileMenuOpen
+         ? <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+         : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+        }
+       </button>
+      </div>
      </div>
-     <nav className="hidden md:flex items-center gap-6">
-      {[["How it works","#how"],["Features","#features"],["Providers","#providers"],["Pricing","#pricing"],["Security","#security"]].map(([label, href]) => (
-        <a key={label} href={href} className="font-sans text-sm text-slate-500 hover:text-slate-900 hover:bg-slate-50 px-3 py-1.5 rounded-lg transition-colors">{label}</a>
-      ))}
-     </nav>
-     <div className="flex items-center gap-2 sm:gap-3">
-      <ThemeToggle />
-      <button
-       onClick={() => navigate(user ? "/dashboard" : "/auth")}
-        className="hidden sm:flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-sans font-semibold text-sm rounded-lg px-4 py-2 shadow-sm transition-all"
-      >
-       {user ? "Dashboard" : "Get Started Free"} <ArrowRight className="h-3.5 w-3.5" />
-      </button>
-      {/* Mobile hamburger */}
-      <button
-        className="md:hidden p-2 rounded-lg border border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-       onClick={() => setMobileMenuOpen(o => !o)}
-       aria-label="Toggle menu"
-      >
-       {mobileMenuOpen
-        ? <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-        : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
-       }
-      </button>
+     {/* Mobile menu */}
+     <div className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${mobileMenuOpen ? "max-h-80 opacity-100 mt-3" : "max-h-0 opacity-0"}`}>
+      <div className="border-t border-slate-200/60 pt-3 pb-2 flex flex-col gap-0.5">
+       {[["Features","#features"],["Providers","#providers"],["Pricing","#pricing"]].map(([label, href]) => (
+        <a key={label} href={href} onClick={() => setMobileMenuOpen(false)}
+          className="font-sans text-sm text-slate-600 hover:text-blue-600 px-3 py-2.5 rounded-lg hover:bg-blue-50/50 transition-colors">
+         {label}
+        </a>
+       ))}
+       <button
+        onClick={() => { setMobileMenuOpen(false); navigate(user ? "/dashboard" : "/auth"); }}
+         className="mt-2 w-full flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white font-sans font-medium text-sm rounded-lg px-4 py-3 shadow-sm shadow-blue-500/20 transition-all min-h-[44px]"
+       >
+        {user ? "Dashboard" : "Get Started Free"} <ArrowRight className="h-3.5 w-3.5" />
+       </button>
+      </div>
      </div>
-    </div>
-    {/* Mobile menu */}
-    {mobileMenuOpen && (
-     <div className="md:hidden border-t border-slate-200 mt-3 pt-4 pb-2 flex flex-col gap-1">
-      {[["How it works","#how"],["Features","#features"],["Providers","#providers"],["Pricing","#pricing"],["Security","#security"]].map(([label, href]) => (
-       <a key={label} href={href} onClick={() => setMobileMenuOpen(false)}
-         className="font-sans text-sm text-slate-600 hover:text-blue-600 px-3 py-2.5 rounded-lg hover:bg-slate-50 transition-colors">
-        {label}
-       </a>
-      ))}
-      <button
-       onClick={() => { setMobileMenuOpen(false); navigate(user ? "/dashboard" : "/auth"); }}
-        className="mt-2 w-full flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-sans font-semibold text-sm rounded-lg px-4 py-3 shadow-sm transition-all min-h-[44px]"
-      >
-       {user ? "Dashboard" : "Get Started Free"} <ArrowRight className="h-3.5 w-3.5" />
-      </button>
-     </div>
-    )}
-   </header>
+    </header>
 
    <main className="relative z-10">
     {/* Hero */}
-    <section className="relative py-12 sm:py-20 px-4 sm:px-6 overflow-hidden">
-     {/* Animated gradient orbs */}
-     <div className="absolute top-20 left-1/4 w-72 h-72 bg-blue-500/20 rounded-full blur-3xl animate-pulse" />
-     <div className="absolute bottom-20 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
-     
-     <motion.div className="max-w-4xl mx-auto text-center relative z-10" initial="initial" animate="animate" variants={{ animate: { transition: { staggerChildren: 0.07 } } }}>
-<motion.div {...fadeUp} className="inline-flex items-center gap-2 mb-6 px-4 py-2 rounded-full bg-gradient-to-r from-blue-50 via-indigo-50/50 to-purple-50 border border-blue-200/70 shadow-sm">
-        <Zap className="h-4 w-4 text-blue-600" />
-       <span className="font-mono text-xs text-blue-600 tracking-widest uppercase font-semibold">Developer Tool</span>
-       <span className="h-1 w-1 rounded-full bg-blue-400 animate-pulse" />
+    <section className="relative pt-16 sm:pt-24 pb-12 sm:pb-16 px-4 sm:px-6 overflow-hidden">
+     {/* Background effects */}
+     <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-[radial-gradient(ellipse_at_center,rgba(59,130,246,0.06),transparent_70%)]" />
+     <div className="absolute top-32 left-1/4 w-64 h-64 bg-blue-500/10 rounded-full blur-[100px] animate-pulse" />
+     <div className="absolute top-48 right-1/4 w-48 h-48 bg-indigo-500/8 rounded-full blur-[80px] animate-pulse" style={{ animationDelay: '2s' }} />
+
+     <motion.div className="max-w-4xl mx-auto text-center relative z-10" initial="initial" animate="animate" variants={{ animate: { transition: { staggerChildren: 0.08 } } }}>
+      {/* Badge */}
+      <motion.div {...fadeUp} className="inline-flex items-center gap-2.5 mb-8 px-4 py-2 rounded-full bg-gradient-to-r from-blue-500/5 via-blue-500/10 to-indigo-500/5 border border-blue-500/20">
+        <span className="relative flex h-2 w-2">
+         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-500 opacity-75" />
+         <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500" />
+        </span>
+       <span className="text-xs text-blue-600 tracking-wide font-medium uppercase">Developer Tool for API Keys</span>
       </motion.div>
-      
-      <motion.h1 {...fadeUp} className="font-display text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold text-slate-900 tracking-tight leading-[1.1] mb-5">
+
+      {/* Headline */}
+      <motion.h1 {...fadeUp} className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold text-slate-900 tracking-[-0.04em] leading-[1.07] mb-6">
        Ping Any API Key.<br />
-       <span className="bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent">Know It Works.</span>
+       <span className="bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-500 bg-clip-text text-transparent">Know It Works.</span>
       </motion.h1>
-      
-      <motion.p {...fadeUp} className="font-sans text-lg sm:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed mb-8">
-       Validate keys across <span className="font-semibold text-blue-600">10+ providers</span> in seconds. Check health scores, rate limits, and permissions from one dashboard.
+
+      {/* Subheadline */}
+      <motion.p {...fadeUp} className="text-lg sm:text-xl text-slate-500 max-w-2xl mx-auto leading-relaxed mb-10">
+       Validate keys across <span className="font-semibold text-slate-700">10+ providers</span> in seconds. Check health scores, rate limits, and permissions from one dashboard.
       </motion.p>
-      
-      <motion.div {...fadeUp} className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
-       <button 
-        onClick={handleCTA} 
-        className="group w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-sans font-bold text-base rounded-xl px-8 py-4 transition-all shadow-card-hover hover:shadow-xl hover:scale-105"
+
+      {/* CTAs */}
+      <motion.div {...fadeUp} className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
+       <button
+        onClick={handleCTA}
+        className="group w-full sm:w-auto flex items-center justify-center gap-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-base rounded-xl px-8 py-4 transition-all duration-200 shadow-[0_4px_20px_rgba(37,99,235,0.3)] hover:shadow-[0_8px_30px_rgba(37,99,235,0.4)] hover:-translate-y-0.5 active:translate-y-0"
        >
-        <Zap className="h-5 w-5" />
-        Start Validating Free 
-        <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+        <Zap className="h-4.5 w-4.5" />
+        Start Validating Free
+        <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
        </button>
-       <a 
-        href="#providers" 
-        className="group font-sans text-base text-slate-600 hover:text-slate-900 flex items-center gap-2 transition-colors px-4 py-2 rounded-xl hover:bg-slate-50"
+       <a
+        href="#providers"
+        className="group flex items-center gap-2 text-slate-500 hover:text-slate-800 font-medium text-base transition-colors px-5 py-3 rounded-xl hover:bg-slate-100/60"
        >
         <Shield className="h-4 w-4" />
-        See Supported Providers 
-        <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+        See Supported Providers
+        <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
        </a>
       </motion.div>
 
-      {/* Feature badges */}
-      <motion.div {...fadeUp} className="flex flex-wrap items-center justify-center gap-3 mb-10">
+      {/* Trust badges */}
+      <motion.div {...fadeUp} className="flex flex-wrap items-center justify-center gap-4 mb-14">
        {[
-        { icon: CheckCircle2, text: "No credit card", color: "text-green-600" },
-        { icon: Lock, text: "Keys never stored", color: "text-blue-600" },
-        { icon: Zap, text: "Results in 2s", color: "text-purple-600" },
-       ].map(({ icon: Icon, text, color }) => (
-<div key={text} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200 shadow-sm hover:border-blue-200 hover:bg-blue-50/30 transition-all duration-200">
-          <Icon className={`h-3.5 w-3.5 ${color}`} />
-          <span className="font-sans text-xs text-slate-600 font-medium">{text}</span>
+        { icon: CheckCircle2, text: "No credit card" },
+        { icon: Lock, text: "Keys never stored" },
+        { icon: Zap, text: "Results in 2s" },
+       ].map(({ icon: Icon, text }) => (
+        <div key={text} className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-slate-50/80 border border-slate-200/60">
+         <Icon className="h-3.5 w-3.5 text-slate-400" />
+         <span className="text-xs text-slate-500 font-medium">{text}</span>
         </div>
        ))}
       </motion.div>
 
-      <motion.div {...fadeUp} className="mt-8">
+      {/* Terminal */}
+      <motion.div {...fadeUp}>
        <HeroTerminal />
       </motion.div>
      </motion.div>
     </section>
 
-    {/* Provider marquee */}
-    <section className="py-8 border-y border-slate-100 overflow-hidden">
-     <p className="text-center font-mono text-xs text-slate-400 uppercase tracking-widest mb-4">Supported Providers</p>
-     <div className="flex gap-8 animate-marquee whitespace-nowrap">
-      {[...PROVIDERS, ...PROVIDERS].map((p, i) => {
-       const Icon = providerIcons[p.id] || Key;
-       return (
-        <span key={i} className="inline-flex items-center gap-2 font-mono text-sm text-slate-400 hover:text-blue-500 transition-colors">
-         <Icon className="h-4 w-4" /> {p.name}
-        </span>
-       );
-      })}
-     </div>
-    </section>
-
     {/* How it works */}
     <section id="how" className="py-0" />
-    {/* Section 1 Health Score Bar Chart */}
-    <HealthBarChart />
+    {/* Health Score */}
+    <HealthScoreSection />
 
-    {/* Providers grid */}
-    <section id="providers" className="py-20 px-4 sm:px-6 bg-white">
-     <div className="max-w-5xl mx-auto text-center">
-      <h2 className="font-display text-3xl font-bold text-slate-900 mb-3">Works with every major API</h2>
-      <p className="font-sans text-slate-500 mb-10">Auto-detected from key pattern no manual selection needed.</p>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+    {/* Providers + Security — combined */}
+    <section id="providers" className="py-20 sm:py-28 px-4 sm:px-6 bg-slate-50/40">
+     <div className="max-w-5xl mx-auto">
+      <motion.div className="text-center mb-12" initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}>
+       <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-3">Works with every major API</h2>
+       <p className="text-slate-500 text-[15px]">Auto-detected from key pattern — no manual selection needed.</p>
+      </motion.div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 mb-12">
        {PROVIDERS.filter(p => p.id !== "custom").map((p, i) => {
-        const Icon = providerIcons[p.id] || Key;
+        const BrandIcon = BRAND_ICONS[p.id];
         const limited = p.id === "aws" || p.id === "supabase";
         return (
-         <motion.div key={p.id} initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}
-          whileHover={{ y: -2 }}
-          className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col items-center gap-2 hover:border-blue-500 hover:shadow-md hover:bg-blue-50/30 transition-all cursor-default group min-w-0">
-          <Icon className="h-5 w-5 text-slate-400 group-hover:text-blue-500 transition-colors shrink-0" />
-          <span className="font-mono text-xs text-slate-500 group-hover:text-slate-700 transition-colors text-center truncate w-full">{p.name}</span>
-<span className={`font-mono text-[10px] rounded-full px-2 py-0.5 border tracking-wider ${
-            limited
-             ? "text-amber-600 bg-amber-50 border-amber-100"
-             : "text-blue-500 bg-blue-50 border-blue-100"
-           }`}>
-           {limited ? "Limited" : "Auto-detected"}
+         <motion.div key={p.id} initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.04 }}
+          whileHover={{ y: -2, scale: 1.02 }}
+          className="bg-white border border-slate-200/80 rounded-xl p-4 sm:p-5 flex flex-col items-center gap-2.5 hover:border-blue-400/50 hover:shadow-[0_4px_16px_rgba(59,130,246,0.06)] transition-all duration-200 cursor-default group">
+          {BrandIcon ? (
+           <BrandIcon className="h-6 w-6 text-slate-400 group-hover:text-blue-600 transition-colors" />
+          ) : (
+           <Key className="h-6 w-6 text-slate-400 group-hover:text-blue-600 transition-colors" />
+          )}
+          <span className="text-xs text-slate-600 group-hover:text-slate-800 text-center truncate w-full font-medium">{p.name}</span>
+          <span className={`text-[10px] rounded-full px-2 py-0.5 border font-medium tracking-wide ${
+            limited ? "text-amber-600 bg-amber-50 border-amber-200/60" : "text-blue-600 bg-blue-50 border-blue-200/60"
+          }`}>
+           {limited ? "Limited" : "Auto"}
           </span>
          </motion.div>
         );
        })}
       </div>
+
+      {/* Security trust strip */}
+      <motion.div
+       id="security"
+       className="bg-white border border-slate-200/80 rounded-2xl p-6 sm:p-8 shadow-[0_2px_12px_rgba(0,0,0,0.03)]"
+       initial={{ opacity: 0, y: 16 }}
+       whileInView={{ opacity: 1, y: 0 }}
+       viewport={{ once: true }}
+       transition={{ duration: 0.5, delay: 0.2 }}
+      >
+       <div className="grid sm:grid-cols-3 gap-6 text-center">
+        <div className="flex flex-col items-center gap-2">
+         <div className="h-10 w-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center">
+          <EyeOff className="h-4.5 w-4.5 text-blue-600" />
+         </div>
+         <p className="text-sm font-semibold text-slate-800">Keys never stored</p>
+         <p className="text-xs text-slate-400 leading-relaxed">Tested at the edge and immediately discarded</p>
+        </div>
+        <div className="flex flex-col items-center gap-2">
+         <div className="h-10 w-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center">
+          <Lock className="h-4.5 w-4.5 text-emerald-600" />
+         </div>
+         <p className="text-sm font-semibold text-slate-800">End-to-end secure</p>
+         <p className="text-xs text-slate-400 leading-relaxed">TLS encrypted, only last 4 chars saved</p>
+        </div>
+        <div className="flex flex-col items-center gap-2">
+         <div className="h-10 w-10 rounded-xl bg-violet-50 border border-violet-100 flex items-center justify-center">
+          <Server className="h-4.5 w-4.5 text-violet-600" />
+         </div>
+         <p className="text-sm font-semibold text-slate-800">Edge validated</p>
+         <p className="text-xs text-slate-400 leading-relaxed">Serverless functions close to providers</p>
+        </div>
+       </div>
+      </motion.div>
      </div>
     </section>
 
-    {/* Section 3 Activity Graph */}
-    <ActivityGraph />
-
-    {/* Section 2 Latency Race Chart */}
-    <LatencyRaceChart />
+    {/* Analytics — Activity + Latency merged */}
+    <AnalyticsSection />
 
     {/* Pricing */}
-    <section id="pricing" className="py-20 px-4 sm:px-6 bg-slate-50 border-y border-slate-100">
-     <div className="max-w-5xl mx-auto text-center">
-      <h2 className="font-display text-3xl font-bold text-slate-900 mb-3">Simple pricing. No surprises.</h2>
-      <p className="font-sans text-slate-500 mb-10">Start free, upgrade when you need more.</p>
-      <div className="grid md:grid-cols-3 gap-6">
-       {PRICING.map(({ name, price, period, features, cta, ctaVariant, popular, locked }) => (
-        <div key={name} className={`relative rounded-2xl border p-6 text-left transition-all ${
-         popular
-          ? "bg-white border-blue-500 md:scale-105 shadow-elevated"
-          : "bg-white border-slate-200"
-        }`}>
-          {popular && (
-           <>
-           <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-300 via-blue-500 to-blue-300 rounded-t-2xl" />
-           <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm">
-            Most Popular
-           </span>
-           </>
-          )}
+    <section id="pricing" className="py-24 sm:py-28 px-4 sm:px-6 bg-slate-50/50 border-y border-slate-200/50">
+     <div className="max-w-5xl mx-auto">
+      <motion.div className="text-center mb-14" initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}>
+       <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50/80 border border-blue-200/50 text-xs text-blue-600 font-medium mb-5">
+        <Zap className="h-3.5 w-3.5" /> Pricing
+       </span>
+       <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 leading-tight mb-4">
+        Simple pricing.<br /><span className="text-blue-600">No surprises.</span>
+       </h2>
+       <p className="text-slate-500 max-w-md mx-auto text-[15px]">Start free, upgrade when you need more.</p>
+      </motion.div>
+      <div className="grid md:grid-cols-3 gap-5 lg:gap-6">
+       {PRICING.map(({ name, price, period, features, cta, ctaVariant, popular, locked }, i) => (
+        <motion.div
+         key={name}
+         initial={{ opacity: 0, y: 20 }}
+         whileInView={{ opacity: 1, y: 0 }}
+         viewport={{ once: true }}
+         transition={{ delay: i * 0.1, duration: 0.4, ease: [0.16,1,0.3,1] }}
+         className={`relative rounded-2xl border p-7 lg:p-8 text-left transition-all duration-300 ${
+          popular
+           ? "bg-white border-blue-500/50 md:scale-105 shadow-[0_8px_40px_rgba(59,130,246,0.12)] hover:shadow-[0_12px_50px_rgba(59,130,246,0.18)]"
+           : "bg-white border-slate-200/80 shadow-[0_2px_10px_rgba(0,0,0,0.03)] hover:border-slate-300 hover:shadow-[0_4px_20px_rgba(0,0,0,0.06)]"
+         }`}>
+         {popular && (
+          <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-xs font-semibold px-4 py-1.5 rounded-full shadow-sm">
+           Most Popular
+          </span>
+         )}
          {locked && (
-          <span className="absolute top-4 right-4 font-mono text-[10px] text-slate-400 bg-slate-100 border border-slate-200 rounded-full px-2 py-0.5 uppercase tracking-widest">
+          <span className="absolute top-5 right-5 text-[10px] text-slate-400 bg-slate-100 border border-slate-200/80 rounded-full px-2.5 py-1 uppercase tracking-wider font-medium">
            {name === "Pro" ? "Available Soon" : "Coming Soon"}
           </span>
          )}
-         <h3 className="font-display text-xl font-bold text-slate-900">{name}</h3>
-         <div className="mt-2 mb-4">
-          <span className="font-display text-4xl font-extrabold text-slate-900">{price}</span>
-          <span className="font-sans text-slate-500">{period}</span>
+         <h3 className="text-lg font-bold text-slate-900">{name}</h3>
+         <div className="mt-4 mb-6">
+          <span className="text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight">{price}</span>
+          <span className="text-slate-400 text-sm ml-1">{period}</span>
          </div>
-         <ul className="space-y-2 mb-6">
+         <ul className="space-y-3 mb-8">
           {features.map(f => (
-           <li key={f} className="flex items-center gap-2 font-sans text-sm text-slate-600">
-            <CheckCircle2 className="h-5 w-5 text-blue-500 shrink-0" /> {f}
+           <li key={f} className="flex items-start gap-3 text-sm text-slate-600">
+            <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+            <span>{f}</span>
            </li>
           ))}
          </ul>
          <button
           onClick={locked ? undefined : handleCTA}
           disabled={locked}
-          className={`w-full rounded-xl py-2.5 font-sans font-semibold text-sm transition-all ${
+          className={`w-full rounded-xl py-3 font-semibold text-sm transition-all duration-200 ${
            locked
-            ? "border border-slate-200 text-slate-400 cursor-not-allowed"
+            ? "border border-slate-200 text-slate-400 cursor-not-allowed bg-slate-50"
              : ctaVariant === "solid"
-              ? "bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:scale-105"
-              : "border border-slate-300 text-slate-700 hover:bg-slate-50"
+              ? "bg-blue-600 hover:bg-blue-500 text-white shadow-[0_4px_15px_rgba(37,99,235,0.25)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.35)] hover:-translate-y-0.5 active:translate-y-0"
+              : "border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300"
           }`}
          >
           {cta}
          </button>
-        </div>
-       ))}
-      </div>
-     </div>
-    </section>
-
-    {/* Security section anchor */}
-    <section id="security-features" className="py-0" />
-
-    {/* Why KeyPing */}
-    <section id="features" className="py-24 px-4 sm:px-6 bg-white relative overflow-hidden">
-     {/* subtle background accent */}
-     <div className="absolute inset-0 pointer-events-none hidden">
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-[radial-gradient(ellipse,rgba(59,130,246,0.05),transparent_70%)]" />
-     </div>
-     <div className="max-w-5xl mx-auto relative z-10">
-      {/* heading */}
-      <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.45 }} className="text-center mb-14">
-       <span className="inline-flex items-center gap-2 mb-4 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200">
-        <span className="font-mono text-xs text-blue-600 tracking-widest uppercase">· Why KeyPing</span>
-       </span>
-       <h2 className="font-display text-3xl sm:text-4xl font-bold text-slate-900 mb-3">Built to solve real problems</h2>
-       <p className="font-sans text-slate-500 max-w-md mx-auto">No fake quotes. Just the actual reasons developers reach for KeyPing.</p>
-      </motion.div>
-
-      {/* cards grid */}
-      <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-5">
-       {WHY_CARDS.map(({ icon: Icon, problem, solution }, i) => (
-        <motion.div
-         key={i}
-         initial={{ opacity: 0, y: 20 }}
-         whileInView={{ opacity: 1, y: 0 }}
-         viewport={{ once: true }}
-         transition={{ delay: i * 0.08, duration: 0.4 }}
-whileHover={{ y: -4 }}
-          className="group relative bg-white border border-slate-200 hover:border-blue-400 rounded-2xl p-6 text-left transition-all duration-200 hover:shadow-card-hover overflow-hidden"
-        >
-         {/* card glow on hover */}
-         <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-[radial-gradient(ellipse_at_top_left,rgba(59,130,246,0.04),transparent_60%)] pointer-events-none" />
-
-         {/* top gradient accent on hover */}
-         <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-blue-400 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-         {/* icon */}
-         <div className="h-11 w-11 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center mb-5 shadow-sm group-hover:bg-blue-100 group-hover:border-blue-300 transition-all duration-200">
-          <Icon className="h-5 w-5 text-blue-600" />
-         </div>
-
-         {/* problem pill */}
-         <div className="inline-flex items-center gap-1.5 mb-3 px-2.5 py-1 rounded-full bg-red-50 border border-red-100">
-          <span className="h-1.5 w-1.5 rounded-full bg-red-400" />
-          <span className="font-mono text-[10px] text-red-500 uppercase tracking-wide">{problem}</span>
-         </div>
-
-         {/* solution */}
-         <p className="font-sans text-sm text-slate-600 leading-relaxed">{solution}</p>
         </motion.div>
        ))}
       </div>
      </div>
     </section>
 
-    {/* Security */}
-    <section id="security" className="py-16 px-4 sm:px-6 bg-slate-50 border-y border-slate-100">
-     <div className="max-w-2xl mx-auto text-center">
-<div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 flex items-center justify-center mx-auto mb-6">
-        <Lock className="h-8 w-8 text-blue-600" />
-       </div>
-       <h2 className="font-display text-2xl sm:text-3xl font-bold text-slate-900 mb-6">We never store your full key ever.</h2>
-      <p className="font-sans text-slate-500 max-w-md mx-auto leading-relaxed">
-       Your API key is transmitted securely to our edge functions, tested against the provider, and immediately discarded. Only the last 4 characters are saved as a preview.
-      </p>
+    {/* Why KeyPing */}
+    <section id="features" className="py-24 sm:py-28 px-4 sm:px-6 bg-white relative overflow-hidden">
+     {/* subtle background accent */}
+     <div className="absolute inset-0 pointer-events-none">
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-[radial-gradient(ellipse,rgba(59,130,246,0.03),transparent_70%)]" />
+     </div>
+     <div className="max-w-5xl mx-auto relative z-10">
+      {/* heading */}
+      <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }} className="text-center mb-14">
+       <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50/80 border border-blue-200/50 text-xs text-blue-600 font-medium mb-5">
+        <Shield className="h-3.5 w-3.5" /> Why KeyPing
+       </span>
+       <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 leading-tight mb-4">
+        Built to solve<br /><span className="text-blue-600">real problems.</span>
+       </h2>
+       <p className="text-slate-500 max-w-md mx-auto text-[15px]">No fake quotes. Just the actual reasons developers reach for KeyPing.</p>
+      </motion.div>
+
+      {/* cards grid */}
+      <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
+       {WHY_CARDS.map(({ icon: Icon, problem, solution }, i) => (
+        <motion.div
+         key={i}
+         initial={{ opacity: 0, y: 20 }}
+         whileInView={{ opacity: 1, y: 0 }}
+         viewport={{ once: true }}
+         transition={{ delay: i * 0.07, duration: 0.4, ease: [0.16,1,0.3,1] }}
+         whileHover={{ y: -4 }}
+         className="group relative bg-white border border-slate-200/80 hover:border-blue-400/50 rounded-2xl p-6 text-left transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] overflow-hidden"
+        >
+         {/* card glow on hover */}
+         <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.03),transparent_50%)] pointer-events-none" />
+
+         {/* top gradient accent on hover */}
+         <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-blue-500/0 via-blue-500/60 to-blue-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+         {/* icon */}
+         <div className="h-10 w-10 rounded-lg bg-blue-50/80 border border-blue-100/60 flex items-center justify-center mb-4 group-hover:bg-blue-100/80 group-hover:border-blue-200 transition-all duration-200">
+          <Icon className="h-4.5 w-4.5 text-blue-600" />
+         </div>
+
+         {/* problem label */}
+         <p className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold mb-2">{problem}</p>
+
+         {/* solution */}
+         <p className="text-sm text-slate-600 leading-relaxed">{solution}</p>
+        </motion.div>
+       ))}
+      </div>
      </div>
     </section>
 
     {/* Bottom CTA */}
-    <section className="py-20 px-4 sm:px-6 bg-blue-600 relative overflow-hidden">
+    <section className="py-24 px-4 sm:px-6 bg-gradient-to-br from-blue-600 via-blue-600 to-indigo-700 relative overflow-hidden">
      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute inset-0 bg-grid-light opacity-20" />
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-transparent to-blue-600" />
-       </div>
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-[100px]" />
+      <div className="absolute bottom-0 right-1/4 w-72 h-72 bg-indigo-400/15 rounded-full blur-[80px]" />
+     </div>
      <div className="max-w-2xl mx-auto text-center relative z-10">
-      <h2 className="font-display text-4xl font-extrabold text-white mb-3">Stop guessing. Start pinging.</h2>
-      <p className="font-sans text-blue-100 mb-8">Free forever. No credit card required.</p>
-      <button onClick={handleCTA} className="bg-white text-blue-600 hover:bg-blue-50 font-sans font-bold text-sm rounded-xl px-8 py-3 transition-all shadow-lg hover:shadow-xl hover:scale-105">
-       Get Started Free 
+      <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-4 tracking-tight">Stop guessing. Start pinging.</h2>
+      <p className="text-blue-100/90 mb-10 text-lg">Free forever. No credit card required.</p>
+      <button onClick={handleCTA} className="bg-white text-blue-600 hover:bg-blue-50 font-semibold text-base rounded-xl px-10 py-4 transition-all duration-200 shadow-[0_8px_30px_rgba(0,0,0,0.15)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0">
+       Get Started Free
       </button>
      </div>
-    </section>
-   </main>
-  </div>
- );
+     </section>
+    </main>
+
+    <Footer />
+   </div>
+  );
 };
 
 export default Landing;

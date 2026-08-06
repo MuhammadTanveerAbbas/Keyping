@@ -13,6 +13,9 @@ type AuthContextType = {
  user: User | null;
  loading: boolean;
  signInWithGoogle: () => Promise<void>;
+ signInWithEmail: (email: string, password: string) => Promise<void>;
+ signUpWithEmail: (email: string, password: string) => Promise<void>;
+ resetPassword: (email: string) => Promise<void>;
  signOut: () => Promise<void>;
 };
 
@@ -23,23 +26,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
  const [loading, setLoading] = useState(true);
 
  useEffect(() => {
-  // Resolve existing session first prevents flicker on reload
   supabase.auth.getSession().then(({ data: { session } }) => {
    setSession(session);
    setLoading(false);
-   // Strip OAuth tokens from the URL hash after Supabase processes them
    if (window.location.hash.includes("access_token")) {
     window.history.replaceState(null, "", window.location.pathname);
    }
   });
 
-  // Then listen for auth state changes (login, logout, token refresh)
   const {
    data: { subscription },
   } = supabase.auth.onAuthStateChange((_event, session) => {
    setSession(session);
    setLoading(false);
-   // Strip OAuth tokens from the URL hash after Supabase processes them
    if (window.location.hash.includes("access_token")) {
     window.history.replaceState(null, "", window.location.pathname);
    }
@@ -56,6 +55,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   if (error) throw error;
  };
 
+ const signInWithEmail = async (email: string, password: string) => {
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) throw error;
+ };
+
+ const signUpWithEmail = async (email: string, password: string) => {
+  const { error } = await supabase.auth.signUp({
+   email,
+   password,
+   options: { emailRedirectTo: window.location.origin },
+  });
+  if (error) throw error;
+ };
+
+ const resetPassword = async (email: string) => {
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+   redirectTo: `${window.location.origin}/auth`,
+  });
+  if (error) throw error;
+ };
+
  const signOut = async () => {
   await supabase.auth.signOut();
  };
@@ -67,6 +87,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user: session?.user ?? null,
     loading,
     signInWithGoogle,
+    signInWithEmail,
+    signUpWithEmail,
+    resetPassword,
     signOut,
    }}
   >
