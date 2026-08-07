@@ -40,7 +40,7 @@ export default function Privacy() {
     {/* Security callout */}
     <div className="flex gap-3 p-4 rounded-xl border bg-blue-50 border-blue-200 text-blue-800 mb-8">
      <Lock className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
-     <p className="font-sans text-sm">We take your API key security seriously. Keys are never stored — only validated in transit via encrypted Edge Functions and immediately discarded.</p>
+     <p className="font-sans text-sm">We take your API key security seriously. Keys are never stored - only validated in transit via encrypted Edge Functions and immediately discarded.</p>
     </div>
 
     {/* Table of contents */}
@@ -68,7 +68,7 @@ export default function Privacy() {
     {/* Footer note */}
     <div className="flex gap-3 p-4 rounded-xl border bg-blue-50 border-blue-200 text-blue-800 mt-12">
      <Lock className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
-     <p className="font-sans text-sm">We take your API key security seriously. Keys are never stored — only validated in transit.</p>
+     <p className="font-sans text-sm">We take your API key security seriously. Keys are never stored - only validated in transit.</p>
     </div>
 
     <div className="mt-8 pt-8 border-t border-slate-200 flex items-center justify-between">

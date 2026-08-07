@@ -67,8 +67,7 @@ body {
 }
 
 img,
-video,
-svg {
+video {
   max-width: 100%;
   height: auto;
 }
@@ -356,6 +355,27 @@ svg {
   background: hsl(var(--border));
   border-radius: 3px;
 }
-*::-webkit-scrollbar-thumb:hover {
+ *::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground));
 }
+
+/* Provider card brand color hover effects */
+.provider-card:hover {
+  border-color: var(--brand-hover-border) !important;
+}
+.provider-card:hover .provider-icon-wrapper {
+  border-color: var(--brand-hover-border) !important;
+  background: var(--brand-hover-bg) !important;
+}
+.provider-card:hover .provider-icon {
+  color: var(--brand-hover-color) !important;
+}
+.provider-card[data-brand-color="#10A37F"]:hover { --brand-hover-border: rgba(16,163,127,0.4); --brand-hover-bg: linear-gradient(135deg, rgba(16,163,127,0.08), rgba(20,184,166,0.05)); --brand-hover-color: #10A37F; }
+.provider-card[data-brand-color="#F55036"]:hover { --brand-hover-border: rgba(245,80,54,0.4); --brand-hover-bg: linear-gradient(135deg, rgba(245,80,54,0.08), rgba(249,115,22,0.05)); --brand-hover-color: #F55036; }
+.provider-card[data-brand-color="#CC785C"]:hover { --brand-hover-border: rgba(204,120,92,0.4); --brand-hover-bg: linear-gradient(135deg, rgba(204,120,92,0.08), rgba(245,158,11,0.05)); --brand-hover-color: #CC785C; }
+.provider-card[data-brand-color="#635BFF"]:hover { --brand-hover-border: rgba(99,91,255,0.4); --brand-hover-bg: linear-gradient(135deg, rgba(99,91,255,0.08), rgba(99,102,241,0.05)); --brand-hover-color: #635BFF; }
+.provider-card[data-brand-color="#24292F"]:hover { --brand-hover-border: rgba(36,41,47,0.4); --brand-hover-bg: linear-gradient(135deg, rgba(36,41,47,0.06), rgba(107,114,128,0.04)); --brand-hover-color: #24292F; }
+.provider-card[data-brand-color="#000000"]:hover { --brand-hover-border: rgba(0,0,0,0.3); --brand-hover-bg: linear-gradient(135deg, rgba(0,0,0,0.04), rgba(0,0,0,0.02)); --brand-hover-color: #000000; }
+.provider-card[data-brand-color="#3ECF8E"]:hover { --brand-hover-border: rgba(62,207,142,0.4); --brand-hover-bg: linear-gradient(135deg, rgba(62,207,142,0.08), rgba(34,197,94,0.05)); --brand-hover-color: #3ECF8E; }
+.provider-card[data-brand-color="#FF9900"]:hover { --brand-hover-border: rgba(255,153,0,0.4); --brand-hover-bg: linear-gradient(135deg, rgba(255,153,0,0.08), rgba(249,115,22,0.05)); --brand-hover-color: #FF9900; }
+.provider-card[data-brand-color="#4285F4"]:hover { --brand-hover-border: rgba(66,133,244,0.4); --brand-hover-bg: linear-gradient(135deg, rgba(66,133,244,0.08), rgba(99,102,241,0.05)); --brand-hover-color: #4285F4; }

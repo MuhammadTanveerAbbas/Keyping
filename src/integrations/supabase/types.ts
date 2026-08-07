@@ -99,6 +99,7 @@ export type Database = {
           shared_at: string
           shared_by: string
           team_id: string
+          updated_at: string | null
         }
         Insert: {
           id?: string
@@ -106,6 +107,7 @@ export type Database = {
           shared_at?: string
           shared_by: string
           team_id: string
+          updated_at?: string | null
         }
         Update: {
           id?: string
@@ -113,6 +115,7 @@ export type Database = {
           shared_at?: string
           shared_by?: string
           team_id?: string
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -138,6 +141,7 @@ export type Database = {
           role: string
           team_id: string
           user_id: string
+          updated_at: string | null
         }
         Insert: {
           id?: string
@@ -145,6 +149,7 @@ export type Database = {
           role?: string
           team_id: string
           user_id: string
+          updated_at?: string | null
         }
         Update: {
           id?: string
@@ -152,6 +157,7 @@ export type Database = {
           role?: string
           team_id?: string
           user_id?: string
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -169,18 +175,21 @@ export type Database = {
           id: string
           name: string
           owner_id: string
+          updated_at: string | null
         }
         Insert: {
           created_at?: string
           id?: string
           name: string
           owner_id: string
+          updated_at?: string | null
         }
         Update: {
           created_at?: string
           id?: string
           name?: string
           owner_id?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -189,6 +198,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_team_with_owner: {
+        Args: {
+          team_name: string
+        }
+        Returns: string
+      }
       delete_user_account: {
         Args: Record<string, never>
         Returns: undefined

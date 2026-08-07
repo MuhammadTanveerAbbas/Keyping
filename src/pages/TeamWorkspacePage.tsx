@@ -128,32 +128,21 @@ const TeamWorkspacePage = () => {
   if (selectedTeam) fetchMembers(selectedTeam);
  }, [selectedTeam, fetchMembers]);
 
- const createTeam = async (values: z.infer<typeof teamFormSchema>) => {
-  if (!user) return;
-  const { data: team, error } = await supabase
-   .from("teams")
-   .insert({
-    name: values.name.trim(),
-    owner_id: user.id,
-   })
-   .select()
-   .single();
+  const createTeam = async (values: z.infer<typeof teamFormSchema>) => {
+   if (!user) return;
+   const { data: teamId, error } = await supabase.rpc("create_team_with_owner", {
+    team_name: values.name.trim(),
+   });
 
-  if (error) {
-   toast.error(error.message);
-   return;
-  }
+   if (error) {
+    toast.error(error.message);
+    return;
+   }
 
-  await supabase.from("team_members").insert({
-   team_id: (team as Team).id,
-   user_id: user.id,
-   role: "owner",
-  });
-
-  toast.success("Team created!");
-  form.reset();
-  fetchTeams();
- };
+   toast.success("Team created!");
+   form.reset();
+   fetchTeams();
+  };
 
  const deleteTeam = async (teamId: string) => {
   const { error } = await supabase.from("teams").delete().eq("id", teamId);

@@ -10,7 +10,7 @@ export const isSupabaseConfigured = Boolean(SUPABASE_URL && SUPABASE_PUBLISHABLE
 
 const authOptions = {
   storageKey: 'keyping-auth',
-  storage: window.localStorage,
+  storage: typeof window !== 'undefined' ? window.localStorage : undefined,
   persistSession: true,
   autoRefreshToken: true,
   detectSessionInUrl: true,
@@ -26,6 +26,11 @@ export const supabase: SupabaseClient<Database> = isSupabaseConfigured
   ? createSupabaseClient()
   : (new Proxy({} as SupabaseClient<Database>, {
       get() {
+        throw new Error(
+          'Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY (or VITE_SUPABASE_PUBLISHABLE_KEY).',
+        );
+      },
+      apply() {
         throw new Error(
           'Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY (or VITE_SUPABASE_PUBLISHABLE_KEY).',
         );

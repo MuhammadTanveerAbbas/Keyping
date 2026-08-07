@@ -10,54 +10,72 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
- Form,
- FormControl,
- FormField,
- FormItem,
- FormLabel,
- FormMessage,
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
 } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
 import {
- AlertDialog,
- AlertDialogAction,
- AlertDialogCancel,
- AlertDialogContent,
- AlertDialogDescription,
- AlertDialogFooter,
- AlertDialogHeader,
- AlertDialogTitle,
- AlertDialogTrigger,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
- User,
- Bell,
- Shield,
- Download,
- Trash2,
- Save,
- AlertTriangle,
-} from "lucide-react";
-import { toast } from "sonner";
+  User,
+  Bell,
+  Shield,
+  Download,
+  Trash2,
+  Save,
+  AlertTriangle,
+  Zap,
+  Clock,
+  Code,
+  HelpCircle,
+} from "lucide-react";import { toast } from "sonner";
 import {
- PageShell,
- PageHeader,
- Panel,
- dashInput,
- dashPrimaryBtn,
- dashGhostBtn,
+  PageShell,
+  PageHeader,
+  Panel,
+  dashInput,
+  dashPrimaryBtn,
+  dashGhostBtn,
 } from "@/components/dashboard/ui";
 import { cn } from "@/lib/utils";
+import { PROVIDERS } from "@/lib/providers";
 
 const profileFormSchema = z.object({
  displayName: z.string().max(100, "Display name must be under 100 characters"),
 });
 
 const navSections = [
- { id: "profile", icon: User, label: "Profile" },
- { id: "notifications", icon: Bell, label: "Notifications" },
- { id: "security", icon: Shield, label: "Security & Data" },
+  { id: "profile", icon: User, label: "Profile" },
+  { id: "notifications", icon: Bell, label: "Notifications" },
+  { id: "security", icon: Shield, label: "Security & Data" },
+  { id: "help", icon: HelpCircle, label: "Help & Docs" },
 ] as const;
+
+const quickStartSteps = [
+  { step: "1", title: "Select provider", desc: "Pick from the list or let auto-detect identify the key" },
+  { step: "2", title: "Paste your key", desc: "The full secret is used once for validation, then discarded" },
+  { step: "3", title: "Run test", desc: "Get status, latency, scopes, and a health score" },
+  { step: "4", title: "Save & monitor", desc: "Optional save with nickname; track history and alerts" },
+];
+
+const features = [
+  { icon: Zap, title: "Live validation", desc: "Tests against real provider endpoints via edge functions" },
+  { icon: Shield, title: "Preview-only storage", desc: "Only the last four characters are persisted" },
+  { icon: Clock, title: "Expiry reminders", desc: "Set alerts for keys approaching expiry" },
+];
 
 const SettingsPage = () => {
  const { user } = useAuth();
@@ -276,100 +294,159 @@ const SettingsPage = () => {
      </Panel>
     </div>
 
-    <div id="security">
-     <Panel title="Security & data" description="Manage data retention and exports">
-      <div className="space-y-4">
-       <div className="flex items-center justify-between gap-4 opacity-60">
-        <div>
-         <p className="text-sm font-medium text-slate-800">
-          Auto-delete old tests
-         </p>
-         <p className="text-xs text-slate-500">
-          Coming soon — use Delete all data below for now
-         </p>
-        </div>
-        <Switch checked={false} disabled />
+     <div id="help">
+      <Panel title="Quick start">
+       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {quickStartSteps.map((s) => (
+          <div key={s.step} className="flex gap-3 rounded-lg border border-slate-100 p-3 hover:shadow-sm hover:-translate-y-0.5 transition-all duration-300">
+           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-sm font-semibold text-blue-700">
+            {s.step}
+           </div>
+           <div>
+            <p className="text-sm font-medium text-slate-800">{s.title}</p>
+            <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{s.desc}</p>
+           </div>
+          </div>
+        ))}
        </div>
+      </Panel>
 
-       <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-4">
-        <Button
-         variant="ghost"
-         size="sm"
-         className={cn("gap-1.5 h-9", dashGhostBtn)}
-         onClick={handleExportData}
-        >
-         <Download className="h-3.5 w-3.5" /> Export data
-        </Button>
-        <Button
-         variant="ghost"
-         size="sm"
-         disabled={deletingData}
-          className="gap-1.5 h-9 rounded-lg text-slate-600 hover:bg-red-50 hover:text-red-600 hover:shadow-sm transition-all duration-200"
-         onClick={handleDeleteAllData}
-        >
-         <Trash2 className="h-3.5 w-3.5" />
-         {deletingData ? "Deleting…" : "Delete all data"}
-        </Button>
+      <Panel title="Features">
+       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {features.map(({ icon: Icon, title, desc }) => (
+          <div key={title} className="rounded-lg border border-slate-100 p-4 hover:shadow-sm hover:-translate-y-0.5 transition-all duration-300">
+           <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50">
+            <Icon className="h-4 w-4 text-blue-600" />
+           </div>
+           <p className="text-sm font-medium text-slate-800">{title}</p>
+           <p className="text-xs text-slate-500 mt-1 leading-relaxed">{desc}</p>
+          </div>
+        ))}
        </div>
+      </Panel>
 
-       <div className="border-t border-red-100 pt-4">
-        <AlertDialog>
-         <AlertDialogTrigger asChild>
-          <Button
-           variant="ghost"
-           size="sm"
-           className="gap-1.5 h-9 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 hover:shadow-sm transition-all duration-200"
-          >
-           <AlertTriangle className="h-3.5 w-3.5" /> Delete account
-          </Button>
-         </AlertDialogTrigger>
-         <AlertDialogContent className="border-slate-200 bg-white">
-          <AlertDialogHeader>
-           <AlertDialogTitle>Delete your account?</AlertDialogTitle>
-           <AlertDialogDescription className="space-y-2">
-            <p>This permanently deletes your account and all associated data:</p>
-            <ul className="list-disc pl-4 text-sm text-slate-500">
-             <li>All test history and saved keys</li>
-             <li>Team memberships and owned teams</li>
-             <li>Alerts and notification preferences</li>
-             <li>Your Supabase authentication profile</li>
-            </ul>
-            <p className="font-medium text-red-600">
-             This action cannot be undone.
-            </p>
-           </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-           <AlertDialogCancel disabled={deletingAccount}>Cancel</AlertDialogCancel>
-           <AlertDialogAction
-            disabled={deletingAccount}
-            className="bg-red-600 hover:bg-red-700 text-white"
-            onClick={async () => {
-             if (!user) return;
-             setDeletingAccount(true);
-             try {
-              const { error: deleteError } = await supabase.rpc("delete_user_account");
-              if (deleteError) throw deleteError;
-              await supabase.auth.signOut();
-              toast.success("Account deleted");
-              navigate("/");
-             } catch (err: unknown) {
-              const message =
-               err instanceof Error ? err.message : "Failed to delete account";
-              toast.error(message);
-              setDeletingAccount(false);
-             }
-            }}
-           >
-            {deletingAccount ? "Deleting…" : "Delete account"}
-           </AlertDialogAction>
-          </AlertDialogFooter>
-         </AlertDialogContent>
-        </AlertDialog>
+      <Panel title="Supported providers" description="AWS has limited validation support">
+       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+        {PROVIDERS.map((p) => (
+          <div key={p.id} className="flex items-center gap-2 rounded-lg border border-slate-100 px-3 py-2 hover:bg-slate-50 transition-colors duration-200">
+           <Code className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+           <span className="text-sm text-slate-700 truncate">{p.name}</span>
+          </div>
+        ))}
        </div>
+      </Panel>
+
+      <Panel title="Keyboard shortcuts">
+       <div className="divide-y divide-slate-100 rounded-lg border border-slate-100">
+        {[
+         { keys: "⌘ + K", action: "Open command palette (dashboard)" },
+         { keys: "Header icon", action: "Toggle light / dark theme" },
+        ].map(({ keys, action }) => (
+          <div key={keys} className="flex items-center justify-between px-4 py-3">
+           <span className="text-sm text-slate-700">{action}</span>
+           <kbd className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs text-slate-600">
+            {keys}
+           </kbd>
+          </div>
+        ))}
+       </div>
+      </Panel>
+     </div>
+
+      <div id="security">
+        <Panel title="Security & data" description="Manage data retention and exports">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between gap-4 opacity-60">
+              <div>
+                <p className="text-sm font-medium text-slate-800">
+                  Auto-delete old tests
+                </p>
+                <p className="text-xs text-slate-500">
+                  Coming soon - use Delete all data below for now
+                </p>
+              </div>
+              <Switch checked={false} disabled />
+            </div>
+
+            <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                className={cn("gap-1.5 h-9", dashGhostBtn)}
+                onClick={handleExportData}
+              >
+                <Download className="h-3.5 w-3.5" /> Export data
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={deletingData}
+                className="gap-1.5 h-9 rounded-lg text-slate-600 hover:bg-red-50 hover:text-red-600 hover:shadow-sm transition-all duration-200"
+                onClick={handleDeleteAllData}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                {deletingData ? "Deleting…" : "Delete all data"}
+              </Button>
+            </div>
+
+            <div className="border-t border-red-100 pt-4">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-1.5 h-9 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 hover:shadow-sm transition-all duration-200"
+                  >
+                    <AlertTriangle className="h-3.5 w-3.5" /> Delete account
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="border-slate-200 bg-white">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete your account?</AlertDialogTitle>
+                    <AlertDialogDescription className="space-y-2">
+                      <p>This permanently deletes your account and all associated data:</p>
+                      <ul className="list-disc pl-4 text-sm text-slate-500">
+                        <li>All test history and saved keys</li>
+                        <li>Team memberships and owned teams</li>
+                        <li>Alerts and notification preferences</li>
+                        <li>Your Supabase authentication profile</li>
+                      </ul>
+                      <p className="font-medium text-red-600">
+                        This action cannot be undone.
+                      </p>
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel disabled={deletingAccount}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      disabled={deletingAccount}
+                      className="bg-red-600 hover:bg-red-700 text-white"
+                      onClick={async () => {
+                        if (!user) return;
+                        setDeletingAccount(true);
+                        try {
+                          const { error: deleteError } = await supabase.rpc("delete_user_account");
+                          if (deleteError) throw deleteError;
+                          await supabase.auth.signOut();
+                          toast.success("Account deleted");
+                          navigate("/");
+                        } catch (err: unknown) {
+                          const message =
+                            err instanceof Error ? err.message : "Failed to delete account";
+                          toast.error(message);
+                          setDeletingAccount(false);
+                        }
+                      }}
+                    >
+                      {deletingAccount ? "Deleting…" : "Delete account"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </div>
+        </Panel>
       </div>
-     </Panel>
-    </div>
    </PageShell>
   </DashboardLayout>
  );

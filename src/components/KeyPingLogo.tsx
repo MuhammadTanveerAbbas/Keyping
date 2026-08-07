@@ -1,11 +1,14 @@
+import { useId } from "react";
+
 type KeyPingLogoProps = {
  size?: number;
 };
 
 export function KeyPingLogo({ size = 28 }: KeyPingLogoProps) {
+ const id = useId().replace(/:/g, "");
  return (
   <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-   <rect width="32" height="32" rx="8" fill="url(#kp-logo)" />
+   <rect width="32" height="32" rx="8" fill={`url(#kp-${id})`} />
    <circle cx="12" cy="14" r="5" stroke="white" strokeWidth="2.2" fill="none" />
    <circle cx="12" cy="14" r="2" fill="white" />
    <rect x="16.5" y="13" width="9" height="2.2" rx="1.1" fill="white" />
@@ -14,7 +17,7 @@ export function KeyPingLogo({ size = 28 }: KeyPingLogoProps) {
    <circle cx="26" cy="8" r="3" fill="#22D3EE" opacity="0.9" />
    <circle cx="26" cy="8" r="1.5" fill="white" />
    <defs>
-    <linearGradient id="kp-logo" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+    <linearGradient id={`kp-${id}`} x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
      <stop offset="0%" stopColor="#3B82F6" />
      <stop offset="100%" stopColor="#1D4ED8" />
     </linearGradient>

@@ -36,15 +36,17 @@ CREATE TABLE public.key_tests (
   latency_ms      INTEGER,
   tested_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
   created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at      TIMESTAMPTZ
+  updated_at      TIMESTAMPTZ DEFAULT now()
 );
 
 ALTER TABLE public.key_tests ENABLE ROW LEVEL SECURITY;
 
-CREATE INDEX idx_key_tests_user_id   ON public.key_tests(user_id);
-CREATE INDEX idx_key_tests_tested_at ON public.key_tests(tested_at DESC);
-CREATE INDEX idx_key_tests_provider  ON public.key_tests(provider);
-CREATE INDEX idx_key_tests_status    ON public.key_tests(status);
+CREATE INDEX idx_key_tests_user_id        ON public.key_tests(user_id);
+CREATE INDEX idx_key_tests_tested_at      ON public.key_tests(tested_at DESC);
+CREATE INDEX idx_key_tests_provider       ON public.key_tests(provider);
+CREATE INDEX idx_key_tests_status         ON public.key_tests(status);
+CREATE INDEX idx_key_tests_user_tested_at ON public.key_tests(user_id, tested_at DESC);
+CREATE INDEX idx_key_tests_user_provider  ON public.key_tests(user_id, provider);
 
 CREATE TRIGGER set_key_tests_updated_at
   BEFORE UPDATE ON public.key_tests
@@ -61,7 +63,7 @@ CREATE TABLE public.teams (
   name       TEXT        NOT NULL,
   owner_id   UUID        NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ
+  updated_at TIMESTAMPTZ DEFAULT now()
 );
 
 ALTER TABLE public.teams ENABLE ROW LEVEL SECURITY;
@@ -81,7 +83,7 @@ CREATE TABLE public.team_members (
   user_id    UUID        NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   role       TEXT        NOT NULL DEFAULT 'member' CHECK (role IN ('owner', 'member')),
   joined_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ,
+  updated_at  TIMESTAMPTZ DEFAULT now(),
   UNIQUE (team_id, user_id)
 );
 
@@ -93,8 +95,11 @@ CREATE TRIGGER set_team_members_updated_at
 
 CREATE POLICY "Members can view their team members" ON public.team_members FOR SELECT TO authenticated
   USING (EXISTS (
-    SELECT 1 FROM public.team_members AS tm
-    WHERE tm.team_id = team_members.team_id AND tm.user_id = auth.uid()
+    SELECT 1 FROM public.teams
+    WHERE teams.id = team_members.team_id AND (
+      teams.owner_id = auth.uid()
+      OR EXISTS (SELECT 1 FROM public.team_members tm WHERE tm.team_id = teams.id AND tm.user_id = auth.uid())
+    )
   ));
 
 CREATE POLICY "Owners can manage team members" ON public.team_members FOR INSERT TO authenticated
@@ -123,7 +128,7 @@ CREATE TABLE public.shared_results (
   key_test_id UUID        NOT NULL REFERENCES public.key_tests(id) ON DELETE CASCADE,
   shared_by   UUID        NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   shared_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at  TIMESTAMPTZ
+  updated_at  TIMESTAMPTZ DEFAULT now()
 );
 
 ALTER TABLE public.shared_results ENABLE ROW LEVEL SECURITY;
@@ -150,7 +155,7 @@ CREATE TABLE public.alerts (
   reminder_days INTEGER     NOT NULL DEFAULT 7,
   notified      BOOLEAN     NOT NULL DEFAULT false,
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at    TIMESTAMPTZ
+  updated_at    TIMESTAMPTZ DEFAULT now()
 );
 
 ALTER TABLE public.alerts ENABLE ROW LEVEL SECURITY;
@@ -202,5 +207,21 @@ BEGIN
   DELETE FROM public.alerts         WHERE user_id   = _user_id;
   DELETE FROM public.key_tests      WHERE user_id   = _user_id;
   DELETE FROM auth.users            WHERE id        = _user_id;
+ END;
+ $$;
+
+-- ── Atomic team creation RPC ─────────────────────────────────
+CREATE OR REPLACE FUNCTION public.create_team_with_owner(team_name TEXT)
+RETURNS uuid
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  new_team_id uuid;
+BEGIN
+  INSERT INTO public.teams (name, owner_id) VALUES (team_name, auth.uid()) RETURNING id INTO new_team_id;
+  INSERT INTO public.team_members (team_id, user_id, role) VALUES (new_team_id, auth.uid(), 'owner');
+  RETURN new_team_id;
 END;
-$$;
+ $$;

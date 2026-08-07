@@ -26,7 +26,7 @@ export function SupabaseConfigError() {
       <li>VITE_SUPABASE_ANON_KEY (or VITE_SUPABASE_PUBLISHABLE_KEY)</li>
      </ul>
      <p className="font-sans text-xs text-slate-500 mt-4">
-      VITE_ variables are embedded at build time — a redeploy is required
+      VITE_ variables are embedded at build time - a redeploy is required
       after adding them.
      </p>
     </div>

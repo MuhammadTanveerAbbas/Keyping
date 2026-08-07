@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
-/** Shared form control styles — one source of truth for dashboard inputs */
+/** Shared form control styles - one source of truth for dashboard inputs */
 export const dashInput =
  "h-10 rounded-lg border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 font-medium transition-shadow";
 

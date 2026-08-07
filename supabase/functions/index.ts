@@ -1,4 +1,4 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.220.0/http/server.ts";
 
 const ALLOWED_ORIGINS = [
  "https://keyping.app",
@@ -23,6 +23,7 @@ type ProviderConfig = {
  method: string;
  headers: (key: string) => Record<string, string>;
  body?: string;
+ skipRequest?: boolean;
  parseResult: (res: Response) => Promise<{
   status: "valid" | "invalid" | "limited";
   scopes?: string[];
@@ -53,7 +54,7 @@ const providers: Record<string, ProviderConfig> = {
    if (res.ok) return { status: "valid", rateLimit: rl };
    if (res.status === 401) return { status: "invalid", error: "Invalid API key" };
    if (res.status === 429) return { status: "limited", error: "Rate limited", rateLimit: rl };
-   if (res.status === 403) return { status: "invalid", error: "Access forbidden — key may lack required permissions" };
+   if (res.status === 403) return { status: "invalid", error: "Access forbidden - key may lack required permissions" };
    return { status: "invalid", error: `HTTP ${res.status}: ${res.statusText || "Unknown error"}` };
   },
  },
@@ -66,7 +67,7 @@ const providers: Record<string, ProviderConfig> = {
    if (res.ok) return { status: "valid", rateLimit: rl };
    if (res.status === 401) return { status: "invalid", error: "Invalid API key" };
    if (res.status === 429) return { status: "limited", error: "Rate limited", rateLimit: rl };
-   if (res.status === 403) return { status: "invalid", error: "Access forbidden — key may lack required permissions" };
+   if (res.status === 403) return { status: "invalid", error: "Access forbidden - key may lack required permissions" };
    return { status: "invalid", error: `HTTP ${res.status}: ${res.statusText || "Unknown error"}` };
   },
  },
@@ -88,7 +89,7 @@ const providers: Record<string, ProviderConfig> = {
    if (res.ok) return { status: "valid", rateLimit: rl };
    if (res.status === 401) return { status: "invalid", error: "Invalid API key" };
    if (res.status === 429) return { status: "limited", error: "Rate limited", rateLimit: rl };
-   if (res.status === 403) return { status: "invalid", error: "Access forbidden — key may lack required permissions" };
+   if (res.status === 403) return { status: "invalid", error: "Access forbidden - key may lack required permissions" };
    if (res.status === 400) {
     try {
      const body = await res.json();
@@ -105,7 +106,7 @@ const providers: Record<string, ProviderConfig> = {
   parseResult: async (res) => {
    if (res.ok) return { status: "valid", scopes: ["balance.read"] };
    if (res.status === 401) return { status: "invalid", error: "Invalid API key" };
-   if (res.status === 403) return { status: "invalid", error: "Access forbidden — key may lack required permissions" };
+   if (res.status === 403) return { status: "invalid", error: "Access forbidden - key may lack required permissions" };
    return { status: "invalid", error: `HTTP ${res.status}: ${res.statusText || "Unknown error"}` };
   },
  },
@@ -124,7 +125,7 @@ const providers: Record<string, ProviderConfig> = {
     };
    }
    if (res.status === 401) return { status: "invalid", error: "Invalid token" };
-   if (res.status === 403) return { status: "invalid", error: "Access forbidden — token may lack required permissions" };
+   if (res.status === 403) return { status: "invalid", error: "Access forbidden - token may lack required permissions" };
    return { status: "invalid", error: `HTTP ${res.status}: ${res.statusText || "Unknown error"}` };
   },
  },
@@ -137,7 +138,7 @@ const providers: Record<string, ProviderConfig> = {
    if (res.ok) return { status: "valid", rateLimit: rl };
    if (res.status === 401) return { status: "invalid", error: "Invalid token" };
    if (res.status === 429) return { status: "limited", error: "Rate limited", rateLimit: rl };
-   if (res.status === 403) return { status: "invalid", error: "Access forbidden — token may lack required permissions" };
+   if (res.status === 403) return { status: "invalid", error: "Access forbidden - token may lack required permissions" };
    return { status: "invalid", error: `HTTP ${res.status}: ${res.statusText || "Unknown error"}` };
   },
  },
@@ -151,20 +152,21 @@ const providers: Record<string, ProviderConfig> = {
   parseResult: async (res) => {
    if (res.ok) return { status: "valid" };
    if (res.status === 401) return { status: "invalid", error: "Invalid token" };
-   if (res.status === 403) return { status: "invalid", error: "Access forbidden — token may lack required permissions" };
+   if (res.status === 403) return { status: "invalid", error: "Access forbidden - token may lack required permissions" };
    return { status: "invalid", error: `HTTP ${res.status}: ${res.statusText || "Unknown error"}` };
   },
  },
- aws: {
-  url: "https://sts.amazonaws.com/?Action=GetCallerIdentity&Version=2011-06-15",
-  method: "GET",
-  headers: () => {
-   return { Authorization: "Bearer unsupported" };
+  aws: {
+   url: "",
+   method: "GET",
+   headers: () => {
+    return {};
+   },
+   parseResult: async () => {
+    return { status: "invalid", error: "AWS key validation requires SigV4 signing which is not currently supported. Use the AWS CLI or SDK to verify keys." };
+   },
+   skipRequest: true,
   },
-  parseResult: async () => {
-   return { status: "invalid", error: "AWS key validation requires SigV4 signing which is not currently supported. Use the AWS CLI or SDK to verify keys." };
-  },
- },
 };
 
 async function verifyAuth(req: Request): Promise<{ userId: string } | null> {
@@ -270,15 +272,21 @@ serve(async (req) => {
      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
    }
-   const privateHostnames = ["localhost", "127.0.0.1", "0.0.0.0", "::1", "[::1]"];
-   const privatePrefixes = ["10.", "172.16.", "172.17.", "172.18.", "172.19.", "172.20.", "172.21.", "172.22.", "172.23.", "172.24.", "172.25.", "172.26.", "172.27.", "172.28.", "172.29.", "172.30.", "172.31.", "192.168.", "169.254."];
-   const host = parsedUrl.hostname.toLowerCase();
-   if (privateHostnames.includes(host) || privatePrefixes.some(p => host.startsWith(p))) {
-    return new Response(
-     JSON.stringify({ status: "invalid", error: "Endpoint URL must point to a public server" }),
-     { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
-   }
+    const privateHostnames = ["localhost", "127.0.0.1", "0.0.0.0", "::1", "[::1]", "169.254.169.254", "100.100.100.200", "[fd00:ec2::254]", "metadata.google.internal"];
+    const privatePrefixes = ["10.", "172.16.", "172.17.", "172.18.", "172.19.", "172.20.", "172.21.", "172.22.", "172.23.", "172.24.", "172.25.", "172.26.", "172.27.", "172.28.", "172.29.", "172.30.", "172.31.", "192.168.", "169.254.", "fd00:", "fe80:", "100.64.", "198.18.", "198.19."];
+    const host = parsedUrl.hostname.toLowerCase();
+    if (privateHostnames.includes(host) || privatePrefixes.some(p => host.startsWith(p))) {
+     return new Response(
+      JSON.stringify({ status: "invalid", error: "Endpoint URL must point to a public server" }),
+      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+     );
+    }
+    if (parsedUrl.port && parsedUrl.port !== "443") {
+     return new Response(
+      JSON.stringify({ status: "invalid", error: "Custom endpoint must use standard HTTPS port 443" }),
+      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+     );
+    }
    url = customEndpoint;
    method = "GET";
    const headerParts = (customAuthHeader || "Authorization: Bearer YOUR_KEY").split(":");
@@ -287,7 +295,7 @@ serve(async (req) => {
    headers = { [headerName]: headerValue, "User-Agent": "KeyPing" };
    parseResult = async (res) => {
     if (res.ok) return { status: "valid" };
-    if (res.status === 401 || res.status === 403) return { status: "invalid", error: "Unauthorized — check your key and endpoint" };
+    if (res.status === 401 || res.status === 403) return { status: "invalid", error: "Unauthorized - check your key and endpoint" };
     if (res.status === 429) return { status: "limited", error: "Rate limited by custom endpoint" };
     return { status: "invalid", error: `HTTP ${res.status}: ${res.statusText || "Unknown error"}` };
    };
@@ -298,6 +306,12 @@ serve(async (req) => {
      JSON.stringify({ status: "invalid", error: `Unknown provider: ${provider}` }),
      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
+   }
+   if (config.skipRequest) {
+    const result = await config.parseResult(new Response(null, { status: 400 }));
+    return new Response(JSON.stringify({ ...result, latencyMs: 0, healthScore: 0 }), {
+     headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
    }
    url = config.url;
    method = config.method;
@@ -321,7 +335,7 @@ serve(async (req) => {
   } catch (fetchError) {
    if (fetchError instanceof Error && fetchError.name === "AbortError") {
     return new Response(
-     JSON.stringify({ status: "invalid", error: "Request timed out — provider may be unreachable" }),
+     JSON.stringify({ status: "invalid", error: "Request timed out - provider may be unreachable" }),
      { status: 504, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
    }

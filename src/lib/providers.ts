@@ -38,7 +38,7 @@ export const PROVIDERS: Provider[] = [
   },
   {
     id: "twitter",
-    name: "Twitter/X",
+    name: "Twitter / X",
     docsUrl: "https://developer.x.com/en/docs/authentication",
   },
   {
@@ -67,7 +67,7 @@ export const PROVIDERS: Provider[] = [
   },
   {
     id: "custom",
-    name: "Custom/Other",
+    name: "Custom",
     docsUrl: "",
   },
 ];
