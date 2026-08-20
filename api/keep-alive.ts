@@ -1,9 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
+import { withTimeout } from './_shared/with-timeout';
 
 export const config = {
   runtime: 'edge',
   cron: { schedule: 'every 5 days' },
 };
+
+const CHECK_TIMEOUT_MS = 5_000;
 
 function getCorsHeaders() {
   const vercelUrl = process.env.VERCEL_URL;
@@ -44,7 +47,16 @@ export default async function handler(req: Request) {
     });
   }
 
-  const { error } = await getSupabase().from('key_tests').select('id').limit(1);
+  let error: { message?: string } | undefined;
+  try {
+    const result = await withTimeout(
+      getSupabase().from('key_tests').select('id').limit(1),
+      CHECK_TIMEOUT_MS,
+    );
+    error = result.error ?? undefined;
+  } catch (e) {
+    error = { message: e instanceof Error ? e.message : 'Supabase check failed' };
+  }
 
   if (error) {
     return new Response(JSON.stringify({ error: error.message }), {

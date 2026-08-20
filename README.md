@@ -44,6 +44,22 @@ Keys are validated server-side via Supabase Edge Functions - your full key is ne
 
 ---
 
+## Reliability
+
+- **Bounded retries for provider calls** - The edge function retries transient
+  failures (HTTP 429 rate limits, HTTP 5xx, network errors, timeouts) with
+  exponential backoff + jitter, respecting `Retry-After` when provided. Only
+  idempotent requests (GET) are retried on HTTP errors; a small retry count
+  prevents endless hammering, and persistent failures surface as a controlled
+  error to the UI.
+- **Graceful timeouts** - The Vercel health check and keep-alive cron fail
+  clearly within a fixed timeout instead of hanging when Supabase is
+  unavailable.
+- **Read-only health checks** - `/api/health` performs a minimal, read-only
+  `key_tests` query that never modifies data or creates records.
+
+---
+
 ## Features
 
 - **Instant Key Validation** - Paste any API key and get a pass/fail result with full details in under 2 seconds

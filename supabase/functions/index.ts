@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.220.0/http/server.ts";
+import { fetchWithRetry, isAbortError } from "./_shared/retry.ts";
 
 const ALLOWED_ORIGINS = [
  "https://keyping.app",
@@ -327,13 +328,13 @@ serve(async (req) => {
   const startTime = Date.now();
   let response: Response;
   try {
-   const controller = new AbortController();
-   const timeout = setTimeout(() => controller.abort(), 15000);
-   fetchOptions.signal = controller.signal;
-   response = await fetch(url, fetchOptions);
-   clearTimeout(timeout);
+   response = await fetchWithRetry(url, fetchOptions, {
+    onRetry: (attempt, reason) => {
+     console.warn(`[test-api-key] retry ${attempt} for ${provider}: ${reason}`);
+    },
+   });
   } catch (fetchError) {
-   if (fetchError instanceof Error && fetchError.name === "AbortError") {
+   if (isAbortError(fetchError)) {
     return new Response(
      JSON.stringify({ status: "invalid", error: "Request timed out - provider may be unreachable" }),
      { status: 504, headers: { ...corsHeaders, "Content-Type": "application/json" } },

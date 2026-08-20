@@ -1,6 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
+import { withTimeout } from './_shared/with-timeout';
 
 export const config = { runtime: 'edge' };
+
+const CHECK_TIMEOUT_MS = 5_000;
 
 function getCorsHeaders() {
   const vercelUrl = process.env.VERCEL_URL;
@@ -35,7 +38,10 @@ export default async function handler(req: Request) {
 
   try {
     const supabase = getSupabase();
-    const { error } = await supabase.from('key_tests').select('id').limit(1);
+    const { error } = await withTimeout(
+      supabase.from('key_tests').select('id').limit(1),
+      CHECK_TIMEOUT_MS,
+    );
     checks.database = error ? `error: ${error.message}` : true;
   } catch (e) {
     checks.database = `error: ${e instanceof Error ? e.message : 'unknown'}`;
