@@ -472,8 +472,8 @@ const Landing = () => {
         <div className="absolute inset-0 bg-grid-light opacity-50" />
       </div>
 
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-slate-200/60 px-4 sm:px-6 py-3 transition-all">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-slate-200/60 py-3 transition-all">
+        <div className="w-full px-4 sm:px-6 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <KeyPingLogo size={30} />
             <span className="font-display text-lg font-bold text-slate-900 tracking-tight">KeyPing</span>
