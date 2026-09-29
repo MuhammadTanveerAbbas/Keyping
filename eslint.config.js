@@ -23,4 +23,16 @@ export default tseslint.config(
       "@typescript-eslint/no-unused-vars": "off",
     },
   },
+  {
+    files: ["supabase/functions/**/*.ts"],
+    rules: {
+      "no-control-regex": "off",
+    },
+  },
+  {
+    files: ["src/components/BrandIcons.tsx", "src/components/ui/button.tsx", "src/components/ui/form.tsx", "src/components/ui/sonner.tsx", "src/lib/auth.tsx"],
+    rules: {
+      "react-refresh/only-export-components": "off",
+    },
+  },
 );

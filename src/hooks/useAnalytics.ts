@@ -1,27 +1,13 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { PROVIDERS } from "@/lib/providers";
-import { format, subDays, differenceInDays } from "date-fns";
+import { differenceInDays, format, subDays } from "date-fns";
+import { onDataChanged } from "@/lib/data-events";
+import { KEY_TEST_FIELDS, createRequestGuard, normalizeKeyTests } from "./rows";
+import type { KeyTest } from "./rows";
 
-export type RateLimitInfo = {
-  remaining?: number;
-  resetAt?: string;
-};
-
-export type KeyTest = {
-  id: string;
-  provider: string;
-  key_preview: string;
-  nickname: string | null;
-  notes: string | null;
-  status: string;
-  scopes: unknown[] | null;
-  rate_limit_info: RateLimitInfo | null;
-  tested_at: string;
-  health_score: number | null;
-  latency_ms: number | null;
-};
+export type { KeyTest, RateLimitInfo } from "./rows";
 
 export type AnalyticsResult = {
   totalTests: number;
@@ -42,61 +28,97 @@ export type AnalyticsResult = {
   statusBreakdown: { name: string; value: number; color: string }[];
   providerUptime: { name: string; uptime: number; total: number }[];
   staleProviders: { name: string; uptime: number; total: number }[];
-  dailyCounts: number[];
-  dailyLatency: number[];
-  dailyHealth: number[];
 };
 
 const CHART_COLORS = {
   blue: "#3B82F6",
-  blueLight: "#93C5FD",
   amber: "#F59E0B",
   red: "#EF4444",
   green: "#10B981",
   slate: "#94A3B8",
 };
 
+const SELECT_FIELDS = KEY_TEST_FIELDS;
+
 export function useKeyTests(options?: { limit?: number }) {
   const { user } = useAuth();
   const [tests, setTests] = useState<KeyTest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const guard = useRef(createRequestGuard());
+  const mounted = useRef(true);
+  const limit = options?.limit;
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
   const fetchTests = useCallback(async () => {
-    if (!user) return;
+    const isCurrent = guard.current.begin();
+
+    if (!user) {
+      if (!isCurrent()) return;
+      setTests([]);
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
     setLoading(true);
+    setError(null);
     let query = supabase
       .from("key_tests")
-      .select("id, provider, key_preview, nickname, notes, status, scopes, rate_limit_info, tested_at, health_score, latency_ms")
+      .select(KEY_TEST_FIELDS)
       .eq("user_id", user.id)
       .order("tested_at", { ascending: false });
 
-    if (options?.limit) query = query.limit(options.limit);
+    if (limit) query = query.limit(limit);
 
-    const { data, error } = await query;
-    if (!error && data) setTests(data as KeyTest[]);
+    const { data, error: queryError } = await query;
+
+    // Discard a result that a newer request has already superseded, and never
+    // write state after unmount.
+    if (!isCurrent() || !mounted.current) return;
+
+    if (queryError) {
+      setError(queryError.message);
+      setTests([]);
+    } else {
+      setTests(normalizeKeyTests(data));
+    }
     setLoading(false);
-  }, [user, options?.limit]);
+  }, [user, limit]);
 
   useEffect(() => {
-    fetchTests();
+    void fetchTests();
   }, [fetchTests]);
+
+  // Keeps the dashboard and analytics figures in step when a result is saved
+  // or deleted somewhere else.
+  useEffect(
+    () => onDataChanged(["key_tests"], () => void fetchTests()),
+    [fetchTests],
+  );
 
   const refresh = useCallback(() => fetchTests(), [fetchTests]);
 
-  return { tests, loading, refresh };
+  return { tests, loading, error, refresh };
 }
 
-export function useAnalytics(): { analytics: AnalyticsResult | null; loading: boolean; refresh: () => void } {
-  const { tests, loading, refresh } = useKeyTests({ limit: 500 });
+export function useAnalytics(): { analytics: AnalyticsResult | null; loading: boolean; error: string | null; refresh: () => void } {
+  const { tests, loading, error, refresh } = useKeyTests({ limit: 500 });
 
   const analytics = useMemo((): AnalyticsResult | null => {
     if (!tests.length) return null;
 
     const now = new Date();
-    const last30 = tests.filter((t) => new Date(t.tested_at) > subDays(now, 30));
-    const prev30 = tests.filter((t) => {
-      const d = new Date(t.tested_at);
-      return d > subDays(now, 60) && d <= subDays(now, 30);
+    const last30 = tests.filter((test) => new Date(test.tested_at) > subDays(now, 30));
+    const prev30 = tests.filter((test) => {
+      const date = new Date(test.tested_at);
+      return date > subDays(now, 60) && date <= subDays(now, 30);
     });
 
     const totalTests = tests.length;
@@ -106,88 +128,83 @@ export function useAnalytics(): { analytics: AnalyticsResult | null; loading: bo
       ? Math.round(((monthlyTests - prevMonthlyTests) / prevMonthlyTests) * 100)
       : monthlyTests > 0 ? 100 : 0;
 
-    const validTests = tests.filter((t) => t.status === "valid").length;
-    const limitedTests = tests.filter((t) => t.status === "limited").length;
-    const invalidTests = tests.filter((t) => t.status === "invalid").length;
+    const validTests = tests.filter((test) => test.status === "valid").length;
+    const limitedTests = tests.filter((test) => test.status === "limited").length;
+    const invalidTests = tests.filter((test) => test.status === "invalid").length;
     const overallUptime = Math.round((validTests / totalTests) * 100);
 
-    const avgLatency = tests.filter((t) => t.latency_ms !== null);
-    const avgMs = avgLatency.length
-      ? Math.round(avgLatency.reduce((s, t) => s + (t.latency_ms || 0), 0) / avgLatency.length)
+    const latencyTests = tests.filter((test) => test.latency_ms !== null);
+    const avgMs = latencyTests.length
+      ? Math.round(latencyTests.reduce((sum, test) => sum + (test.latency_ms ?? 0), 0) / latencyTests.length)
       : 0;
 
-    const avgHealth = tests.filter((t) => t.health_score !== null);
-    const healthAvg = avgHealth.length
-      ? Math.round(avgHealth.reduce((s, t) => s + (t.health_score || 0), 0) / avgHealth.length)
+    const healthTests = tests.filter((test) => test.health_score !== null);
+    const healthAvg = healthTests.length
+      ? Math.round(healthTests.reduce((sum, test) => sum + (test.health_score ?? 0), 0) / healthTests.length)
       : 0;
 
     const providerCounts: Record<string, number> = {};
-    tests.forEach((t) => {
-      providerCounts[t.provider] = (providerCounts[t.provider] || 0) + 1;
+    tests.forEach((test) => {
+      providerCounts[test.provider] = (providerCounts[test.provider] ?? 0) + 1;
     });
     const topProvider = Object.entries(providerCounts).sort((a, b) => b[1] - a[1])[0];
 
     const providerLatency: Record<string, number[]> = {};
-    tests.forEach((t) => {
-      if (t.latency_ms !== null) {
-        const bucket = providerLatency[t.provider] ?? [];
-        bucket.push(t.latency_ms);
-        providerLatency[t.provider] = bucket;
+    tests.forEach((test) => {
+      if (test.latency_ms !== null) {
+        const bucket = providerLatency[test.provider] ?? [];
+        bucket.push(test.latency_ms);
+        providerLatency[test.provider] = bucket;
       }
     });
     const latencyData = Object.entries(providerLatency)
-      .map(([p, vals]) => ({
-        name: PROVIDERS.find((pr) => pr.id === p)?.name || p,
-        avg: Math.round(vals.reduce((s, v) => s + v, 0) / vals.length),
-        tests: vals.length,
+      .map(([provider, values]) => ({
+        name: PROVIDERS.find((item) => item.id === provider)?.name ?? provider,
+        avg: Math.round(values.reduce((sum, value) => sum + value, 0) / values.length),
+        tests: values.length,
       }))
       .sort((a, b) => a.avg - b.avg);
 
-    const dailyTests: Record<string, { count: number; valid: number; invalid: number }> = {};
-    for (let i = 29; i >= 0; i--) {
-      const d = format(subDays(new Date(), i), "MMM d");
-      dailyTests[d] = { count: 0, valid: 0, invalid: 0 };
-    }
-    tests.forEach((t) => {
-      const d = format(new Date(t.tested_at), "MMM d");
-      if (dailyTests[d] !== undefined) {
-        dailyTests[d].count++;
-        if (t.status === "valid") dailyTests[d].valid++;
-        if (t.status === "invalid") dailyTests[d].invalid++;
-      }
+    const dayKeys = Array.from({ length: 30 }, (_, index) => {
+      const date = subDays(now, 29 - index);
+      return { key: format(date, "yyyy-MM-dd"), label: format(date, "MMM d") };
     });
-    const lineData = Object.entries(dailyTests).map(([name, data]) => ({
-      name,
-      count: data.count,
-      valid: data.valid,
-      invalid: data.invalid,
-    }));
+    const dailyTests = new Map<string, { count: number; valid: number; invalid: number }>();
+    dayKeys.forEach(({ key }) => dailyTests.set(key, { count: 0, valid: 0, invalid: 0 }));
+    tests.forEach((test) => {
+      const key = format(new Date(test.tested_at), "yyyy-MM-dd");
+      const bucket = dailyTests.get(key);
+      if (!bucket) return;
+      bucket.count += 1;
+      if (test.status === "valid") bucket.valid += 1;
+      if (test.status === "invalid") bucket.invalid += 1;
+    });
+    const lineData = dayKeys.map(({ key, label }) => {
+      const bucket = dailyTests.get(key) ?? { count: 0, valid: 0, invalid: 0 };
+      return { name: label, ...bucket };
+    });
 
-    const dailyLatency: Record<string, number[]> = {};
-    for (let i = 29; i >= 0; i--) {
-      const d = format(subDays(new Date(), i), "MMM d");
-      dailyLatency[d] = [];
-    }
-    tests.forEach((t) => {
-      if (t.latency_ms !== null) {
-        const d = format(new Date(t.tested_at), "MMM d");
-        if (dailyLatency[d] !== undefined) dailyLatency[d].push(t.latency_ms);
-      }
+    const dailyLatency = new Map<string, number[]>();
+    dayKeys.forEach(({ key }) => dailyLatency.set(key, []));
+    tests.forEach((test) => {
+      if (test.latency_ms === null) return;
+      const key = format(new Date(test.tested_at), "yyyy-MM-dd");
+      dailyLatency.get(key)?.push(test.latency_ms);
     });
-    const latencyTrendData = Object.entries(dailyLatency).map(([name, vals]) => ({
-      name,
-      avg: vals.length ? Math.round(vals.reduce((s, v) => s + v, 0) / vals.length) : null,
-    }));
+    const latencyTrendData = dayKeys.map(({ key, label }) => {
+      const values = dailyLatency.get(key) ?? [];
+      return { name: label, avg: values.length ? Math.round(values.reduce((sum, value) => sum + value, 0) / values.length) : null };
+    });
 
     const pieData = Object.entries(providerCounts).map(([id, value]) => ({
-      name: PROVIDERS.find((p) => p.id === id)?.name || id,
+      name: PROVIDERS.find((provider) => provider.id === id)?.name ?? id,
       value,
     }));
 
     const healthDist = [
-      { range: "80-100", count: tests.filter((t) => (t.health_score ?? 0) >= 80).length, color: CHART_COLORS.green },
-      { range: "50-79", count: tests.filter((t) => (t.health_score ?? 0) >= 50 && (t.health_score ?? 0) < 80).length, color: CHART_COLORS.amber },
-      { range: "0-49", count: tests.filter((t) => (t.health_score ?? 0) < 50 && t.health_score !== null).length, color: CHART_COLORS.red },
+      { range: "80-100", count: tests.filter((test) => (test.health_score ?? 0) >= 80).length, color: CHART_COLORS.green },
+      { range: "50-79", count: tests.filter((test) => (test.health_score ?? 0) >= 50 && (test.health_score ?? 0) < 80).length, color: CHART_COLORS.amber },
+      { range: "0-49", count: tests.filter((test) => test.health_score !== null && (test.health_score ?? 0) < 50).length, color: CHART_COLORS.red },
     ];
 
     const statusBreakdown = [
@@ -196,49 +213,47 @@ export function useAnalytics(): { analytics: AnalyticsResult | null; loading: bo
       { name: "Invalid", value: invalidTests, color: CHART_COLORS.red },
     ];
 
-    const providerUptime = Object.entries(
-      tests.reduce<Record<string, { total: number; valid: number }>>((acc, t) => {
-        if (!acc[t.provider]) acc[t.provider] = { total: 0, valid: 0 };
-        const existing = acc[t.provider] || { total: 0, valid: 0 };
-        existing.total++;
-        if (t.status === "valid") existing.valid++;
-        acc[t.provider] = existing;
-        return acc;
-      }, {})
-    )
-      .map(([id, { total, valid }]) => ({
-        name: PROVIDERS.find((p) => p.id === id)?.name || id,
-        uptime: Math.round((valid / total) * 100),
-        total,
+    const providerTotals = new Map<string, { total: number; valid: number }>();
+    tests.forEach((test) => {
+      const current = providerTotals.get(test.provider) ?? { total: 0, valid: 0 };
+      current.total += 1;
+      if (test.status === "valid") current.valid += 1;
+      providerTotals.set(test.provider, current);
+    });
+    const providerUptime = Array.from(providerTotals.entries())
+      .map(([id, value]) => ({
+        name: PROVIDERS.find((provider) => provider.id === id)?.name ?? id,
+        uptime: Math.round((value.valid / value.total) * 100),
+        total: value.total,
       }))
       .sort((a, b) => b.total - a.total);
 
-    const staleThreshold = 7;
-    const staleProviders = providerUptime.filter((p) => {
-      const providerTests = tests.filter((t) => PROVIDERS.find((pr) => pr.id === t.provider)?.name === p.name || t.provider === p.name);
-      if (!providerTests.length) return false;
-      const firstTest = providerTests[0];
-      if (!firstTest?.tested_at) return false;
-      const lastTest = new Date(firstTest.tested_at);
-      return differenceInDays(now, lastTest) > staleThreshold;
+    const latestByProvider = new Map<string, string>();
+    tests.forEach((test) => {
+      const current = latestByProvider.get(test.provider);
+      if (!current || new Date(test.tested_at) > new Date(current)) latestByProvider.set(test.provider, test.tested_at);
     });
 
-    const dailyCounts: number[] = [];
-    const dailyLatencyArr: number[] = [];
-    const dailyHealthArr: number[] = [];
-    for (let i = 13; i >= 0; i--) {
-      const d = format(subDays(now, i), "yyyy-MM-dd");
-      const dayTests = tests.filter((t) => format(new Date(t.tested_at), "yyyy-MM-dd") === d);
-      dailyCounts.push(dayTests.length);
-      const lat = dayTests.filter((t) => t.latency_ms !== null);
-      dailyLatencyArr.push(
-        lat.length ? Math.round(lat.reduce((s, t) => s + (t.latency_ms || 0), 0) / lat.length) : 0
-      );
-      const hl = dayTests.filter((t) => t.health_score !== null);
-      dailyHealthArr.push(
-        hl.length ? Math.round(hl.reduce((s, t) => s + (t.health_score || 0), 0) / hl.length) : 0
-      );
-    }
+    // Built from the provider id directly. It previously recovered the id by
+    // matching the already display-named entry back through PROVIDERS, which
+    // was a lossy inverse of the mapping above, silently ambiguous if two
+    // providers ever shared a display name, and quadratic in the provider count.
+    const staleProviders = Array.from(latestByProvider.entries())
+      .map(([id, latest]) => ({
+        id,
+        name: PROVIDERS.find((provider) => provider.id === id)?.name ?? id,
+        daysSinceLastTest: differenceInDays(now, new Date(latest)),
+      }))
+      .filter((entry) => entry.daysSinceLastTest > 7)
+      .map((entry) => {
+        const totals = providerTotals.get(entry.id);
+        return {
+          name: entry.name,
+          uptime: totals ? Math.round((totals.valid / totals.total) * 100) : 0,
+          total: totals?.total ?? 0,
+        };
+      })
+      .sort((a, b) => b.total - a.total);
 
     return {
       totalTests,
@@ -259,11 +274,8 @@ export function useAnalytics(): { analytics: AnalyticsResult | null; loading: bo
       statusBreakdown,
       providerUptime,
       staleProviders,
-      dailyCounts,
-      dailyLatency: dailyLatencyArr,
-      dailyHealth: dailyHealthArr,
     };
   }, [tests]);
 
-  return { analytics, loading, refresh };
+  return { analytics, loading, error, refresh };
 }

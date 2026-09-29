@@ -14,6 +14,9 @@ const DEFAULT_MAX_RETRIES = 2;
 const DEFAULT_BASE_DELAY_MS = 300;
 const DEFAULT_MAX_DELAY_MS = 5_000;
 const MAX_RETRY_AFTER_MS = 10_000;
+const MAX_ALLOWED_RETRIES = 3;
+const MAX_ALLOWED_TIMEOUT_MS = 30_000;
+const MAX_ALLOWED_DELAY_MS = 10_000;
 
 const IDEMPOTENT_METHODS = new Set(["GET", "HEAD", "OPTIONS", "DELETE"]);
 
@@ -29,10 +32,13 @@ function isAbortError(err: unknown): boolean {
 export { isAbortError };
 
 export function isRetryableHttpStatus(status: number): boolean {
-  return status === 429 || status >= 500;
+  return status === 429 || (status >= 500 && status <= 599);
 }
 
-export function parseRetryAfter(header: string | null, now: number): number | null {
+export function parseRetryAfter(
+  header: string | null,
+  now: number,
+): number | null {
   if (!header) return null;
   const value = header.trim();
   if (!value) return null;
@@ -50,11 +56,18 @@ export function parseRetryAfter(header: string | null, now: number): number | nu
   return null;
 }
 
-export function backoffDelay(attempt: number, baseDelayMs: number, maxDelayMs: number): number {
+export function backoffDelay(
+  attempt: number,
+  baseDelayMs: number,
+  maxDelayMs: number,
+): number {
   return Math.min(baseDelayMs * 2 ** attempt, maxDelayMs);
 }
 
-export function jitteredDelay(delayMs: number, random: () => number = Math.random): number {
+export function jitteredDelay(
+  delayMs: number,
+  random: () => number = Math.random,
+): number {
   if (delayMs <= 1) return 0;
   return Math.floor(random() * delayMs);
 }
@@ -86,8 +99,9 @@ function retryDelayMs(
  *
  * - Retries HTTP 429 (respecting `Retry-After`, capped) and 5xx responses,
  *   but only for idempotent methods (GET/HEAD/OPTIONS/DELETE).
- * - Retries network errors and timeouts for any method, since the request
- *   may never have reached the provider.
+ * - Retries network errors and timeouts only for idempotent methods. A
+ *   non-idempotent request is never replayed because the caller cannot know
+ *   whether the first attempt reached the provider.
  * - Uses exponential backoff with jitter and a small maximum retry count.
  * - On timeout throws an "AbortError"-named error; on network failure throws
  *   the underlying fetch error; on exhausted HTTP retries returns the last
@@ -98,10 +112,22 @@ export async function fetchWithRetry(
   init: RequestInit = {},
   options: FetchRetryOptions = {},
 ): Promise<Response> {
-  const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-  const maxRetries = options.maxRetries ?? DEFAULT_MAX_RETRIES;
-  const baseDelayMs = options.baseDelayMs ?? DEFAULT_BASE_DELAY_MS;
-  const maxDelayMs = options.maxDelayMs ?? DEFAULT_MAX_DELAY_MS;
+  const requestedTimeout = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const requestedRetries = options.maxRetries ?? DEFAULT_MAX_RETRIES;
+  const requestedBaseDelay = options.baseDelayMs ?? DEFAULT_BASE_DELAY_MS;
+  const requestedMaxDelay = options.maxDelayMs ?? DEFAULT_MAX_DELAY_MS;
+  const timeoutMs = Number.isFinite(requestedTimeout)
+    ? Math.max(1, Math.min(requestedTimeout, MAX_ALLOWED_TIMEOUT_MS))
+    : DEFAULT_TIMEOUT_MS;
+  const maxRetries = Number.isFinite(requestedRetries)
+    ? Math.max(0, Math.min(Math.floor(requestedRetries), MAX_ALLOWED_RETRIES))
+    : DEFAULT_MAX_RETRIES;
+  const baseDelayMs = Number.isFinite(requestedBaseDelay)
+    ? Math.max(0, Math.min(requestedBaseDelay, MAX_ALLOWED_DELAY_MS))
+    : DEFAULT_BASE_DELAY_MS;
+  const maxDelayMs = Number.isFinite(requestedMaxDelay)
+    ? Math.max(baseDelayMs, Math.min(requestedMaxDelay, MAX_ALLOWED_DELAY_MS))
+    : DEFAULT_MAX_DELAY_MS;
   const onRetry = options.onRetry;
 
   const method = (init.method ?? "GET").toUpperCase();
@@ -123,7 +149,10 @@ export async function fetchWithRetry(
     try {
       const response = await fetch(url, { ...init, signal: controller.signal });
 
-      if (idempotent && isRetryableHttpStatus(response.status) && attempt < maxRetries) {
+      if (
+        idempotent && isRetryableHttpStatus(response.status) &&
+        attempt < maxRetries
+      ) {
         const delayMs = retryDelayMs(
           response.status,
           response.headers.get("retry-after"),
@@ -133,6 +162,11 @@ export async function fetchWithRetry(
           Date.now(),
         );
         onRetry?.(attempt + 1, `HTTP ${response.status}`);
+        try {
+          await response.body?.cancel();
+        } catch {
+          // The response is being discarded before a bounded retry.
+        }
         await sleep(delayMs);
         continue;
       }
@@ -141,8 +175,10 @@ export async function fetchWithRetry(
     } catch (err) {
       if (init.signal?.aborted) throw err;
       lastError = err;
-      if (attempt < maxRetries) {
-        const delayMs = jitteredDelay(backoffDelay(attempt, baseDelayMs, maxDelayMs));
+      if (idempotent && attempt < maxRetries) {
+        const delayMs = jitteredDelay(
+          backoffDelay(attempt, baseDelayMs, maxDelayMs),
+        );
         onRetry?.(attempt + 1, isAbortError(err) ? "timeout" : "network error");
         await sleep(delayMs);
         continue;

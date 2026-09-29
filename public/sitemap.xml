@@ -1,23 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://keyping.app/</loc>
+    <loc>https://key-ping.vercel.app/</loc>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://keyping.app/auth</loc>
+    <loc>https://key-ping.vercel.app/auth</loc>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://keyping.app/privacy</loc>
-    <priority>0.4</priority>
+    <loc>https://key-ping.vercel.app/privacy</loc>
+    <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://keyping.app/terms</loc>
-    <priority>0.4</priority>
-  </url>
-  <url>
-    <loc>https://keyping.app/dashboard/docs</loc>
-    <priority>0.5</priority>
+    <loc>https://key-ping.vercel.app/terms</loc>
+    <priority>0.3</priority>
   </url>
 </urlset>

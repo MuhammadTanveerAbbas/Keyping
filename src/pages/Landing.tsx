@@ -1,274 +1,777 @@
-import { useAuth } from "@/lib/auth";
+import { useEffect, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion, MotionConfig, useInView } from "framer-motion";
 import {
-  Key, Shield, Zap, ArrowRight, Lock, Clock, BarChart3, ChevronRight,
-  CheckCircle2, TrendingUp, Activity, AlertTriangle,
-  EyeOff, Server, TerminalSquare,
-  Sparkles, Code2, BarChart4, Tag, LayoutDashboard,
+  Activity,
+  AlertTriangle,
+  ArrowRight,
+  BarChart3,
+  Check,
+  CheckCircle2,
+  ChevronRight,
+  Clock3,
+  EyeOff,
+  FileDown,
+  Gauge,
+  Globe2,
+  History,
+  KeyRound,
+  Layers3,
+  Loader2,
+  Lock,
+  LockKeyhole,
+  Menu,
+  Radio,
+  ServerCog,
+  ShieldCheck,
+  Sparkles,
+  Timer,
+  TrendingUp,
+  X,
+  Zap,
+  GitBranch,
+  Wifi,
+  BarChart2,
+  RefreshCw,
+  User,
+  Calendar,
 } from "lucide-react";
-import { useEffect, useState, useRef } from "react";
-import { PROVIDERS } from "@/lib/providers";
-import { motion, useInView } from "framer-motion";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { KeyPingLogo } from "@/components/KeyPingLogo";
+import type { LucideIcon } from "lucide-react";
+import { useAuth } from "@/lib/auth";
+import { PROVIDERS, type ValidationCheck } from "@/lib/providers";
 import { BRAND_ICONS } from "@/components/BrandIcons";
 import { Footer } from "@/components/Footer";
-import type { LucideIcon } from "lucide-react";
+import { KeyPingLogo } from "@/components/KeyPingLogo";
+import { cn } from "@/lib/utils";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
-const NAV_LINKS: { label: string; href: string; icon: LucideIcon }[] = [
-  { label: "Features", href: "#features", icon: LayoutDashboard },
-  { label: "Providers", href: "#providers", icon: Code2 },
-  { label: "Analytics", href: "#analytics", icon: BarChart4 },
-  { label: "Pricing", href: "#pricing", icon: Tag },
-];
+const NAV_LINKS = [
+  { label: "Features", href: "#features" },
+  { label: "Health", href: "#health" },
+  { label: "Analytics", href: "#analytics" },
+  { label: "Providers", href: "#providers" },
+  { label: "Security", href: "#security" },
+] as const;
 
-const HERO_TERMINAL = {
-  cmd: "$ keyping test sk-proj-abc123...",
-  outputs: [
-    { text: "▶ Provider detected: OpenAI", color: "text-cyan-400", bold: true },
-    { text: "  ✓ Status: Valid", color: "text-emerald-400", bold: false },
-    { text: "  ✓ Rate limit: 90,000 TPM remaining", color: "text-slate-300", bold: false },
-    { text: "  ✓ Scopes: chat, embeddings, fine-tuning", color: "text-slate-300", bold: false },
-    { text: "  ✓ Health Score: 94/100", color: "text-emerald-400", bold: true, icon: true },
-  ],
+const ACTIVE_BRANDED_PROVIDERS = PROVIDERS.filter(
+  (provider) => provider.availability === "active" && BRAND_ICONS[provider.id],
+);
+
+const SUPPORTED_BRANDED_PROVIDERS = PROVIDERS.filter(
+  (provider) =>
+    BRAND_ICONS[provider.id] &&
+    (provider.availability === "active" ||
+      (provider.availability === "limited" && provider.validationKind === "legacy-api")),
+);
+
+const UNAVAILABLE_PROVIDERS = PROVIDERS.filter(
+  (provider) => provider.availability === "planned" || provider.validationKind === "unsupported",
+);
+
+const CHECK_LABELS: Record<ValidationCheck, string> = {
+  status: "Status",
+  rateLimit: "Rate limit*",
+  scopes: "Scopes*",
+  docs: "Docs",
+  responseTime: "Latency",
+  healthScore: "Health score",
 };
 
-function HeroTerminal() {
-  const [charIdx, setCharIdx] = useState(0);
-  const [showOutputs, setShowOutputs] = useState(false);
-  const [outputIdx, setOutputIdx] = useState(0);
-  const cmd = HERO_TERMINAL.cmd;
-
-  useEffect(() => {
-    if (charIdx < cmd.length) {
-      const t = setTimeout(() => setCharIdx(c => c + 1), 35);
-      return () => clearTimeout(t);
-    }
-    const t = setTimeout(() => setShowOutputs(true), 400);
-    return () => clearTimeout(t);
-  }, [charIdx, cmd.length]);
-
-  useEffect(() => {
-    if (!showOutputs) return;
-    if (outputIdx < HERO_TERMINAL.outputs.length) {
-      const t = setTimeout(() => setOutputIdx(i => i + 1), 280);
-      return () => clearTimeout(t);
-    }
-    const t = setTimeout(() => {
-      setCharIdx(0); setShowOutputs(false); setOutputIdx(0);
-    }, 4000);
-    return () => clearTimeout(t);
-  }, [showOutputs, outputIdx]);
-
+function ProviderMark({ provider, className }: { provider: string; className?: string }) {
+  const BrandIcon = BRAND_ICONS[provider];
+  if (!BrandIcon) return <ServerCog className={className} aria-hidden="true" />;
   return (
-    <div className="relative w-full max-w-2xl mx-auto">
-      <div className="absolute -inset-4 bg-blue-500/10 rounded-3xl blur-3xl opacity-60" />
-      <div className="relative bg-[#0c0c14] border border-slate-700/60 rounded-2xl overflow-hidden shadow-[0_0_60px_rgba(59,130,246,0.15),0_8px_32px_rgba(0,0,0,0.4)]">
-        <div className="bg-gradient-to-b from-[#12121c] to-[#0f0f18] border-b border-slate-700/40 px-4 py-2.5 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-[#ff5f57] hover:bg-[#ff5f57]/80 transition-colors cursor-pointer shadow-[0_0_4px_rgba(255,95,87,0.4)]" />
-            <span className="w-3 h-3 rounded-full bg-[#febc2e] hover:bg-[#febc2e]/80 transition-colors cursor-pointer shadow-[0_0_4px_rgba(254,188,46,0.4)]" />
-            <span className="w-3 h-3 rounded-full bg-[#28c840] hover:bg-[#28c840]/80 transition-colors cursor-pointer shadow-[0_0_4px_rgba(40,200,64,0.4)]" />
-          </div>
-          <div className="flex items-center gap-1.5 text-slate-500">
-            <TerminalSquare className="h-3 w-3" />
-            <span className="font-mono text-[11px] tracking-wide">keyping ~ bash</span>
-          </div>
-          <div className="w-16" />
-        </div>
-        <div className="p-5 font-mono text-[13px] leading-relaxed min-h-[200px] bg-[#0c0c14]">
-          <div className="flex items-start">
-            <span className="text-emerald-400 mr-2 select-none">❯</span>
-            <span className="text-slate-200">{cmd.slice(0, charIdx)}</span>
-            {charIdx < cmd.length && (
-              <span className="inline-block w-[7px] h-[16px] bg-blue-400 animate-pulse ml-0.5 rounded-[1px]" />
-            )}
-          </div>
-          {showOutputs && (
-            <div className="mt-3 space-y-1">
-              {HERO_TERMINAL.outputs.slice(0, outputIdx).map((line, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, x: -6 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.25, ease: "easeOut" }}
-                  className={`${line.color} ${line.bold ? 'font-semibold' : ''} flex items-center gap-2`}
-                >
-                  <span>{line.text}</span>
-                  {line.icon && <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />}
-                </motion.div>
-              ))}
-            </div>
-          )}
-          {outputIdx === HERO_TERMINAL.outputs.length && showOutputs && (
-            <div className="flex items-center mt-3">
-              <span className="text-emerald-400 mr-2 select-none">❯</span>
-              <span className="inline-block w-[7px] h-[16px] bg-slate-400/60 terminal-cursor rounded-[1px]" />
-            </div>
-          )}
-        </div>
-        <div className="border-t border-slate-700/30 px-4 py-1.5 flex items-center justify-between bg-[#0a0a12]">
-          <span className="font-mono text-[10px] text-slate-600">utf-8</span>
-          <span className="font-mono text-[10px] text-slate-600">Ln 1, Col 1</span>
-          <span className="font-mono text-[10px] text-blue-400/60">● connected</span>
-        </div>
-      </div>
+    <span className="inline-flex" aria-hidden="true">
+      <BrandIcon className={className} />
+    </span>
+  );
+}
+
+function HeroProviderCluster() {
+  return (
+    <div className="relative mx-auto mt-10 flex max-w-3xl flex-wrap items-center justify-center gap-2.5 sm:mt-12 sm:gap-3" aria-label="Supported provider brands">
+      {ACTIVE_BRANDED_PROVIDERS.slice(0, 8).map((provider, index) => {
+        const BrandIcon = BRAND_ICONS[provider.id];
+        if (!BrandIcon) return null;
+        return (
+          <motion.div
+            key={provider.id}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: [0, -4, 0] }}
+            transition={{
+              opacity: { duration: 0.35, delay: 0.08 * index },
+              y: { duration: 5.4 + index * 0.22, delay: 0.08 * index, repeat: Infinity, ease: "easeInOut" },
+            }}
+            className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200/90 bg-white/90 shadow-[0_8px_24px_rgba(15,23,42,0.07)] backdrop-blur-sm sm:h-12 sm:w-12 sm:rounded-2xl"
+            style={{ color: provider.icon.brandColor, backgroundColor: provider.icon.backgroundColor }}
+            title={provider.name}
+          >
+            <BrandIcon className="h-5 w-5 sm:h-6 sm:w-6" />
+          </motion.div>
+        );
+      })}
     </div>
   );
 }
 
-const WHY_CARDS = [
-  {
-    icon: Clock,
-    problem: "Wasted hours debugging",
-    solution: "You paste a key, get a result in under 2 seconds. No more guessing if the key is the problem.",
-  },
-  {
-    icon: AlertTriangle,
-    problem: "Keys expiring silently in prod",
-    solution: "Set expiry reminders and get alerts before your app breaks.",
-  },
-  {
-    icon: Shield,
-    problem: "Not knowing what a key can do",
-    solution: "See the exact scopes and permissions attached to any key before you ship.",
-  },
-  {
-    icon: BarChart3,
-    problem: "Hitting rate limits unexpectedly",
-    solution: "Check remaining quota and rate limit windows before they become incidents.",
-  },
-  {
-    icon: Key,
-    problem: "Managing keys across environments",
-    solution: "Bulk test dev, staging, and prod keys in one go. Spot the broken one instantly.",
-  },
-  {
-    icon: Lock,
-    problem: "Worried about key exposure",
-    solution: "Full keys are never stored. Tested at the edge and discarded. Only the last 4 chars are saved.",
-  },
-];
+function LiveMetricIcon({ icon: Icon, tone, className }: { icon: LucideIcon; tone: "blue" | "emerald" | "violet" | "amber"; className?: string }) {
+  const tones = {
+    blue: "from-blue-500 to-blue-700 text-white shadow-blue-500/30",
+    emerald: "from-emerald-400 to-emerald-600 text-white shadow-emerald-500/30",
+    violet: "from-violet-500 to-indigo-700 text-white shadow-violet-500/30",
+    amber: "from-amber-400 to-orange-600 text-white shadow-amber-500/30",
+  }[tone];
+  return (
+    <span className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br shadow-[0_8px_16px_var(--tw-shadow-color),inset_0_1px_0_rgba(255,255,255,0.28)] ring-1 ring-black/5", tones, className)}>
+      <Icon className="h-4 w-4" strokeWidth={2.25} aria-hidden="true" />
+    </span>
+  );
+}
 
-const PRICING = [
-  {
-    name: "Free", price: "$0", period: "/mo",
-    features: ["API key validation", "All supported providers", "Test history & stats", "Google sign-in"],
-    cta: "Get Started", ctaVariant: "outline" as const, popular: false, locked: false,
-  },
-  {
-    name: "Pro", price: "$12", period: "/mo",
-    features: ["Higher usage limits", "Expiry alerts", "Bulk testing", "Export reports"],
-    cta: "Available Soon", ctaVariant: "solid" as const, popular: true, locked: true,
-  },
-  {
-    name: "Team", price: "$39", period: "/mo",
-    features: ["Everything in Pro", "Team workspaces", "Shared results", "Priority support"],
-    cta: "Coming Soon", ctaVariant: "outline" as const, popular: false, locked: true,
-  },
-];
-
-const HEALTH_FACTORS = [
-  { label: "Validity", score: 100, icon: CheckCircle2, color: "#10B981", desc: "Key is active and recognized" },
-  { label: "Rate Limit", score: 85, icon: Zap, color: "#3B82F6", desc: "90,000 TPM remaining" },
-  { label: "Scopes", score: 90, icon: Shield, color: "#8B5CF6", desc: "chat, embeddings, fine-tuning" },
-  { label: "Latency", score: 95, icon: Activity, color: "#06B6D4", desc: "142ms avg response" },
-];
-
-function HealthScoreSection() {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-80px" });
-  const overallScore = Math.round(HEALTH_FACTORS.reduce((s, f) => s + f.score, 0) / HEALTH_FACTORS.length);
+function HeroResultPreview() {
+  const scoreRef = useRef<HTMLDivElement>(null);
+  const scoreInView = useInView(scoreRef, { once: true, margin: "-80px" });
+  const radius = 42;
+  const circumference = 2 * Math.PI * radius;
+  const score = 100;
+  const offset = circumference * (1 - score / 100);
+  const LATENCY_SPARK = [98, 112, 89, 134, 107, 121, 108, 142, 118, 131, 124, 142];
+  const sparkMax = 160;
+  const sparkW = 120;
+  const sparkH = 44;
 
   return (
-    <section className="py-20 sm:py-28 px-4 sm:px-6 overflow-hidden bg-slate-50/50">
-      <div className="max-w-6xl mx-auto">
-        <motion.div className="text-center mb-14 sm:mb-16" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}>
-          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50/80 border border-emerald-200/50 text-xs text-emerald-600 font-medium mb-5">
-            <Activity className="h-3.5 w-3.5" /> Health Score
+    <motion.figure
+      initial={{ opacity: 0, y: 24, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.65, delay: 0.25, ease: EASE }}
+      className="relative mx-auto w-full max-w-[900px]"
+      aria-labelledby="result-preview-caption"
+    >
+      <div className="absolute -inset-6 rounded-[2.5rem] bg-gradient-to-br from-blue-400/15 via-indigo-400/8 to-emerald-400/12 blur-3xl" />
+      <div className="relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_32px_90px_rgba(15,23,42,0.14),0_2px_8px_rgba(15,23,42,0.05)] ring-1 ring-white/80">
+
+        {/* Browser chrome */}
+        <div className="flex items-center gap-3 border-b border-slate-200/80 bg-slate-50/90 px-4 py-3 sm:px-5">
+          <div className="flex h-4 items-center gap-1.5" aria-hidden="true">
+            <span className="h-2.5 w-2.5 rounded-full bg-red-400" />
+            <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
+            <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
+          </div>
+          <div className="flex min-w-0 flex-1 items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 shadow-sm">
+            <Lock className="h-3 w-3 shrink-0 text-emerald-600" aria-hidden="true" />
+            <span className="truncate font-mono text-[11px] text-slate-500">app.keyping.dev/live/validation</span>
+          </div>
+          <motion.span
+            animate={{ boxShadow: ["0 0 0 0 rgba(16,185,129,0)", "0 0 0 5px rgba(16,185,129,0.12)", "0 0 0 0 rgba(16,185,129,0)"] }}
+            transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 font-mono text-[11px] font-bold uppercase tracking-wider text-emerald-700"
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Live
+          </motion.span>
+        </div>
+
+        {/* Scanning progress bar */}
+        <div className="relative h-[3px] w-full overflow-hidden bg-slate-100">
+          <motion.div
+            aria-hidden="true"
+            animate={{ x: ["-100%", "100%"] }}
+            transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut", repeatDelay: 1.2 }}
+            className="absolute inset-y-0 w-1/2 bg-gradient-to-r from-transparent via-blue-500 to-transparent"
+          />
+        </div>
+        {/* Provider + status header */}
+        <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-4 sm:px-6">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-950 shadow-[0_8px_20px_rgba(15,23,42,0.10),inset_0_1px_0_rgba(255,255,255,0.9)]">
+              <ProviderMark provider="github" className="h-6 w-6" />
+            </span>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                <p className="text-sm font-bold text-slate-900">GitHub token</p>
+                <span className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-slate-500">Personal access</span>
+              </div>
+              <p className="mt-0.5 font-mono text-[11px] text-slate-400">ghp_xK9mP2qR...7A2F</p>
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="hidden items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 font-mono text-[11px] font-semibold text-slate-500 sm:inline-flex">
+              <RefreshCw className="h-3 w-3" aria-hidden="true" /> Just now
+            </span>
+            <motion.span
+              animate={{ y: [0, -2, 0] }}
+              transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-emerald-200 bg-gradient-to-b from-white to-emerald-50 px-3 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-wider text-emerald-700 shadow-[0_4px_12px_rgba(16,185,129,0.14)]"
+            >
+              <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" /> Valid
+            </motion.span>
+          </div>
+        </div>
+
+        {/* Main metrics grid */}
+        <div className="grid gap-4 p-4 sm:grid-cols-[140px_1fr] sm:p-5">
+
+          {/* Health ring */}
+          <div ref={scoreRef} className="flex flex-col items-center justify-center rounded-2xl border border-blue-100/80 bg-gradient-to-br from-blue-50/70 via-white to-emerald-50/50 p-4 text-center shadow-[0_8px_24px_rgba(37,99,235,0.07),inset_0_1px_0_rgba(255,255,255,0.9)]">
+            <div className="relative h-24 w-24 sm:h-28 sm:w-28">
+              <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90" aria-hidden="true">
+                <defs>
+                  <linearGradient id="hero-score-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#3B82F6" />
+                    <stop offset="100%" stopColor="#10B981" />
+                  </linearGradient>
+                </defs>
+                <circle cx="50" cy="50" r={radius} fill="none" stroke="#E2E8F0" strokeWidth="7" />
+                <motion.circle
+                  cx="50" cy="50" r={radius} fill="none"
+                  stroke="url(#hero-score-gradient)" strokeWidth="7" strokeLinecap="round"
+                  strokeDasharray={circumference}
+                  initial={{ strokeDashoffset: circumference }}
+                  animate={scoreInView ? { strokeDashoffset: offset } : {}}
+                  transition={{ duration: 1.1, delay: 0.25, ease: EASE }}
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-3xl font-extrabold tracking-tight text-slate-900">{score}</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Health</span>
+              </div>
+            </div>
+            <p className="mt-2 text-xs font-bold text-slate-700">100 / 100</p>
+            <p className="mt-0.5 text-[10px] leading-relaxed text-slate-400">Composite score</p>
+          </div>
+
+          {/* Right metrics */}
+          <div className="grid grid-cols-2 gap-3">
+
+            {/* Latency with sparkline */}
+            <div className="col-span-2 rounded-xl border border-slate-200/80 bg-white px-3.5 py-3 shadow-[0_4px_14px_rgba(15,23,42,0.05),inset_0_1px_0_rgba(255,255,255,0.9)] sm:col-span-1">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <dt className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    <LiveMetricIcon icon={Timer} tone="blue" className="h-6 w-6 rounded-md" /> Latency
+                  </dt>
+                  <dd className="mt-1.5 flex items-baseline gap-1">
+                    <span className="font-mono text-2xl font-extrabold text-slate-900">142</span>
+                    <span className="font-mono text-sm font-semibold text-slate-400">ms</span>
+                    <span className="ml-1 inline-flex items-center gap-0.5 rounded-full border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 font-mono text-[10px] font-bold text-emerald-700">
+                      <TrendingUp className="h-2.5 w-2.5" aria-hidden="true" /> Fast
+                    </span>
+                  </dd>
+                  <p className="mt-0.5 text-[10px] text-slate-400">p95 this session</p>
+                </div>
+                <svg viewBox={`0 0 ${sparkW} ${sparkH}`} className="h-11 w-28 shrink-0" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="spark-grad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.25" />
+                      <stop offset="100%" stopColor="#3B82F6" stopOpacity="0" />
+                    </linearGradient>
+                  </defs>
+                  {(() => {
+                    const pts = LATENCY_SPARK.map((v, i) => ({
+                      x: (i / (LATENCY_SPARK.length - 1)) * sparkW,
+                      y: 4 + (sparkH - 8) - ((v - 80) / (sparkMax - 80)) * (sparkH - 8),
+                    }));
+                    const linePath = pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
+                    const areaPath = `${linePath} L ${pts[pts.length - 1]!.x} ${sparkH} L 0 ${sparkH} Z`;
+                    return (
+                      <>
+                        <path d={areaPath} fill="url(#spark-grad)" />
+                        <path d={linePath} fill="none" stroke="#3B82F6" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+                        {pts.map((p, i) => i === pts.length - 1 ? (
+                          <circle key={i} cx={p.x} cy={p.y} r="3" fill="#3B82F6" stroke="white" strokeWidth="1.5" />
+                        ) : null)}
+                      </>
+                    );
+                  })()}
+                </svg>
+              </div>
+              <div className="mt-2.5 grid grid-cols-3 divide-x divide-slate-100 rounded-lg border border-slate-100 bg-slate-50/80">
+                {[{ label: "Min", val: "89 ms" }, { label: "Avg", val: "118 ms" }, { label: "Max", val: "142 ms" }].map((s) => (
+                  <div key={s.label} className="px-2 py-1.5 text-center">
+                    <p className="font-mono text-[11px] font-bold text-slate-700">{s.val}</p>
+                    <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">{s.label}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Rate limit */}
+            <div className="col-span-2 rounded-xl border border-slate-200/80 bg-white px-3.5 py-3 shadow-[0_4px_14px_rgba(15,23,42,0.05),inset_0_1px_0_rgba(255,255,255,0.9)] sm:col-span-1">
+              <dt className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                <LiveMetricIcon icon={Gauge} tone="violet" className="h-6 w-6 rounded-md" /> Rate limit
+              </dt>
+              <dd className="mt-1.5 font-mono text-xl font-extrabold text-slate-900">4,821 <span className="text-sm font-semibold text-slate-400">/ 5,000</span></dd>
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                <motion.div
+                  className="h-full rounded-full bg-gradient-to-r from-violet-500 to-indigo-500"
+                  initial={{ width: 0 }}
+                  animate={scoreInView ? { width: "96.4%" } : {}}
+                  transition={{ duration: 1, delay: 0.5, ease: EASE }}
+                />
+              </div>
+              <p className="mt-1 text-[10px] text-slate-400">96.4% remaining</p>
+            </div>
+
+            {/* Checks passed mini row */}
+            <div className="col-span-2 flex items-center gap-2 rounded-xl border border-emerald-100/80 bg-gradient-to-r from-emerald-50/60 to-white px-3.5 py-2.5 shadow-[0_2px_8px_rgba(16,185,129,0.06)]">
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" aria-hidden="true" />
+              <span className="text-[11px] font-semibold text-slate-700">All checks passed</span>
+              <div className="ml-auto flex items-center gap-1.5">
+                {["Status", "Scopes", "Rate limit", "Latency"].map((c) => (
+                  <span key={c} className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-white px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-700 shadow-sm">
+                    <Check className="h-2.5 w-2.5" aria-hidden="true" />{c}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Scopes */}
+            <div className="col-span-2 rounded-xl border border-slate-200/80 bg-white px-3.5 py-3 shadow-[0_4px_14px_rgba(15,23,42,0.05),inset_0_1px_0_rgba(255,255,255,0.9)]">
+              <div className="flex items-center justify-between gap-2">
+                <dt className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  <LiveMetricIcon icon={ShieldCheck} tone="emerald" className="h-6 w-6 rounded-md" /> Returned scopes
+                </dt>
+                <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 font-mono text-[10px] font-semibold text-slate-500">5 granted</span>
+              </div>
+              <dd className="mt-2.5 space-y-2">
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    { label: "read:user", level: "read", icon: User },
+                    { label: "user:email", level: "read", icon: User },
+                    { label: "repo", level: "write", icon: GitBranch },
+                    { label: "repo:status", level: "read", icon: GitBranch },
+                    { label: "gist", level: "write", icon: Lock },
+                  ].map((scope) => {
+                    const ScopeIcon = scope.icon;
+                    return (
+                      <span key={scope.label} className={cn(
+                        "inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 font-mono text-[11px] font-semibold shadow-[0_2px_6px_rgba(15,23,42,0.04),inset_0_1px_0_rgba(255,255,255,0.9)]",
+                        scope.level === "write"
+                          ? "border-amber-200/80 bg-gradient-to-b from-amber-50 to-orange-50/60 text-amber-700"
+                          : "border-blue-100/80 bg-gradient-to-b from-blue-50 to-indigo-50/60 text-blue-700"
+                      )}>
+                        <ScopeIcon className={cn("h-3 w-3", scope.level === "write" ? "text-amber-500" : "text-blue-500")} aria-hidden="true" />
+                        {scope.label}
+                        <span className={cn(
+                          "rounded-sm px-1 py-px text-[9px] font-bold uppercase tracking-wide",
+                          scope.level === "write" ? "bg-amber-100 text-amber-600" : "bg-blue-100 text-blue-600"
+                        )}>{scope.level}</span>
+                      </span>
+                    );
+                  })}
+                </div>
+                <div className="flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50/70 px-2.5 py-2">
+                  <span className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-500">
+                    <span className="h-2 w-2 rounded-full bg-blue-400" /> 3 read
+                  </span>
+                  <span className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-500">
+                    <span className="h-2 w-2 rounded-full bg-amber-400" /> 2 write
+                  </span>
+                  <span className="ml-auto text-[10px] font-semibold text-slate-400">via OAuth token</span>
+                </div>
+              </dd>
+            </div>
+          </div>
+        </div>
+
+        {/* Request timeline */}
+        <div className="border-t border-slate-100 px-4 py-3 sm:px-5">
+          <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">Request timeline</p>
+          <div className="flex items-center gap-0">
+            {[
+              { label: "DNS", ms: 8, color: "bg-blue-400" },
+              { label: "TLS", ms: 22, color: "bg-indigo-400" },
+              { label: "TTFB", ms: 67, color: "bg-violet-500" },
+              { label: "Read", ms: 45, color: "bg-emerald-400" },
+            ].map((seg, i) => (
+              <div key={seg.label} className="flex flex-1 flex-col items-center gap-1">
+                <motion.div
+                  className={cn("h-2 w-full", seg.color, i === 0 && "rounded-l-full", i === 3 && "rounded-r-full")}
+                  initial={{ scaleX: 0, originX: 0 }}
+                  animate={scoreInView ? { scaleX: 1 } : {}}
+                  transition={{ duration: 0.4, delay: 0.6 + i * 0.1, ease: EASE }}
+                />
+                <span className="font-mono text-[9px] font-semibold text-slate-400">{seg.label} {seg.ms}ms</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Token metadata row */}
+        <div className="flex flex-wrap items-center gap-3 border-t border-slate-100 bg-slate-50/60 px-4 py-3 sm:px-5">
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
+            <User className="h-3 w-3 text-slate-400" aria-hidden="true" /> User
           </span>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 leading-tight mb-4">
-            One score that tells<br /><span className="text-blue-600">the whole story.</span>
-          </h2>
-          <p className="text-slate-500 max-w-xl mx-auto leading-relaxed">
-            Every key gets a 0–100 health score based on validity, rate limits, permissions, and response latency.
-          </p>
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
+            <GitBranch className="h-3 w-3 text-slate-400" aria-hidden="true" /> github.com API v3
+          </span>
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
+            <Calendar className="h-3 w-3 text-slate-400" aria-hidden="true" /> Expires never
+          </span>
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
+            <Wifi className="h-3 w-3 text-emerald-500" aria-hidden="true" /> Provider up
+          </span>
+        </div>
+
+        {/* Footer */}
+        <motion.div
+          animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+          className="flex flex-col gap-2 border-t border-slate-100 bg-[linear-gradient(100deg,#f8fafc_20%,#ecfdf5_50%,#f8fafc_80%)] bg-[length:200%_100%] px-5 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6"
+        >
+          <span className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600">
+            <LiveMetricIcon icon={Check} tone="emerald" className="h-6 w-6 rounded-md" /> Provider request accepted
+          </span>
+          <figcaption id="result-preview-caption" className="font-mono text-[10px] uppercase tracking-wider text-slate-400">
+            Live example result
+          </figcaption>
         </motion.div>
 
-        <div ref={ref} className="max-w-3xl mx-auto">
-          <div className="relative">
-            <div className="absolute -inset-3 bg-gradient-to-r from-blue-500/10 via-emerald-500/10 to-blue-500/10 rounded-3xl blur-2xl opacity-50" />
-            <div className="relative bg-white border border-slate-200/80 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.06)] overflow-hidden">
-              <div className="px-5 sm:px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800">Key Health Report</p>
-                    <p className="text-[11px] text-slate-400">sk-proj-abc123...xyz</p>
+      </div>
+    </motion.figure>
+  );
+}
+
+function ValidatorLoop() {
+  const providers = SUPPORTED_BRANDED_PROVIDERS;
+  return (
+    <div className="relative mt-8 overflow-hidden py-2" aria-label="Supported provider validators">
+      <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-white to-transparent sm:w-28" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-white to-transparent sm:w-28" />
+      <motion.div
+        animate={{ x: ["0%", "-50%"] }}
+        transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+        className="flex w-max items-stretch gap-3 hover:[animation-play-state:paused]"
+      >
+        {[0, 1].map((group) => (
+          <div key={group} className="flex shrink-0 gap-3" aria-hidden={group === 1}>
+            {providers.map((provider) => {
+              const BrandIcon = BRAND_ICONS[provider.id];
+              if (!BrandIcon) return null;
+              const isLimited = provider.availability === "limited";
+              return (
+                <div key={`${group}-${provider.id}`} className="flex w-52 items-center gap-3 rounded-2xl border border-slate-200/90 bg-white/95 p-3 shadow-[0_10px_30px_rgba(15,23,42,0.07),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur">
+                  <span
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl shadow-[0_8px_18px_rgba(15,23,42,0.14),inset_0_1px_0_rgba(255,255,255,0.3)] ring-1 ring-black/5"
+                    style={{ color: provider.icon.brandColor, backgroundColor: provider.icon.backgroundColor }}
+                  >
+                    <BrandIcon className="h-6 w-6" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-bold text-slate-800">{provider.name}</span>
+                    <span className="mt-0.5 flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
+                      <span className={cn("h-1.5 w-1.5 rounded-full", isLimited ? "bg-amber-500" : "bg-emerald-500")} />
+                      {isLimited ? "Limited" : "Active"}
+                    </span>
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </motion.div>
+    </div>
+  );
+}
+
+type SectionHeadingProps = {
+  id: string;
+  eyebrow: string;
+  title: ReactNode;
+  description: string;
+  icon: LucideIcon;
+  align?: "center" | "left";
+};
+
+function SectionHeading({
+  id,
+  eyebrow,
+  title,
+  description,
+  icon: Icon,
+  align = "center",
+}: SectionHeadingProps) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 18 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-80px" }}
+      transition={{ duration: 0.5, ease: EASE }}
+      className={`mb-12 sm:mb-16 ${align === "center" ? "mx-auto max-w-3xl text-center" : "max-w-2xl"}`}
+    >
+      <span className="mb-5 inline-flex items-center gap-2.5 rounded-full border border-blue-200/70 bg-gradient-to-b from-white to-blue-50 px-2 py-1.5 pr-4 text-xs font-bold text-blue-700 shadow-[0_8px_20px_rgba(37,99,235,0.10),inset_0_1px_0_rgba(255,255,255,0.9)]">
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-[0_5px_12px_rgba(37,99,235,0.28),inset_0_1px_0_rgba(255,255,255,0.28)] ring-1 ring-blue-900/10">
+          <Icon className="h-3.5 w-3.5" strokeWidth={2.25} aria-hidden="true" />
+        </span>
+        {eyebrow}
+      </span>
+      <h2 id={id} className="text-balance text-3xl font-extrabold leading-tight tracking-tight text-slate-950 sm:text-4xl lg:text-5xl">
+        {title}
+      </h2>
+      <p className={`mt-4 text-pretty text-base leading-7 text-slate-600 sm:text-lg ${align === "center" ? "mx-auto max-w-2xl" : ""}`}>
+        {description}
+      </p>
+    </motion.div>
+  );
+}
+
+const WORKFLOW_STEPS = [
+  {
+    number: "01",
+    title: "Choose or detect",
+    description: "Select a provider or let supported key patterns fill it automatically. Custom public HTTPS endpoints are also available.",
+    icon: Radio,
+  },
+  {
+    number: "02",
+    title: "Run the check",
+    description: "An authenticated server function sends the smallest practical provider request and records status and response time.",
+    icon: Zap,
+  },
+  {
+    number: "03",
+    title: "Review the signals",
+    description: "Review health, latency, and any rate limit or scope data returned by that provider. Save a masked result when useful.",
+    icon: Activity,
+  },
+] as const;
+
+const FEATURE_CARDS = [
+  {
+    icon: ShieldCheck,
+    title: "Clear validation status",
+    description: "Separate accepted keys, rejected keys, and rate-limited responses instead of reducing every check to pass or fail.",
+  },
+  {
+    icon: Gauge,
+    title: "Rate limit signals",
+    description: "Surface remaining request counts and reset data when the selected provider returns those headers.",
+  },
+  {
+    icon: LockKeyhole,
+    title: "Permissions and scopes",
+    description: "Show OAuth scopes or access details when a provider returns them. Some endpoints expose no permission metadata.",
+  },
+  {
+    icon: Timer,
+    title: "Measured latency",
+    description: "Capture the round-trip time for each validation request and keep provider comparisons in analytics.",
+  },
+  {
+    icon: Activity,
+    title: "Composite health score",
+    description: "Combine status, access signals, rate limit data, and latency into a transparent 0 to 100 result summary.",
+  },
+  {
+    icon: History,
+    title: "History that stays useful",
+    description: "Filter saved results, compare status changes, export account data as CSV, and delete individual records or all data.",
+  },
+] as const;
+
+function FeaturesSection() {
+  return (
+    <section id="features" className="scroll-mt-28 border-y border-slate-200/60 bg-slate-50/70 px-4 py-20 sm:px-6 sm:py-28">
+      <div className="mx-auto max-w-6xl">
+        <SectionHeading
+          id="features-title"
+          eyebrow="One focused workflow"
+          icon={Sparkles}
+          title={<>Validate the key. <span className="text-blue-600">Understand the response.</span></>}
+          description="KeyPing turns a provider check into a useful diagnostic. Optional signals stay optional, so the interface never implies data that an API did not return."
+        />
+
+        {/* Workflow steps horizontal timeline */}
+        <ol className="grid gap-4 md:grid-cols-3">
+          {WORKFLOW_STEPS.map((step, index) => {
+            const Icon = step.icon;
+            return (
+              <motion.li
+                key={step.number}
+                initial={{ opacity: 0, y: 18 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-60px" }}
+                transition={{ duration: 0.45, delay: index * 0.08, ease: EASE }}
+                className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_4px_20px_rgba(15,23,42,0.04)]"
+              >
+                <div className="mb-6 flex items-center justify-between">
+                  <LiveMetricIcon icon={Icon} tone={index === 0 ? "blue" : index === 1 ? "violet" : "emerald"} className="h-11 w-11 rounded-xl shadow-[0_10px_22px_rgba(15,23,42,0.16),inset_0_1px_0_rgba(255,255,255,0.3)]" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-900">{step.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{step.description}</p>
+              </motion.li>
+            );
+          })}
+        </ol>
+
+        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {FEATURE_CARDS.map((feature, index) => {
+            const Icon = feature.icon;
+            return (
+              <motion.article
+                key={feature.title}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.4, delay: (index % 3) * 0.07, ease: EASE }}
+                className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm"
+              >
+                <LiveMetricIcon icon={Icon} tone={index % 3 === 0 ? "blue" : index % 3 === 1 ? "violet" : "emerald"} className="mb-4 h-11 w-11 rounded-xl shadow-[0_9px_20px_rgba(15,23,42,0.15),inset_0_1px_0_rgba(255,255,255,0.28)]" />
+                <h3 className="font-bold text-slate-900">{feature.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{feature.description}</p>
+              </motion.article>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+const HEALTH_BREAKDOWN = [
+  {
+    label: "Provider status",
+    detail: "Valid response",
+    points: "50 / 50",
+    percent: 100,
+    color: "#10B981",
+  },
+  {
+    label: "Access signal",
+    detail: "Scopes returned",
+    points: "15 / 15",
+    percent: 100,
+    color: "#8B5CF6",
+  },
+  {
+    label: "Rate limit signal",
+    detail: "4,821 remaining",
+    points: "20 / 20",
+    percent: 100,
+    color: "#3B82F6",
+  },
+  {
+    label: "Response time",
+    detail: "142 ms",
+    points: "15 / 15",
+    percent: 100,
+    color: "#06B6D4",
+  },
+] as const;
+
+function HealthScoreSection() {
+  const healthRef = useRef<HTMLDivElement>(null);
+  const healthInView = useInView(healthRef, { once: true, margin: "-80px" });
+  const score = 100;
+  const radius = 54;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference * (1 - score / 100);
+
+  return (
+    <section id="health" className="scroll-mt-28 overflow-hidden bg-white px-4 py-20 sm:px-6 sm:py-28">
+      <div className="mx-auto max-w-6xl">
+        <SectionHeading
+          id="health-title"
+          eyebrow="Health score"
+          icon={Activity}
+          title={<>A useful summary, <span className="text-blue-600">not a black box.</span></>}
+          description="The score reflects the signals from one validation request. It is designed to make results comparable, not to promise future uptime or quota."
+        />
+
+        <div ref={healthRef} className="relative mx-auto max-w-4xl">
+          <div className="absolute -inset-5 rounded-[2.5rem] bg-gradient-to-r from-blue-500/10 via-violet-500/10 to-emerald-500/10 blur-3xl" />
+          <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
+            <div className="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-blue-100 bg-blue-50 text-blue-600">
+                  <ProviderMark provider="github" className="h-5 w-5" />
+                </span>
+                <div>
+                  <p className="text-sm font-bold text-slate-900">Example health report</p>
+                  <p className="font-mono text-[11px] text-slate-500">GitHub token ending in 7A2F</p>
+                </div>
+              </div>
+              <span className="w-fit rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 font-mono text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                Interface preview
+              </span>
+            </div>
+
+            <div className="grid gap-7 p-5 sm:p-7 lg:grid-cols-[220px_1fr] lg:items-center">
+              <div className="flex flex-col items-center rounded-2xl border border-slate-100 bg-slate-50/80 p-6 text-center">
+                <div className="relative h-40 w-40">
+                  <svg viewBox="0 0 128 128" className="h-full w-full -rotate-90" aria-hidden="true">
+                    <defs>
+                      <linearGradient id="health-score-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#3B82F6" />
+                        <stop offset="100%" stopColor="#10B981" />
+                      </linearGradient>
+                    </defs>
+                    <circle cx="64" cy="64" r={radius} fill="none" stroke="#E2E8F0" strokeWidth="9" />
+                    <motion.circle
+                      cx="64"
+                      cy="64"
+                      r={radius}
+                      fill="none"
+                      stroke="url(#health-score-gradient)"
+                      strokeWidth="9"
+                      strokeLinecap="round"
+                      strokeDasharray={circumference}
+                      initial={{ strokeDashoffset: circumference }}
+                      animate={healthInView ? { strokeDashoffset: offset } : {}}
+                      transition={{ duration: 1.1, delay: 0.2, ease: EASE }}
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-5xl font-black tracking-tight text-slate-950">{score}</span>
+                    <span className="text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500">out of 100</span>
                   </div>
                 </div>
-                <span className="text-[10px] text-slate-400 bg-slate-100 px-2.5 py-1 rounded-full font-mono uppercase tracking-wider">Live Preview</span>
+                <p className="mt-3 text-sm font-bold text-slate-800">All example signals returned</p>
+                <p className="mt-1 text-xs leading-5 text-slate-500">A different provider response can produce a different score.</p>
               </div>
-              <div className="px-5 sm:px-6 py-6">
-                <div className="grid sm:grid-cols-2 gap-4">
-                  {HEALTH_FACTORS.map(({ label, score, icon: Icon, color, desc }, i) => (
-                    <motion.div key={label} initial={{ opacity: 0, y: 12 }} animate={inView ? { opacity: 1, y: 0 } : {}} transition={{ delay: 0.2 + i * 0.1, duration: 0.4 }}
-                      className="flex items-start gap-3 p-3 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-colors">
-                      <div className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: color + '15' }}>
-                        <Icon className="h-4 w-4" style={{ color }} />
+
+              <div className="space-y-3">
+                {HEALTH_BREAKDOWN.map((factor, index) => (
+                  <div key={factor.label} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+                    <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <p className="text-sm font-bold text-slate-800">{factor.label}</p>
+                        <p className="mt-0.5 font-mono text-[11px] text-slate-500">{factor.detail}</p>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs font-semibold text-slate-700">{label}</span>
-                          <span className="text-xs font-bold" style={{ color }}>{score}%</span>
-                        </div>
-                        <div className="h-1.5 w-full rounded-full bg-slate-200/60 overflow-hidden mb-1.5">
-                          <motion.div className="h-full rounded-full" style={{ backgroundColor: color }}
-                            initial={{ width: 0 }} animate={inView ? { width: score + '%' } : {}}
-                            transition={{ duration: 0.8, delay: 0.4 + i * 0.1, ease: [0.16,1,0.3,1] }} />
-                        </div>
-                        <p className="text-[11px] text-slate-400 truncate">{desc}</p>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-              <div className="px-5 sm:px-6 py-4 border-t border-slate-100 bg-gradient-to-r from-slate-50 to-white flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="relative h-10 w-10">
-                    <svg className="w-full h-full -rotate-90" viewBox="0 0 40 40">
-                      <circle cx="20" cy="20" r="16" fill="none" stroke="#e2e8f0" strokeWidth="3" />
-                      <motion.circle cx="20" cy="20" r="16" fill="none" stroke="url(#scoreGrad)" strokeWidth="3" strokeLinecap="round"
-                        strokeDasharray={100.53}
-                        initial={{ strokeDashoffset: 100.53 }}
-                        animate={inView ? { strokeDashoffset: 100.53 * (1 - overallScore / 100) } : {}}
-                        transition={{ duration: 1, delay: 0.5, ease: [0.16,1,0.3,1] }} />
-                      <defs>
-                        <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                          <stop offset="0%" stopColor="#3B82F6" />
-                          <stop offset="100%" stopColor="#10B981" />
-                        </linearGradient>
-                      </defs>
-                    </svg>
-                    <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-slate-700">{overallScore}</span>
+                      <span className="font-mono text-xs font-bold" style={{ color: factor.color }}>
+                        {factor.points}
+                      </span>
+                    </div>
+                    <div
+                      className="h-2 overflow-hidden rounded-full bg-slate-100"
+                      role="progressbar"
+                      aria-label={factor.label}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-valuenow={factor.percent}
+                    >
+                      <motion.div
+                        className="h-full rounded-full"
+                        style={{ backgroundColor: factor.color }}
+                        initial={{ width: 0 }}
+                        animate={healthInView ? { width: `${factor.percent}%` } : {}}
+                        transition={{ duration: 0.8, delay: 0.3 + index * 0.1, ease: EASE }}
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-bold text-slate-800">Overall Health</p>
-                    <p className="text-[11px] text-emerald-600 font-medium">Excellent - fully operational</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <motion.p className="text-2xl font-extrabold bg-gradient-to-r from-blue-600 to-emerald-500 bg-clip-text text-transparent"
-                    initial={{ opacity: 0, scale: 0.5 }} animate={inView ? { opacity: 1, scale: 1 } : {}}
-                    transition={{ delay: 0.8, type: "spring", stiffness: 200, damping: 15 }}>
-                    {overallScore}/100
-                  </motion.p>
-                </div>
+                ))}
               </div>
+            </div>
+
+            <div className="flex items-center gap-3 border-t border-blue-100 bg-gradient-to-r from-blue-50/80 to-indigo-50/40 px-5 py-3.5 sm:px-7">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-blue-200 bg-white text-blue-600 shadow-sm">
+                <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
+              </span>
+              <p className="text-xs font-medium leading-5 text-blue-800">
+                Valid means the provider accepted the request. Check your provider dashboard for live permissions and quota.
+              </p>
             </div>
           </div>
         </div>
@@ -277,169 +780,421 @@ function HealthScoreSection() {
   );
 }
 
-const LATENCY_DATA = [
-  { name: "Groq", ms: 67, color: "#22C55E" },
-  { name: "OpenAI", ms: 142, color: "#3B82F6" },
-  { name: "Stripe", ms: 89, color: "#EAB308" },
-  { name: "GitHub", ms: 201, color: "#06B6D4" },
-  { name: "Anthropic", ms: 178, color: "#A855F7" },
-  { name: "Notion", ms: 115, color: "#EC4899" },
-];
-const MAX_MS = 250;
+const ACTIVITY_DATA = [8, 12, 10, 18, 14, 22, 19, 25, 21, 28, 24, 31];
+const ACTIVITY_MAX = 35;
+const CHART_WIDTH = 560;
+const CHART_HEIGHT = 210;
+const CHART_PADDING = 18;
 
-const ACTIVITY_DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
-const VALID_DATA  = [12, 19, 15, 28, 24, 8, 31];
-const INVALID_DATA = [2, 1, 3, 1, 4, 0, 2];
-const MAX_VAL = 35;
+const RECENT_RESULTS = [
+  { provider: "github", key: "ghp_...7A2F", status: "Valid", score: 100, latency: "142 ms" },
+  { provider: "stripe", key: "sk_live_...91QK", status: "Valid", score: 90, latency: "188 ms" },
+  { provider: "groq", key: "gsk_...M4PL", status: "Limited", score: 60, latency: "96 ms" },
+] as const;
+
+const ACTIVITY_POINTS = ACTIVITY_DATA.map((value, index) => ({
+  x: CHART_PADDING + (index / (ACTIVITY_DATA.length - 1)) * (CHART_WIDTH - CHART_PADDING * 2),
+  y: CHART_HEIGHT - CHART_PADDING - (value / ACTIVITY_MAX) * (CHART_HEIGHT - CHART_PADDING * 2),
+}));
+
+const ACTIVITY_PATH = ACTIVITY_POINTS.map(
+  (point, index) => `${index === 0 ? "M" : "L"} ${point.x},${point.y}`,
+).join(" ");
+
+const ACTIVITY_AREA = `${ACTIVITY_PATH} L ${ACTIVITY_POINTS[ACTIVITY_POINTS.length - 1]?.x},${CHART_HEIGHT - CHART_PADDING} L ${ACTIVITY_POINTS[0]?.x},${CHART_HEIGHT - CHART_PADDING} Z`;
 
 function AnalyticsSection() {
-  const chartRef = useRef<HTMLDivElement>(null);
-  const latencyRef = useRef<HTMLDivElement>(null);
-  const chartInView = useInView(chartRef, { once: true, margin: "-80px" });
-  const latencyInView = useInView(latencyRef, { once: true, margin: "-80px" });
-  const sorted = [...LATENCY_DATA].sort((a, b) => a.ms - b.ms);
-
-  const W = 400; const H = 100; const PAD = 10;
-  const getPoints = (data: number[]) => data.map((v, i) => ({
-    x: PAD + (i / (data.length - 1)) * (W - PAD * 2),
-    y: H - PAD - (v / MAX_VAL) * (H - PAD * 2),
-  }));
-
-  const smoothLine = (pts: { x: number; y: number }[]) => {
-    if (pts.length < 2) return "";
-    let path = `M ${pts[0]!.x},${pts[0]!.y}`;
-    for (let i = 0; i < pts.length - 1; i++) {
-      const p0 = pts[Math.max(0, i - 1)]!; const p1 = pts[i]!;
-      const p2 = pts[i + 1]!; const p3 = pts[Math.min(pts.length - 1, i + 2)]!;
-      const t = 0.3;
-      path += ` C ${p1.x + (p2.x - p0.x) * t},${p1.y + (p2.y - p0.y) * t} ${p2.x - (p3.x - p1.x) * t},${p2.y - (p3.y - p1.y) * t} ${p2.x},${p2.y}`;
-    }
-    return path;
-  };
-
-  const smoothArea = (pts: { x: number; y: number }[]) => {
-    if (pts.length < 2) return "";
-    return `${smoothLine(pts)} L ${pts[pts.length - 1]!.x},${H - PAD} L ${pts[0]!.x},${H - PAD} Z`;
-  };
-
-  const validPoints = getPoints(VALID_DATA);
-  const invalidPoints = getPoints(INVALID_DATA);
+  const analyticsRef = useRef<HTMLDivElement>(null);
+  const analyticsInView = useInView(analyticsRef, { once: true, margin: "-80px" });
 
   return (
-    <section className="py-20 sm:py-28 px-4 sm:px-6 bg-white overflow-hidden">
-      <div className="max-w-6xl mx-auto">
-        <motion.div className="text-center mb-14 sm:mb-16" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}>
-          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-50/80 border border-violet-200/50 text-xs text-violet-600 font-medium mb-5">
-            <BarChart3 className="h-3.5 w-3.5" /> Analytics & Latency
-          </span>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 leading-tight mb-4">
-            Track validations.<br /><span className="text-blue-600">Measure speed.</span>
-          </h2>
-          <p className="text-slate-500 max-w-xl mx-auto leading-relaxed">
-            See your full validation history and provider response times in one dashboard. Spot issues before they become incidents.
-          </p>
-        </motion.div>
+    <section id="analytics" className="scroll-mt-28 border-y border-slate-200/60 bg-slate-50/70 px-4 py-20 sm:px-6 sm:py-28">
+      <div className="mx-auto max-w-6xl">
+        <SectionHeading
+          id="analytics-title"
+          eyebrow="History and analytics"
+          icon={BarChart3}
+          title={<>Turn one-off checks into <span className="text-blue-600">clear patterns.</span></>}
+          description="Saved results power provider distribution, status breakdowns, health ranges, latency trends, provider success rates, and stale key hints."
+        />
 
-        <div className="grid lg:grid-cols-2 gap-6 lg:gap-8">
-          <div ref={chartRef} className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-[0_4px_30px_rgba(0,0,0,0.04)]">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between flex-wrap gap-2">
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-semibold text-slate-800">Weekly Activity</span>
-                <div className="flex items-center gap-3">
-                  <span className="flex items-center gap-1.5 text-xs text-slate-500"><span className="h-2 w-2 rounded-full bg-blue-500" /> Valid</span>
-                  <span className="flex items-center gap-1.5 text-xs text-slate-500"><span className="h-2 w-2 rounded-full bg-red-400" /> Invalid</span>
+        <div ref={analyticsRef} className="grid gap-5 lg:grid-cols-[1.25fr_0.75fr]">
+          <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_12px_40px_rgba(15,23,42,0.06)]">
+            <div className="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+              <div>
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-blue-600" aria-hidden="true" />
+                  <h3 className="text-sm font-bold text-slate-900">Test activity</h3>
                 </div>
+                <p className="mt-1 text-xs text-slate-500">30 day volume in the analytics workspace</p>
               </div>
-              <span className="text-[10px] text-slate-400 font-mono uppercase tracking-wider">Preview</span>
+              <span className="w-fit rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 font-mono text-[11px] font-semibold uppercase tracking-wider text-amber-700">
+                Example data
+              </span>
             </div>
-            <div className="px-5 pt-4 pb-2">
-              <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: 110 }}>
-                <defs>
-                  <linearGradient id="validGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.25" />
-                    <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.02" />
-                  </linearGradient>
-                  <linearGradient id="invalidGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#EF4444" stopOpacity="0.2" />
-                    <stop offset="100%" stopColor="#EF4444" stopOpacity="0.02" />
-                  </linearGradient>
-                </defs>
-                <motion.path d={smoothArea(validPoints)} fill="url(#validGrad)" initial={{ opacity: 0 }} animate={chartInView ? { opacity: 1 } : {}} transition={{ duration: 0.8, delay: 0.3 }} />
-                <motion.path d={smoothArea(invalidPoints)} fill="url(#invalidGrad)" initial={{ opacity: 0 }} animate={chartInView ? { opacity: 1 } : {}} transition={{ duration: 0.8, delay: 0.5 }} />
-                <motion.path d={smoothLine(validPoints)} fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" initial={{ pathLength: 0, opacity: 0 }} animate={chartInView ? { pathLength: 1, opacity: 1 } : {}} transition={{ duration: 1.2, delay: 0.2, ease: "easeOut" }} />
-                <motion.path d={smoothLine(invalidPoints)} fill="none" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="4 3" initial={{ pathLength: 0, opacity: 0 }} animate={chartInView ? { pathLength: 1, opacity: 1 } : {}} transition={{ duration: 1.2, delay: 0.4, ease: "easeOut" }} />
-                {validPoints.map((p, i) => (
-                  <motion.circle key={i} cx={p.x} cy={p.y} r="3.5" fill="#3B82F6" stroke="white" strokeWidth="2" initial={{ scale: 0, opacity: 0 }} animate={chartInView ? { scale: 1, opacity: 1 } : {}} transition={{ delay: 0.2 + i * 0.08, type: "spring", stiffness: 300 }} />
-                ))}
-              </svg>
-              <div className="flex justify-between px-1 mt-1 mb-3">
-                {ACTIVITY_DAYS.map(d => <span key={d} className="text-[10px] text-slate-400 font-medium">{d}</span>)}
-              </div>
-            </div>
-            <div className="grid grid-cols-3 border-t border-slate-100">
+
+            <div className="grid grid-cols-2 divide-x divide-y divide-slate-100 border-b border-slate-100 sm:grid-cols-4 sm:divide-y-0">
               {[
-                { label: "Tests", value: VALID_DATA.reduce((a,b)=>a+b,0) + INVALID_DATA.reduce((a,b)=>a+b,0), color: "text-slate-900" },
-                { label: "Success", value: Math.round(VALID_DATA.reduce((a,b)=>a+b,0) / (VALID_DATA.reduce((a,b)=>a+b,0) + INVALID_DATA.reduce((a,b)=>a+b,0)) * 100) + "%", color: "text-emerald-600" },
-                { label: "Peak", value: "Thu", color: "text-blue-600" },
-              ].map(({ label, value, color }, i) => (
-                <div key={label} className={`px-4 py-3 text-center ${i < 2 ? 'border-r border-slate-100' : ''}`}>
-                  <motion.p className={`text-lg font-bold ${color}`} initial={{ opacity: 0, y: 6 }} animate={chartInView ? { opacity: 1, y: 0 } : {}} transition={{ delay: 0.8 + i * 0.1, duration: 0.4 }}>{value}</motion.p>
-                  <p className="text-[9px] text-slate-400 uppercase tracking-wider font-medium">{label}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div ref={latencyRef} className="bg-white border border-slate-200/80 rounded-2xl p-5 sm:p-6 shadow-[0_4px_30px_rgba(0,0,0,0.04)]">
-            <div className="flex items-center justify-between mb-5">
-              <span className="text-sm font-semibold text-slate-800">Response Times</span>
-              <span className="text-[10px] text-slate-400 font-mono uppercase tracking-wider">Preview</span>
-            </div>
-            <div className="space-y-3">
-              {sorted.map(({ name, ms, color }, i) => {
-                const BrandIcon = BRAND_ICONS[name.toLowerCase()] || null;
+                { label: "Total tests", value: "148", icon: BarChart3 },
+                { label: "Valid rate", value: "92%", icon: ShieldCheck },
+                { label: "Avg health", value: "87", icon: Activity },
+                { label: "Avg latency", value: "186 ms", icon: Clock3 },
+              ].map((stat) => {
+                const Icon = stat.icon;
                 return (
-                  <div key={name} className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 w-24 shrink-0">
-                      {BrandIcon ? <BrandIcon className="h-4 w-4 text-slate-400 shrink-0" /> : <Clock className="h-4 w-4 text-slate-400 shrink-0" />}
-                      <span className="text-xs text-slate-600 font-medium truncate">{name}</span>
-                    </div>
-                    <div className="flex-1 h-6 bg-slate-50 rounded-full overflow-hidden relative">
-                      <motion.div
-                        className="h-full rounded-full flex items-center justify-end pr-2"
-                        style={{ background: `linear-gradient(90deg, ${color}99, ${color})` }}
-                        initial={{ width: 0 }}
-                        animate={latencyInView ? { width: `${(ms / MAX_MS) * 100}%` } : {}}
-                        transition={{ duration: 0.8, delay: i * 0.1, ease: [0.16,1,0.3,1] }}
-                      >
-                        <span className="text-[10px] font-bold text-white drop-shadow-sm">{ms}ms</span>
-                      </motion.div>
-                    </div>
-                    {i === 0 && (
-                      <motion.span className="text-[10px] text-emerald-600 bg-emerald-50 border border-emerald-200/60 rounded-full px-2 py-0.5 shrink-0 font-medium"
-                        initial={{ opacity: 0, x: 8, scale: 0.9 }} animate={latencyInView ? { opacity: 1, x: 0, scale: 1 } : {}} transition={{ delay: 0.8, type: "spring", stiffness: 200, damping: 15 }}>
-                        fastest
-                      </motion.span>
-                    )}
+                  <div key={stat.label} className="p-4 sm:p-5">
+                    <Icon className="h-3.5 w-3.5 text-slate-500" aria-hidden="true" />
+                    <p className="mt-2 text-xl font-extrabold text-slate-900">{stat.value}</p>
+                    <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500">{stat.label}</p>
                   </div>
                 );
               })}
             </div>
-            <div className="mt-3 ml-[104px] flex justify-between">
-              {[0, 50, 100, 150, 200, 250].map(v => <span key={v} className="text-[9px] text-slate-400 font-mono">{v}ms</span>)}
+
+            <div className="px-4 pb-4 pt-5 sm:px-6 sm:pb-5">
+              <svg
+                viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
+                className="h-auto w-full overflow-visible"
+                role="img"
+                aria-labelledby="activity-chart-title activity-chart-description"
+              >
+                <title id="activity-chart-title">Example test activity over 12 periods</title>
+                <desc id="activity-chart-description">The line rises from 8 tests to 31 tests across the displayed period.</desc>
+                <defs>
+                  <linearGradient id="analytics-area-gradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.28" />
+                    <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.02" />
+                  </linearGradient>
+                </defs>
+                {[0, 1, 2, 3].map((line) => {
+                  const y = CHART_PADDING + (line / 3) * (CHART_HEIGHT - CHART_PADDING * 2);
+                  return <line key={line} x1={CHART_PADDING} x2={CHART_WIDTH - CHART_PADDING} y1={y} y2={y} stroke="#E2E8F0" strokeDasharray="4 6" />;
+                })}
+                <motion.path
+                  d={ACTIVITY_AREA}
+                  fill="url(#analytics-area-gradient)"
+                  initial={{ opacity: 0 }}
+                  animate={analyticsInView ? { opacity: 1 } : {}}
+                  transition={{ duration: 0.7, delay: 0.4 }}
+                />
+                <motion.path
+                  d={ACTIVITY_PATH}
+                  fill="none"
+                  stroke="#2563EB"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  initial={{ pathLength: 0, opacity: 0 }}
+                  animate={analyticsInView ? { pathLength: 1, opacity: 1 } : {}}
+                  transition={{ duration: 1.2, delay: 0.2, ease: EASE }}
+                />
+                {ACTIVITY_POINTS.map((point, index) => (
+                  <motion.circle
+                    key={index}
+                    cx={point.x}
+                    cy={point.y}
+                    r="3.5"
+                    fill="#2563EB"
+                    stroke="white"
+                    strokeWidth="2"
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={analyticsInView ? { scale: 1, opacity: 1 } : {}}
+                    transition={{ duration: 0.25, delay: 0.3 + index * 0.05 }}
+                  />
+                ))}
+              </svg>
+              <div className="mt-2 flex items-center justify-center gap-5 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                <span>30 days ago</span>
+                <span>Today</span>
+              </div>
             </div>
-            <div className="mt-5 pt-4 border-t border-slate-100 grid grid-cols-3 gap-3">
-              {[
-                { label: "Fastest", value: "Groq", sub: "67ms avg" },
-                { label: "Slowest", value: "GitHub", sub: "201ms avg" },
-                { label: "Avg RTT", value: "132ms", sub: "All providers" },
-              ].map(({ label, value, sub }) => (
-                <div key={label} className="text-center">
-                  <p className="text-sm font-bold text-slate-800">{value}</p>
-                  <p className="text-[10px] text-slate-400">{label}</p>
-                </div>
+          </div>
+
+          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_12px_40px_rgba(15,23,42,0.06)] sm:p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Recent saved results</h3>
+                <p className="mt-1 text-xs leading-5 text-slate-500">Masked references with status, score, and latency.</p>
+              </div>
+              <History className="h-5 w-5 shrink-0 text-slate-300" aria-hidden="true" />
+            </div>
+
+            <div className="mt-5 space-y-3">
+              {RECENT_RESULTS.map((result, index) => (
+                <motion.div
+                  key={result.key}
+                  initial={{ opacity: 0, x: 12 }}
+                  animate={analyticsInView ? { opacity: 1, x: 0 } : {}}
+                  transition={{ duration: 0.35, delay: 0.25 + index * 0.08 }}
+                  className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700">
+                      <ProviderMark provider={result.provider} className="h-4 w-4" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-mono text-xs font-semibold text-slate-700">{result.key}</p>
+                      <p className="mt-1 text-[11px] text-slate-500">{result.latency}</p>
+                    </div>
+                    <span
+                      className={`rounded-full border px-2 py-1 font-mono text-[11px] font-bold uppercase tracking-wider ${
+                        result.status === "Valid"
+                          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                          : "border-amber-200 bg-amber-50 text-amber-700"
+                      }`}
+                    >
+                      {result.status}
+                    </span>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between border-t border-slate-200/70 pt-3 text-xs">
+                    <span className="text-slate-500">Health score</span>
+                    <span className="font-mono font-bold text-slate-800">{result.score} / 100</span>
+                  </div>
+                </motion.div>
               ))}
             </div>
+
+            <div className="mt-5 flex flex-wrap gap-2">
+              {["Provider mix", "Health ranges", "Latency trend", "Success rate"].map((label) => (
+                <span key={label} className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-500">
+                  {label}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-5 grid gap-5 md:grid-cols-2">
+          <motion.article
+            initial={{ opacity: 0, y: 18 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.45, ease: EASE }}
+            className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-7"
+          >
+            <div className="flex items-start gap-4">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
+                <History className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <div>
+                <h3 className="text-lg font-bold text-slate-900">History and vault</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  Save results with nicknames and notes, filter by provider or status, inspect returned scopes and rate data, and track changes under the same nickname.
+                </p>
+              </div>
+            </div>
+            <div className="mt-5 flex flex-wrap gap-2">
+              {["Status changelog", "CSV account export", "Record deletion"].map((item) => (
+                <span key={item} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 shadow-sm transition-colors hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700">
+                  <Check className="h-3.5 w-3.5 text-emerald-500" aria-hidden="true" /> {item}
+                </span>
+              ))}
+            </div>
+          </motion.article>
+
+          <motion.article
+            initial={{ opacity: 0, y: 18 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.45, delay: 0.08, ease: EASE }}
+            className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-7"
+          >
+            <div className="flex items-start gap-4">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                <Layers3 className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <div>
+                <h3 className="text-lg font-bold text-slate-900">Bulk testing</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  Add up to 10 provider and key pairs, test them concurrently, compare status and health at a glance, then export the current report as a PDF.
+                </p>
+              </div>
+            </div>
+            <div className="mt-5 grid grid-cols-[1fr_auto] items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-3">
+              <div className="flex min-w-0 items-center gap-2.5">
+                <FileDown className="h-4 w-4 shrink-0 text-blue-600" aria-hidden="true" />
+                <div className="min-w-0">
+                  <p className="truncate text-xs font-semibold text-slate-700">Bulk results stay in this session</p>
+                  <p className="mt-0.5 text-[11px] text-slate-500">Export when the comparison is ready</p>
+                </div>
+              </div>
+              <span className="rounded-lg border border-blue-200 bg-white px-2.5 py-1.5 font-mono text-[11px] font-bold text-blue-700">PDF</span>
+            </div>
+          </motion.article>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ProvidersSection() {
+  return (
+    <section id="providers" className="scroll-mt-28 bg-white px-4 py-20 sm:px-6 sm:py-28">
+      <div className="mx-auto max-w-6xl">
+        <SectionHeading
+          id="providers-title"
+          eyebrow="Provider coverage"
+          icon={ShieldCheck}
+          title={<>Know the endpoint. <span className="text-blue-600">Know the signal coverage.</span></>}
+          description="Provider checks are not identical. The cards below come from the shared provider registry and only advertise validators that can currently run."
+        />
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {SUPPORTED_BRANDED_PROVIDERS.map((provider, index) => {
+            const BrandIcon = BRAND_ICONS[provider.id];
+            if (!BrandIcon) return null;
+            const isLimited = provider.availability === "limited";
+            const canAutoDetect = provider.detectionPriority < 1000;
+            const signals = provider.supportedChecks
+              .filter((check) => check !== "docs")
+              .map((check) => CHECK_LABELS[check]);
+
+            return (
+              <motion.article
+                key={provider.id}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.4, delay: (index % 4) * 0.06, ease: EASE }}
+                className="group flex flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-blue-200 hover:shadow-[0_14px_36px_rgba(15,23,42,0.08)]"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <span
+                    className="flex h-12 w-12 items-center justify-center rounded-xl border shadow-[0_10px_24px_rgba(15,23,42,0.16),inset_0_1px_0_rgba(255,255,255,0.34)] ring-1 ring-black/5 transition-transform duration-300 group-hover:scale-105 group-hover:-rotate-2"
+                    style={{
+                      color: provider.icon.brandColor,
+                      backgroundColor: provider.icon.backgroundColor,
+                      borderColor: `${provider.icon.brandColor}24`,
+                    }}
+                  >
+                    <span className="inline-flex" aria-hidden="true">
+                      <BrandIcon className="h-6 w-6" />
+                    </span>
+                  </span>
+                  <span
+                    className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 font-mono text-[11px] font-bold uppercase tracking-wider shadow-[0_4px_10px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.8)] ${
+                      isLimited
+                        ? "border-amber-200 bg-amber-50 text-amber-700"
+                        : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                    }`}
+                  >
+                    <span className={`h-1.5 w-1.5 rounded-full ${isLimited ? "bg-amber-500" : "bg-emerald-500"}`} />
+                    {isLimited ? "Limited" : "Active"}
+                  </span>
+                </div>
+                <h3 className="mt-4 text-base font-bold text-slate-900">{provider.name}</h3>
+                <p className="mt-1 min-h-10 text-xs leading-5 text-slate-500">{provider.availabilityNote}</p>
+                <div className="mt-4 flex flex-wrap gap-1.5">
+                  {signals.map((signal) => (
+                    <span key={signal} className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-semibold text-slate-600">
+                      {signal}
+                    </span>
+                  ))}
+                </div>
+                <div className="mt-auto flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
+                  <span className="text-[11px] font-medium text-slate-500">
+                    {canAutoDetect ? "Pattern detection" : "Manual selection"}
+                  </span>
+                  {provider.docsUrl && (
+                    <a
+                      href={provider.docsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                      aria-label={`Open ${provider.name} documentation in a new tab`}
+                    >
+                      Docs <ChevronRight className="h-3 w-3" aria-hidden="true" />
+                    </a>
+                  )}
+                </div>
+              </motion.article>
+            );
+          })}
+        </div>
+
+        <div className="mt-5">
+          <div className="flex gap-4 rounded-2xl border border-blue-200/70 bg-blue-50/70 p-5">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-blue-200 bg-white text-blue-600">
+              <Globe2 className="h-4.5 w-4.5" aria-hidden="true" />
+            </span>
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">Custom HTTPS endpoint</h3>
+              <p className="mt-1.5 text-xs leading-5 text-slate-600">
+                Custom validation uses an authenticated GET request to public HTTPS on port 443. The runner rejects private destinations, pins a resolved address, and does not follow redirects.
+              </p>
+            </div>
+          </div>
+        </div>
+        <p className="mt-3 text-center text-[11px] text-slate-500">* Rate limit and scope data appears only when the provider returns it.</p>
+      </div>
+    </section>
+  );
+}
+
+const SECURITY_CARDS = [
+  {
+    icon: EyeOff,
+    title: "Masked saved results",
+    description: "The full key is not written to KeyPing history. When you save a result, its reference keeps only the last four characters.",
+  },
+  {
+    icon: Clock3,
+    title: "Automatic input clearing",
+    description: "The tester clears the key from its input after 10 minutes without activity and removes the current result at the same time.",
+  },
+  {
+    icon: LockKeyhole,
+    title: "Authenticated test runner",
+    description: "The server test function requires a valid signed-in user before it forwards a validation request to a provider.",
+  },
+  {
+    icon: ServerCog,
+    title: "Custom endpoint guardrails",
+    description: "Custom URLs require public HTTPS on port 443. The runner rejects private destinations, pins a resolved address, and does not follow redirects.",
+  },
+] as const;
+
+function SecuritySection() {
+  return (
+    <section id="security" className="scroll-mt-28 border-y border-slate-200/60 bg-white px-4 py-20 sm:px-6 sm:py-28">
+      <div className="mx-auto max-w-6xl">
+        <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
+          <div>
+            <span className="mb-5 inline-flex items-center gap-2.5 rounded-full border border-blue-200/70 bg-gradient-to-b from-white to-blue-50 px-2.5 py-1.5 pr-4 text-xs font-bold text-blue-700 shadow-[0_8px_20px_rgba(37,99,235,0.10),inset_0_1px_0_rgba(255,255,255,0.9)]">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-[0_5px_12px_rgba(37,99,235,0.28),inset_0_1px_0_rgba(255,255,255,0.28)] ring-1 ring-blue-900/10">
+                <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+              </span>
+              Key handling
+            </span>
+            <h2 id="security-title" className="text-balance text-3xl font-extrabold leading-tight tracking-tight text-slate-950 sm:text-4xl lg:text-5xl">
+              Keep the useful history. <span className="text-blue-600">Not the full secret.</span>
+            </h2>
+            <p className="mt-5 text-base leading-7 text-slate-600">
+              KeyPing explains exactly what the app does with test inputs and saved records. Security claims stay tied to the implemented behavior.
+            </p>
+
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            {SECURITY_CARDS.map((item, index) => {
+              const Icon = item.icon;
+              return (
+                <motion.article
+                  key={item.title}
+                  initial={{ opacity: 0, y: 18 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-60px" }}
+                  transition={{ duration: 0.45, delay: (index % 2) * 0.08, ease: EASE }}
+                  className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.05),inset_0_1px_0_rgba(255,255,255,0.9)] transition-all hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-[0_14px_34px_rgba(15,23,42,0.08)]"
+                >
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-[0_8px_18px_rgba(37,99,235,0.24),inset_0_1px_0_rgba(255,255,255,0.28)] ring-1 ring-blue-900/10">
+                    <Icon className="h-4.5 w-4.5" aria-hidden="true" />
+                  </span>
+                  <h3 className="mt-4 text-sm font-bold text-slate-900">{item.title}</h3>
+                  <p className="mt-2 text-xs leading-5 text-slate-600">{item.description}</p>
+                </motion.article>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -448,349 +1203,249 @@ function AnalyticsSection() {
 }
 
 const Landing = () => {
-  const { user, loading, signInWithGoogle } = useAuth();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const howRef = useRef<HTMLElement>(null);
-  const howInView = useInView(howRef, { once: true });
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-white">
-      <div className="h-5 w-5 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
-    </div>
-  );
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMobileMenuOpen(false);
+    };
+    document.addEventListener("keydown", closeOnEscape);
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [mobileMenuOpen]);
 
-  const handleCTA = () => { if (user) navigate("/dashboard"); else navigate("/auth"); };
-  const fadeUp = { initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.45, ease: EASE } };
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-white" role="status" aria-live="polite">
+        <Loader2 className="h-6 w-6 animate-spin text-blue-600" aria-hidden="true" />
+        <span className="sr-only">Loading KeyPing</span>
+      </div>
+    );
+  }
+
+  const handleCTA = () => {
+    navigate(user ? "/dashboard" : "/auth");
+  };
+
+  const closeMobileMenu = () => setMobileMenuOpen(false);
 
   return (
-    <div className="min-h-screen bg-white relative">
-      <div className="fixed inset-0 pointer-events-none hidden">
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[radial-gradient(ellipse_at_80%_0%,rgba(59,130,246,0.08),transparent_60%)]" />
-        <div className="absolute inset-0 bg-grid-light opacity-60" />
-      </div>
-      <div className="fixed inset-0 pointer-events-none block">
-        <div className="absolute inset-0 bg-grid-light opacity-50" />
-      </div>
+    <MotionConfig reducedMotion="user">
+      <div id="top" className="min-h-screen overflow-x-hidden bg-white text-slate-900">
 
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-slate-200/60 py-3 transition-all">
-        <div className="w-full px-4 sm:px-6 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <KeyPingLogo size={30} />
-            <span className="font-display text-lg font-bold text-slate-900 tracking-tight">KeyPing</span>
-          </div>
-          <nav className="hidden md:flex items-center gap-1">
-            {NAV_LINKS.map(({ label, href, icon: Icon }) => (
-              <a key={label} href={href} className="group flex items-center gap-1.5 font-sans text-[13px] text-slate-500 hover:text-slate-900 hover:bg-slate-100/80 px-3.5 py-2 rounded-lg transition-all duration-200">
-                <Icon className="h-3.5 w-3.5 text-slate-400 group-hover:text-blue-500 transition-colors" />
-                {label}
+        <header className="sticky top-0 z-50 px-3 pt-3 sm:px-6 sm:pt-4" aria-label="Main navigation">
+          <div className="relative mx-auto max-w-6xl">
+            <div className="flex min-h-14 items-center justify-between gap-2 rounded-2xl border border-slate-200/90 bg-white/90 px-3 py-2 shadow-[0_8px_30px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:px-4">
+              <a href="#top" className="flex shrink-0 items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2" aria-label="KeyPing home">
+                <KeyPingLogo size={27} />
+                <span className="font-display text-[15px] font-extrabold tracking-tight text-slate-950">KeyPing</span>
               </a>
-            ))}
-          </nav>
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            <button
-              onClick={() => navigate(user ? "/dashboard" : "/auth")}
-              className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white font-sans font-medium text-[13px] rounded-lg px-4 py-2 shadow-sm shadow-blue-500/20 transition-all duration-200"
-            >
-              {user ? "Dashboard" : "Get Started"} <ArrowRight className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        </div>
-      </header>
 
-      <main className="relative z-10">
-        <section className="relative pt-16 sm:pt-24 pb-12 sm:pb-16 px-4 sm:px-6 overflow-hidden">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-[radial-gradient(ellipse_at_center,rgba(59,130,246,0.06),transparent_70%)]" />
-          <div className="absolute top-32 left-1/4 w-64 h-64 bg-blue-500/10 rounded-full blur-[100px] animate-pulse" />
-          <div className="absolute top-48 right-1/4 w-48 h-48 bg-indigo-500/8 rounded-full blur-[80px] animate-pulse" style={{ animationDelay: '2s' }} />
-
-          <motion.div className="max-w-4xl mx-auto text-center relative z-10" initial="initial" animate="animate" variants={{ animate: { transition: { staggerChildren: 0.08 } } }}>
-            <motion.div {...fadeUp} className="inline-flex items-center gap-2.5 mb-8 px-4 py-2 rounded-full bg-gradient-to-r from-blue-500/5 via-blue-500/10 to-indigo-500/5 border border-blue-500/20">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-500 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500" />
-              </span>
-              <span className="text-xs text-blue-600 tracking-wide font-medium uppercase">Developer Tool for API Keys</span>
-            </motion.div>
-
-            <motion.h1 {...fadeUp} className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold text-slate-900 tracking-[-0.04em] leading-[1.07] mb-6">
-              Ping Any API Key.<br />
-              <span className="bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-500 bg-clip-text text-transparent">Know It Works.</span>
-            </motion.h1>
-
-            <motion.p {...fadeUp} className="text-lg sm:text-xl text-slate-500 max-w-2xl mx-auto leading-relaxed mb-10">
-              Validate keys across <span className="font-semibold text-slate-700">10+ providers</span> in seconds. Check health scores, rate limits, and permissions from one dashboard.
-            </motion.p>
-
-            <motion.div {...fadeUp} className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
-              <button
-                onClick={handleCTA}
-                className="group w-full sm:w-auto flex items-center justify-center gap-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-base rounded-xl px-8 py-4 transition-all duration-200 shadow-[0_4px_20px_rgba(37,99,235,0.3)] hover:shadow-[0_8px_30px_rgba(37,99,235,0.4)] hover:-translate-y-0.5 active:translate-y-0"
-              >
-                <Zap className="h-4.5 w-4.5" />
-                Start Validating Free
-                <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
-              </button>
-              <a
-                href="#providers"
-                className="group flex items-center gap-2 text-slate-500 hover:text-slate-800 font-medium text-base transition-colors px-5 py-3 rounded-xl hover:bg-slate-100/60"
-              >
-                <Shield className="h-4 w-4" />
-                See Supported Providers
-                <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
-              </a>
-            </motion.div>
-
-            <motion.div {...fadeUp} className="flex flex-wrap items-center justify-center gap-4 mb-14">
-              {[
-                { icon: CheckCircle2, text: "No credit card" },
-                { icon: Lock, text: "Full keys never stored" },
-                { icon: Zap, text: "Results in 2s" },
-              ].map(({ icon: Icon, text }) => (
-                <div key={text} className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-slate-50/80 border border-slate-200/60">
-                  <Icon className="h-3.5 w-3.5 text-slate-400" />
-                  <span className="text-xs text-slate-500 font-medium">{text}</span>
-                </div>
-              ))}
-            </motion.div>
-
-            <motion.div {...fadeUp}>
-              <HeroTerminal />
-            </motion.div>
-          </motion.div>
-        </section>
-
-        <section id="how" className="py-0" />
-        <HealthScoreSection />
-
-         <section id="providers" className="py-20 sm:py-28 px-4 sm:px-6 bg-slate-50/40">
-          <div className="max-w-6xl mx-auto">
-            <motion.div className="text-center mb-14" initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}>
-              <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50/80 border border-blue-200/50 text-xs text-blue-600 font-medium mb-5">
-                <CheckCircle2 className="h-3.5 w-3.5" /> Supported Providers
-              </span>
-              <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-3">Works with every major API</h2>
-              <p className="text-slate-500 text-[15px]">Auto-detected from key pattern - no manual selection needed.</p>
-            </motion.div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-14">
-              {PROVIDERS.filter(p => p.id !== "custom").map((p, i) => {
-                const BrandIcon = BRAND_ICONS[p.id];
-                const limited = p.id === "aws";
-                const descriptions: Record<string, string> = {
-                  openai: "GPT-4, DALL-E models",
-                  groq: "Ultra-fast LLM inference",
-                  anthropic: "Claude AI assistant",
-                  stripe: "Payment processing API",
-                  github: "Code repository access",
-                  twitter: "Social media data",
-                  notion: "Workspace integration tool",
-                  supabase: "Open source backend",
-                  aws: "Cloud infrastructure services",
-                  gemini: "Google AI models",
-                };
-                const brandColors: Record<string, string> = {
-                  openai: "#10A37F",
-                  groq: "#F55036",
-                  anthropic: "#CC785C",
-                  stripe: "#635BFF",
-                  github: "#24292F",
-                  twitter: "#000000",
-                  notion: "#000000",
-                  supabase: "#3ECF8E",
-                  aws: "#FF9900",
-                  gemini: "#4285F4",
-                };
-                const color = brandColors[p.id] || "#3B82F6";
-                return (
-                  <motion.div key={p.id} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05, duration: 0.4 }}
-                    whileHover={{ y: -4 }}
-                    className="provider-card bg-white border border-slate-200/80 rounded-2xl p-5 flex flex-col items-center text-center transition-all duration-300 cursor-default group hover:shadow-lg"
-                    data-brand-color={color}
+              <nav className="hidden items-center rounded-xl border border-slate-200/70 bg-slate-50/80 p-1 lg:flex" aria-label="Product sections">
+                {NAV_LINKS.map((link) => (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    className="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-500 transition-colors hover:bg-white hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                   >
-                    <div className="provider-icon-wrapper h-14 w-14 rounded-xl bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200/60 flex items-center justify-center mb-3 transition-all duration-300">
-                      {BrandIcon ? (
-                        <BrandIcon className="provider-icon h-7 w-7 text-slate-500 transition-colors duration-300" />
-                      ) : (
-                        <Key className="provider-icon h-7 w-7 text-slate-500 transition-colors duration-300" />
-                      )}
-                    </div>
-                    <span className="text-sm font-semibold text-slate-800 group-hover:text-slate-900 block mb-1">{p.name}</span>
-                    <span className="text-[11px] text-slate-500 leading-snug block mb-3 min-h-[32px]">{descriptions[p.id] || "API key validation"}</span>
-                    <span className={`inline-flex items-center gap-1 text-[11px] font-semibold rounded-full px-3 py-1 transition-colors ${
-                      limited
-                        ? "text-amber-700 bg-amber-50 border border-amber-200 ring-1 ring-amber-100"
-                        : "text-emerald-700 bg-emerald-50 border border-emerald-200 ring-1 ring-emerald-100"
-                    }`}>
-                      <span className={`h-1.5 w-1.5 rounded-full ${limited ? "bg-amber-500" : "bg-emerald-500"}`} />
-                      {limited ? "Limited" : "Auto"}
-                    </span>
-                  </motion.div>
-                );
-              })}
+                    {link.label}
+                  </a>
+                ))}
+              </nav>
+
+              <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+                <button
+                  type="button"
+                  onClick={handleCTA}
+                  className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3 text-xs font-bold text-white shadow-[0_5px_16px_rgba(37,99,235,0.25)] transition-all hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-[0_8px_20px_rgba(37,99,235,0.32)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 sm:px-4 sm:text-[13px]"
+                >
+                  <span className="sm:hidden">{user ? "Open" : "Test"}</span>
+                  <span className="hidden sm:inline">{user ? "Dashboard" : "Open tester"}</span>
+                  <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMobileMenuOpen((open) => !open)}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 lg:hidden"
+                  aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+                  aria-expanded={mobileMenuOpen}
+                  aria-controls="mobile-navigation"
+                >
+                  {mobileMenuOpen ? <X className="h-4.5 w-4.5" aria-hidden="true" /> : <Menu className="h-4.5 w-4.5" aria-hidden="true" />}
+                </button>
+              </div>
             </div>
+
+            <motion.nav
+              id="mobile-navigation"
+              initial={false}
+              animate={{ opacity: mobileMenuOpen ? 1 : 0, y: mobileMenuOpen ? 0 : -6 }}
+              className={`absolute left-0 right-0 top-[calc(100%+0.5rem)] overflow-hidden rounded-2xl border border-slate-200 bg-white/95 p-2 shadow-[0_18px_45px_rgba(15,23,42,0.14)] backdrop-blur-xl lg:hidden ${mobileMenuOpen ? "pointer-events-auto" : "pointer-events-none"}`}
+              aria-label="Mobile product navigation"
+              aria-hidden={!mobileMenuOpen}
+            >
+              {NAV_LINKS.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  onClick={closeMobileMenu}
+                  tabIndex={mobileMenuOpen ? 0 : -1}
+                  className="flex min-h-11 items-center justify-between rounded-xl px-3.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                >
+                  {link.label}
+                  <ChevronRight className="h-4 w-4 text-slate-300" aria-hidden="true" />
+                </a>
+              ))}
+            </motion.nav>
+          </div>
+        </header>
+
+        <main className="relative z-10">
+          <section className="relative overflow-hidden px-4 pb-20 pt-16 sm:px-6 sm:pb-24 sm:pt-20 lg:pb-28 lg:pt-24">
 
             <motion.div
-              id="security"
-              className="bg-white border border-slate-200/80 rounded-2xl p-6 sm:p-8 shadow-[0_2px_12px_rgba(0,0,0,0.03)]"
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.2 }}
+              initial="hidden"
+              animate="visible"
+              variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.07 } } }}
+              className="relative z-10 mx-auto max-w-6xl text-center"
             >
-              <div className="grid sm:grid-cols-3 gap-6 text-center">
-                <div className="flex flex-col items-center gap-2">
-                  <div className="h-10 w-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center">
-                    <EyeOff className="h-4.5 w-4.5 text-blue-600" />
-                  </div>
-                  <p className="text-sm font-semibold text-slate-800">Full keys never stored</p>
-                  <p className="text-xs text-slate-400 leading-relaxed">Tested at the edge and immediately discarded</p>
-                </div>
-                <div className="flex flex-col items-center gap-2">
-                  <div className="h-10 w-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center">
-                    <Lock className="h-4.5 w-4.5 text-emerald-600" />
-                  </div>
-                  <p className="text-sm font-semibold text-slate-800">End-to-end secure</p>
-                  <p className="text-xs text-slate-400 leading-relaxed">TLS encrypted, only last 4 chars saved</p>
-                </div>
-                <div className="flex flex-col items-center gap-2">
-                  <div className="h-10 w-10 rounded-xl bg-violet-50 border border-violet-100 flex items-center justify-center">
-                    <Server className="h-4.5 w-4.5 text-violet-600" />
-                  </div>
-                  <p className="text-sm font-semibold text-slate-800">Edge validated</p>
-                  <p className="text-xs text-slate-400 leading-relaxed">Serverless functions close to providers</p>
-                </div>
+              <motion.div
+                variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: EASE } } }}
+                className="mx-auto inline-flex min-h-9 items-center gap-2 rounded-full border border-blue-200/90 bg-white/90 px-4 py-1.5 text-xs font-bold tracking-wide text-blue-700 shadow-sm backdrop-blur"
+              >
+                <span className="relative flex h-2 w-2" aria-hidden="true">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-50" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-600" />
+                </span>
+                Built for reliable API operations
+              </motion.div>
+
+              <motion.h1
+                variants={{ hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: EASE } } }}
+                className="mx-auto mt-7 max-w-5xl text-balance font-display text-[2.7rem] font-extrabold leading-[0.98] tracking-[-0.055em] text-slate-950 sm:text-6xl lg:text-7xl xl:text-[5.5rem]"
+              >
+                Validate every key.
+                <span className="mt-1 block bg-gradient-to-r from-blue-700 via-indigo-600 to-violet-600 bg-clip-text text-transparent">Ship with confidence.</span>
+              </motion.h1>
+
+              <motion.p
+                variants={{ hidden: { opacity: 0, y: 14 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: EASE } } }}
+                className="mx-auto mt-6 max-w-2xl text-pretty text-base leading-7 text-slate-600 sm:text-lg sm:leading-8"
+              >
+                Test credentials through an authenticated server check, then turn provider responses into clear health, latency, scope, and rate-limit signals your team can act on.
+              </motion.p>
+
+              <motion.div
+                variants={{ hidden: { opacity: 0, y: 14 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: EASE } } }}
+                className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row"
+              >
+                <button
+                  type="button"
+                  onClick={handleCTA}
+                  className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 text-sm font-bold text-white shadow-[0_10px_28px_rgba(37,99,235,0.24)] transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 sm:w-auto"
+                >
+                  {user ? "Open dashboard" : "Test an API key"}
+                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                </button>
+                <a
+                  href="#features"
+                  className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white/90 px-6 text-sm font-bold text-slate-700 shadow-sm backdrop-blur transition-colors hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 sm:w-auto"
+                >
+                  Explore the workflow
+                  <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                </a>
+              </motion.div>
+
+              <motion.ul
+                variants={{ hidden: { opacity: 0 }, visible: { opacity: 1, transition: { duration: 0.45, delay: 0.15 } } }}
+                className="mx-auto mt-6 flex max-w-2xl flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs font-semibold text-slate-500 sm:text-sm"
+              >
+                {["Masked saved history", "10 minute secret clearing", "Provider-aware results"].map((item) => (
+                  <li key={item} className="flex items-center gap-1.5">
+                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-600" aria-hidden="true" />
+                    {item}
+                  </li>
+                ))}
+              </motion.ul>
+
+              <HeroProviderCluster />
+
+              <div className="mt-8 sm:mt-10">
+                <HeroResultPreview />
               </div>
             </motion.div>
-          </div>
-        </section>
+          </section>
 
-        <section id="analytics">
+          <section className="relative overflow-hidden border-y border-slate-200/70 bg-white/95 px-4 py-12 sm:px-6 sm:py-14" aria-labelledby="coverage-title">
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-blue-50/70 to-transparent" />
+            <div className="relative mx-auto max-w-6xl">
+              <div className="text-center">
+                <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-wider text-slate-600 shadow-sm">
+                  <span className="relative flex h-2 w-2"><span className="absolute h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" /><span className="relative h-2 w-2 rounded-full bg-emerald-500" /></span>
+                  Live provider registry
+                </span>
+                <h2 id="coverage-title" className="mt-4 font-display text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl">Supported validators</h2>
+                <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-slate-600">Active and limited coverage comes from the shared provider registry, using official brand assets and current availability state.</p>
+              </div>
+              <ValidatorLoop />
+            </div>
+          </section>
+
+          <FeaturesSection />
+          <HealthScoreSection />
           <AnalyticsSection />
-        </section>
+          <ProvidersSection />
+          <SecuritySection />
 
-        <section id="pricing" className="py-24 sm:py-28 px-4 sm:px-6 bg-slate-50/50 border-y border-slate-200/50">
-          <div className="max-w-5xl mx-auto">
-            <motion.div className="text-center mb-14" initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}>
-              <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50/80 border border-blue-200/50 text-xs text-blue-600 font-medium mb-5">
-                <Zap className="h-3.5 w-3.5" /> Pricing
+          <section className="relative overflow-hidden border-t border-slate-200/60 bg-gradient-to-br from-white via-blue-50/40 to-white px-4 py-20 sm:px-6 sm:py-24">
+            <div className="pointer-events-none absolute -left-24 top-0 h-80 w-80 rounded-full bg-blue-200/25 blur-[90px]" aria-hidden="true" />
+            <div className="pointer-events-none absolute -right-16 bottom-0 h-72 w-72 rounded-full bg-indigo-200/20 blur-[80px]" aria-hidden="true" />
+            <motion.div
+              initial={{ opacity: 0, y: 18 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ duration: 0.5, ease: EASE }}
+              className="relative mx-auto max-w-3xl text-center"
+            >
+              <span className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-700 text-white shadow-[0_12px_28px_rgba(37,99,235,0.26),inset_0_1px_0_rgba(255,255,255,0.3)] ring-1 ring-blue-900/10">
+                <KeyRound className="h-5 w-5" aria-hidden="true" />
               </span>
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 leading-tight mb-4">
-                Simple pricing.<br /><span className="text-blue-600">No surprises.</span>
+              <h2 className="text-balance text-3xl font-extrabold tracking-tight text-slate-950 sm:text-4xl lg:text-5xl">
+                Run the next check with context.
               </h2>
-              <p className="text-slate-500 max-w-md mx-auto text-[15px]">Start free, upgrade when you need more.</p>
-            </motion.div>
-            <div className="grid md:grid-cols-3 gap-5 lg:gap-6">
-              {PRICING.map(({ name, price, period, features, cta, ctaVariant, popular, locked }, i) => (
-                <motion.div
-                  key={name}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.1, duration: 0.4, ease: [0.16,1,0.3,1] }}
-                  className={`relative rounded-2xl border p-7 lg:p-8 text-left transition-all duration-300 ${
-                    popular
-                      ? "bg-white border-blue-500/50 md:scale-105 shadow-[0_8px_40px_rgba(59,130,246,0.12)] hover:shadow-[0_12px_50px_rgba(59,130,246,0.18)]"
-                      : "bg-white border-slate-200/80 shadow-[0_2px_10px_rgba(0,0,0,0.03)] hover:border-slate-300 hover:shadow-[0_4px_20px_rgba(0,0,0,0.06)]"
-                  }`}>
-                  {popular && (
-                    <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-xs font-semibold px-4 py-1.5 rounded-full shadow-sm">
-                      Most Popular
-                    </span>
-                  )}
-                  {locked && (
-                    <span className="absolute top-5 right-5 text-[10px] text-slate-400 bg-slate-100 border border-slate-200/80 rounded-full px-2.5 py-1 uppercase tracking-wider font-medium">
-                      {name === "Pro" ? "Available Soon" : "Coming Soon"}
-                    </span>
-                  )}
-                  <h3 className="text-lg font-bold text-slate-900">{name}</h3>
-                  <div className="mt-4 mb-6">
-                    <span className="text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight">{price}</span>
-                    <span className="text-slate-400 text-sm ml-1">{period}</span>
-                  </div>
-                  <ul className="space-y-3 mb-8">
-                    {features.map(f => (
-                      <li key={f} className="flex items-start gap-3 text-sm text-slate-600">
-                        <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
-                        <span>{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <button
-                    onClick={locked ? undefined : handleCTA}
-                    disabled={locked}
-                    className={`w-full rounded-xl py-3 font-semibold text-sm transition-all duration-200 ${
-                      locked
-                        ? "border border-slate-200 text-slate-400 cursor-not-allowed bg-slate-50"
-                        : ctaVariant === "solid"
-                          ? "bg-blue-600 hover:bg-blue-500 text-white shadow-[0_4px_15px_rgba(37,99,235,0.25)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.35)] hover:-translate-y-0.5 active:translate-y-0"
-                          : "border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300"
-                    }`}
-                  >
-                    {cta}
-                  </button>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section id="features" className="py-24 sm:py-28 px-4 sm:px-6 bg-white relative overflow-hidden">
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-[radial-gradient(ellipse,rgba(59,130,246,0.03),transparent_70%)]" />
-          </div>
-          <div className="max-w-5xl mx-auto relative z-10">
-            <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }} className="text-center mb-14">
-              <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50/80 border border-blue-200/50 text-xs text-blue-600 font-medium mb-5">
-                <Shield className="h-3.5 w-3.5" /> Why KeyPing
-              </span>
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 leading-tight mb-4">
-                Built to solve<br /><span className="text-blue-600">real problems.</span>
-              </h2>
-              <p className="text-slate-500 max-w-md mx-auto text-[15px]">No fake quotes. Just the actual reasons developers reach for KeyPing.</p>
-            </motion.div>
-
-            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {WHY_CARDS.map(({ icon: Icon, problem, solution }, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.07, duration: 0.4, ease: [0.16,1,0.3,1] }}
-                  whileHover={{ y: -4 }}
-                  className="group relative bg-white border border-slate-200/80 hover:border-blue-400/50 rounded-2xl p-6 text-left transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] overflow-hidden"
+              <p className="mx-auto mt-4 max-w-2xl text-pretty text-base leading-7 text-slate-600 sm:text-lg">
+                Sign in to validate one key, compare up to 10 keys, and keep only the result details you choose to save.
+              </p>
+              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={handleCTA}
+                  className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 text-sm font-bold text-white shadow-[0_10px_28px_rgba(37,99,235,0.22)] transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 sm:w-auto"
                 >
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.03),transparent_50%)] pointer-events-none" />
-                  <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-blue-500/0 via-blue-500/60 to-blue-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  <div className="h-10 w-10 rounded-lg bg-blue-50/80 border border-blue-100/60 flex items-center justify-center mb-4 group-hover:bg-blue-100/80 group-hover:border-blue-200 transition-all duration-200">
-                    <Icon className="h-4.5 w-4.5 text-blue-600" />
-                  </div>
-                  <p className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold mb-2">{problem}</p>
-                  <p className="text-sm text-slate-600 leading-relaxed">{solution}</p>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
+                  {user ? "Go to dashboard" : "Open the tester"}
+                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                </button>
+                <a
+                  href="https://github.com/MuhammadTanveerAbbas/Keyping#readme"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-6 text-sm font-bold text-slate-700 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 sm:w-auto"
+                >
+                  Read documentation
+                  <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                </a>
+              </div>
+            </motion.div>
+          </section>
+        </main>
 
-        <section className="py-24 px-4 sm:px-6 bg-gradient-to-br from-blue-600 via-blue-600 to-indigo-700 relative overflow-hidden">
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-[100px]" />
-            <div className="absolute bottom-0 right-1/4 w-72 h-72 bg-indigo-400/15 rounded-full blur-[80px]" />
-          </div>
-          <div className="max-w-2xl mx-auto text-center relative z-10">
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-4 tracking-tight">Stop guessing. Start pinging.</h2>
-            <p className="text-blue-100/90 mb-10 text-lg">Free forever. No credit card required.</p>
-            <button onClick={handleCTA} className="bg-white text-blue-600 hover:bg-blue-50 font-semibold text-base rounded-xl px-10 py-4 transition-all duration-200 shadow-[0_8px_30px_rgba(0,0,0,0.15)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0">
-              Get Started Free
-            </button>
-          </div>
-        </section>
-      </main>
-
-      <Footer />
-    </div>
+        <div className="relative z-10">
+          <Footer />
+        </div>
+      </div>
+    </MotionConfig>
   );
 };
 

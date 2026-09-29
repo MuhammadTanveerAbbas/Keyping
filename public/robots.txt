@@ -1,7 +1,7 @@
-# https://keyping.app
+# KeyPing
 User-agent: *
 Allow: /
 Disallow: /dashboard/
 Disallow: /api/
 
-Sitemap: https://keyping.app/sitemap.xml
+Sitemap: https://key-ping.vercel.app/sitemap.xml

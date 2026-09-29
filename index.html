@@ -3,34 +3,54 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>KeyPing - Ping Any API Key. Know It Works.</title>
-    <meta name="description" content="Validate your API keys across OpenAI, Stripe, GitHub, Groq, and more. Check status, rate limits, and permissions  all in one place." />
+    <meta name="robots" content="index, follow" />
+    <meta name="color-scheme" content="light" />
+    <title>KeyPing | API Key Validation and Health Reports</title>
+    <meta
+      name="description"
+      content="Validate API keys with KeyPing. Review status, provider-reported rate limit and scope signals, latency, health scores, saved history, analytics, and bulk results."
+    />
     <meta name="author" content="KeyPing" />
     <meta name="theme-color" content="#3B82F6" />
-    <meta property="og:title" content="KeyPing — Ping Any API Key. Know It Works." />
-    <meta property="og:description" content="Validate your API keys across OpenAI, Stripe, GitHub, Groq, and 10+ providers. Check status, health score, rate limits, and latency in under 2 seconds." />
+    <link rel="canonical" href="https://key-ping.vercel.app/" />
+
+    <meta property="og:title" content="KeyPing | API Key Validation and Health Reports" />
+    <meta
+      property="og:description"
+      content="Validate API keys and inspect status, returned rate limit and scope signals, latency, health scores, history, analytics, and bulk results."
+    />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://keyping.vercel.app" />
-    <meta property="og:image" content="https://keyping.vercel.app/og-image.png" />
+    <meta property="og:url" content="https://key-ping.vercel.app/" />
+    <meta property="og:image" content="https://key-ping.vercel.app/og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="KeyPing — API Key Validator" />
+    <meta property="og:image:alt" content="KeyPing API key validation dashboard preview" />
     <meta property="og:site_name" content="KeyPing" />
+
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@themvpguy" />
     <meta name="twitter:creator" content="@themvpguy" />
-    <meta name="twitter:title" content="KeyPing — Ping Any API Key. Know It Works." />
-    <meta name="twitter:description" content="Validate your API keys across OpenAI, Stripe, GitHub, Groq, and 10+ providers. Check status, health score, rate limits, and latency in under 2 seconds." />
-    <meta name="twitter:image" content="https://keyping.vercel.app/og-image.png" />
-    <meta name="twitter:image:alt" content="KeyPing — API Key Validator" />
-    <!-- Favicon  all browsers -->
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="twitter:title" content="KeyPing | API Key Validation and Health Reports" />
+    <meta
+      name="twitter:description"
+      content="Validate API keys and inspect status, returned rate limit and scope signals, latency, health scores, history, analytics, and bulk results."
+    />
+    <meta name="twitter:image" content="https://key-ping.vercel.app/og-image.png" />
+    <meta name="twitter:image:alt" content="KeyPing API key validation dashboard preview" />
 
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/favicon.svg" />
     <link rel="mask-icon" href="/favicon.svg" color="#3B82F6" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <!-- One stylesheet request. Two were present, both requesting the same three
+         families, so the browser made two render blocking requests for one set
+         of fonts. This one includes PT Sans, which the mono and sans stacks
+         reference as a fallback. -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&family=Roboto+Condensed:ital,wght@0,100..900;1,100..900&family=Valley+Sans:ital,wght@0,100..900;1,100..900&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
     <div id="root"></div>

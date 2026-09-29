@@ -15,14 +15,16 @@ export default defineConfig(({ mode }) => ({
   build: {
     rollupOptions: {
       output: {
+        // Only packages that are actually imported appear here. The list was
+        // carrying entries for a popover, a toast, and the query client that
+        // no source file imported, so the chunk boundaries described a
+        // dependency set that did not exist.
         manualChunks: {
           vendor: ["react", "react-dom", "react-router-dom"],
           ui: [
             "@radix-ui/react-dialog",
-            "@radix-ui/react-popover",
             "@radix-ui/react-select",
             "@radix-ui/react-switch",
-            "@radix-ui/react-toast",
             "@radix-ui/react-tooltip",
             "@radix-ui/react-alert-dialog",
             "@radix-ui/react-label",
@@ -30,11 +32,12 @@ export default defineConfig(({ mode }) => ({
           ],
           charts: ["recharts"],
           motion: ["framer-motion"],
+          // jspdf is only reached by the PDF export, which is why it is its
+          // own chunk rather than part of the main bundle.
           pdf: ["jspdf"],
-          query: ["@tanstack/react-query"],
         },
       },
     },
-    chunkSizeWarningLimit: 300,
+    chunkSizeWarningLimit: 500,
   },
 }));

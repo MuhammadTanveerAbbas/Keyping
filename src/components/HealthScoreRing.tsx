@@ -9,25 +9,26 @@ interface HealthScoreRingProps {
 }
 
 export function HealthScoreRing({ score, size = 100, strokeWidth = 8, className }: HealthScoreRingProps) {
+ const safeScore = Math.max(0, Math.min(100, Number.isFinite(score) ? score : 0));
  const radius = (size - strokeWidth) / 2;
  const circumference = 2 * Math.PI * radius;
- const offset = circumference - (score / 100) * circumference;
+ const offset = circumference - (safeScore / 100) * circumference;
  const ringRef = useRef<SVGCircleElement>(null);
 
  const strokeColor =
-  score >= 80 ? "#22C55E" :
-  score >= 50 ? "#F59E0B" :
+  safeScore >= 80 ? "#22C55E" :
+  safeScore >= 50 ? "#F59E0B" :
   "#EF4444";
 
  const glowColor =
-  score >= 80 ? "rgba(34,197,94,0.5)" :
-  score >= 50 ? "rgba(245,158,11,0.5)" :
+  safeScore >= 80 ? "rgba(34,197,94,0.5)" :
+  safeScore >= 50 ? "rgba(245,158,11,0.5)" :
   "rgba(239,68,68,0.5)";
 
  const textColor =
-  score >= 80 ? "text-green-400" :
-  score >= 50 ? "text-amber-400" :
-  "text-red-400";
+  safeScore >= 80 ? "text-emerald-600" :
+  safeScore >= 50 ? "text-amber-600" :
+  "text-red-600";
 
  useEffect(() => {
   if (!ringRef.current) return;
@@ -39,10 +40,10 @@ export function HealthScoreRing({ score, size = 100, strokeWidth = 8, className 
    }
   });
   return () => cancelAnimationFrame(raf);
- }, [score, circumference, offset]);
+ }, [safeScore, circumference, offset]);
 
  return (
-  <div className={cn("relative inline-flex items-center justify-center", className)}>
+  <div className={cn("relative inline-flex items-center justify-center", className)} role="img" aria-label={`Health score ${safeScore} out of 100`}>
    <svg
     width={size}
     height={size}
@@ -74,7 +75,7 @@ export function HealthScoreRing({ score, size = 100, strokeWidth = 8, className 
    </svg>
    <div className="absolute inset-0 flex flex-col items-center justify-center">
     <span className={cn("font-mono font-bold leading-none", textColor, size >= 100 ? "text-2xl" : "text-lg")}>
-     {score}
+     {safeScore}
     </span>
     <span className="font-mono text-[9px] text-slate-400 uppercase tracking-widest mt-0.5">Health</span>
    </div>

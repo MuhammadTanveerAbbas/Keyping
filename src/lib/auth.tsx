@@ -1,105 +1,84 @@
-import {
- createContext,
- useContext,
- useEffect,
- useState,
- ReactNode,
-} from "react";
-import { Session, User } from "@supabase/supabase-js";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
 type AuthContextType = {
- session: Session | null;
- user: User | null;
- loading: boolean;
- signInWithGoogle: () => Promise<void>;
- signInWithEmail: (email: string, password: string) => Promise<void>;
- signUpWithEmail: (email: string, password: string) => Promise<void>;
- resetPassword: (email: string) => Promise<void>;
- signOut: () => Promise<void>;
+  session: Session | null;
+  user: User | null;
+  loading: boolean;
+  error: string | null;
+  signInWithGoogle: () => Promise<void>;
+  signInWithEmail: (email: string, password: string) => Promise<void>;
+  signUpWithEmail: (email: string, password: string) => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
+  signOut: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
- const [session, setSession] = useState<Session | null>(null);
- const [loading, setLoading] = useState(true);
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
- useEffect(() => {
-  supabase.auth.getSession().then(({ data: { session } }) => {
-   setSession(session);
-   setLoading(false);
-   if (window.location.hash.includes("access_token")) {
-    window.history.replaceState(null, "", window.location.pathname);
-   }
-  });
+  useEffect(() => {
+    let active = true;
+    void supabase.auth.getSession().then(({ data }) => {
+      if (!active) return;
+      setSession(data.session);
+      setLoading(false);
+      if (window.location.hash.includes("access_token")) window.history.replaceState(null, "", window.location.pathname);
+    }).catch((reason: unknown) => {
+      if (!active) return;
+      setSession(null);
+      setError(reason instanceof Error ? reason.message : "Could not restore the authentication session");
+      setLoading(false);
+    });
 
-  const {
-   data: { subscription },
-  } = supabase.auth.onAuthStateChange((_event, session) => {
-   setSession(session);
-   setLoading(false);
-   if (window.location.hash.includes("access_token")) {
-    window.history.replaceState(null, "", window.location.pathname);
-   }
-  });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      if (!active) return;
+      setSession(nextSession);
+      setError(null);
+      setLoading(false);
+      if (window.location.hash.includes("access_token")) window.history.replaceState(null, "", window.location.pathname);
+    });
 
-  return () => subscription.unsubscribe();
- }, []);
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
+  }, []);
 
- const signInWithGoogle = async () => {
-  const { error } = await supabase.auth.signInWithOAuth({
-   provider: "google",
-   options: { redirectTo: window.location.origin },
-  });
-  if (error) throw error;
- };
+  const signInWithGoogle = async () => {
+    const result = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin } });
+    if (result.error) throw result.error;
+  };
 
- const signInWithEmail = async (email: string, password: string) => {
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) throw error;
- };
+  const signInWithEmail = async (email: string, password: string) => {
+    const result = await supabase.auth.signInWithPassword({ email, password });
+    if (result.error) throw result.error;
+  };
 
- const signUpWithEmail = async (email: string, password: string) => {
-  const { error } = await supabase.auth.signUp({
-   email,
-   password,
-   options: { emailRedirectTo: window.location.origin },
-  });
-  if (error) throw error;
- };
+  const signUpWithEmail = async (email: string, password: string) => {
+    const result = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin } });
+    if (result.error) throw result.error;
+  };
 
- const resetPassword = async (email: string) => {
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-   redirectTo: `${window.location.origin}/auth`,
-  });
-  if (error) throw error;
- };
+  const resetPassword = async (email: string) => {
+    const result = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/auth` });
+    if (result.error) throw result.error;
+  };
 
- const signOut = async () => {
-  await supabase.auth.signOut();
- };
+  const signOut = async () => {
+    const result = await supabase.auth.signOut();
+    if (result.error) throw result.error;
+  };
 
- return (
-  <AuthContext.Provider
-   value={{
-    session,
-    user: session?.user ?? null,
-    loading,
-    signInWithGoogle,
-    signInWithEmail,
-    signUpWithEmail,
-    resetPassword,
-    signOut,
-   }}
-  >
-   {children}
-  </AuthContext.Provider>
- );
+  return <AuthContext.Provider value={{ session, user: session?.user ?? null, loading, error, signInWithGoogle, signInWithEmail, signUpWithEmail, resetPassword, signOut }}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
- const context = useContext(AuthContext);
- if (!context) throw new Error("useAuth must be used within AuthProvider");
- return context;
+  const context = useContext(AuthContext);
+  if (!context) throw new Error("useAuth must be used within AuthProvider");
+  return context;
 }

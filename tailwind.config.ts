@@ -2,7 +2,10 @@ import type { Config } from "tailwindcss";
 import tailwindcssAnimate from "tailwindcss-animate";
 
 export default {
-  content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}"],
+  // Only paths that exist. The list previously also named ./pages and ./app,
+  // which are Next.js conventions and do not exist in this Vite project, so
+  // Tailwind was scanning two directories that could never match.
+  content: ["./src/**/*.{ts,tsx}", "./index.html"],
   prefix: "",
   theme: {
     container: {
@@ -14,9 +17,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ["Inter", "system-ui", "sans-serif"],
-        sans: ["Inter", "system-ui", "sans-serif"],
-        mono: ["JetBrains Mono", "monospace"],
+        display: ["Bricolage Grotesque", "Valley Sans", "sans-serif"],
+        sans: ["Valley Sans", "PT Sans", "sans-serif"],
+        mono: ["Roboto Condensed", "PT Sans", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",

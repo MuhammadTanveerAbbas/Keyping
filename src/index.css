@@ -1,5 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap");
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -82,7 +80,7 @@ video {
 
   body {
     @apply bg-background text-foreground;
-    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-family: "PT Sans", "Valley Sans", sans-serif;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11", "tnum" 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -95,7 +93,7 @@ video {
   h4,
   h5,
   h6 {
-    font-family: "Inter", system-ui, sans-serif;
+    font-family: "Bricolage Grotesque", "Valley Sans", sans-serif;
     font-weight: 700;
     letter-spacing: -0.03em;
   }
@@ -103,7 +101,7 @@ video {
   code,
   .font-mono,
   pre {
-    font-family: "JetBrains Mono", "SF Mono", "Fira Code", monospace;
+    font-family: "Roboto Condensed", "PT Sans", sans-serif;
     font-feature-settings:
       "liga" 1,
       "calt" 1,
@@ -122,260 +120,32 @@ video {
     background-size: 32px 32px;
   }
 
-
-  /* ── Scanline overlay ── */
-  .scanline-overlay::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      rgba(255, 255, 255, 0.015) 2px,
-      rgba(255, 255, 255, 0.015) 4px
-    );
-    pointer-events: none;
-    z-index: 0;
+  /* ── Command Palette terminal item hover ── */
+  [cmdk-item][data-selected="true"] {
+    background: linear-gradient(90deg, rgba(59,130,246,0.08), rgba(139,92,246,0.04)) !important;
+    border-left: 2px solid rgba(59,130,246,0.4);
+    color: rgba(226,232,240,0.9) !important;
   }
-
-  /* ── Glass card ── */
-  .glass-card {
-    @apply rounded-2xl border;
-    background: white;
-    border-color: #cbd5e1;
+  [cmdk-item][data-selected="true"] svg {
+    color: rgba(96,165,250,0.8) !important;
   }
-
-  .glass-sidebar {
-    background: white;
-    border-color: #e2e8f0;
-  }
-
-  .glass-badge {
-    @apply rounded-md px-2 py-0.5 text-xs font-medium border font-mono;
-    background: #f1f5f9;
-    border-color: #cbd5e1;
-    color: #475569;
-  }
-
-  /* ── Card hover lift ── */
-  .card-hover-lift {
-    @apply transition-all duration-300;
-    transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  .card-hover-lift:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), 0 4px 10px rgba(0, 0, 0, 0.04);
-  }
-
-  .card-elevated {
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
-  }
-
-  /* ── Glow effects ── */
-  .glow-blue {
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
-  }
-  .glow-blue-sm {
-    box-shadow: 0 0 8px rgba(59, 130, 246, 0.3);
-  }
-  .glow-cyan {
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
-  }
-
-  /* ── Button glow ── */
-  .btn-hover-glow {
-    @apply transition-all duration-150;
-  }
-  .btn-hover-glow:hover {
-    box-shadow: 0 0 22px rgba(59, 130, 246, 0.55);
-  }
-
-  /* ── Health score ring animation ── */
-  @keyframes fill-ring {
-    from {
-      stroke-dashoffset: 282.74;
-    }
-  }
-  .health-ring-animated {
-    animation: fill-ring 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  }
-
-  /* ── Terminal cursor ── */
-  @keyframes cursor-blink {
-    0%,
-    100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0;
-    }
-  }
-  .terminal-cursor {
-    animation: cursor-blink 1s step-end infinite;
-  }
-
-  /* ── Typewriter ── */
-  @keyframes typewriter {
-    0% {
-      width: 0;
-    }
-    70% {
-      width: 100%;
-    }
-    90% {
-      width: 100%;
-    }
-    100% {
-      width: 0;
-    }
-  }
-  @keyframes blink-caret {
-    0%,
-    100% {
-      border-color: transparent;
-    }
-    50% {
-      border-color: #3b82f6;
-    }
-  }
-  .typewriter-text {
-    overflow: hidden;
-    white-space: nowrap;
-    border-right: 2px solid #3b82f6;
-    animation:
-      typewriter 4s steps(40) infinite,
-      blink-caret 0.75s step-end infinite;
-  }
-
-  /* ── Pulse valid ── */
-  @keyframes pulse-glow {
-    0%,
-    100% {
-      box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.15);
-    }
-    50% {
-      box-shadow: 0 0 12px 4px rgba(59, 130, 246, 0.08);
-    }
-  }
-  .pulse-valid {
-    animation: pulse-glow 2s ease-in-out infinite;
-  }
-
-  /* ── Skeleton ── */
-  .skeleton-muted {
-    @apply animate-pulse rounded-xl;
-    background: #f1f5f9;
-  }
-
-  /* ── Marquee ── */
-  @keyframes marquee {
-    0% {
-      transform: translateX(0);
-    }
-    100% {
-      transform: translateX(-50%);
-    }
-  }
-  .animate-marquee {
-    animation: marquee 30s linear infinite;
-  }
-
-  /* ── Float particles ── */
-  @keyframes float-particle {
-    0%,
-    100% {
-      transform: translateY(0px) translateX(0px);
-      opacity: 0.4;
-    }
-    33% {
-      transform: translateY(-20px) translateX(10px);
-      opacity: 0.8;
-    }
-    66% {
-      transform: translateY(-10px) translateX(-8px);
-      opacity: 0.6;
-    }
-  }
-  .particle {
-    animation: float-particle var(--duration, 6s) ease-in-out infinite;
-    animation-delay: var(--delay, 0s);
-  }
-
-  /* ── Count up ── */
-  @keyframes count-up {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  .count-up {
-    animation: count-up 0.6s ease-out forwards;
-  }
-
-  /* ── Gradient text ── */
-  .gradient-blue-text {
-    background: linear-gradient(135deg, #2563eb, #7c3aed);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-/* ── Card accent ── */
-.card-accent {
- border: 1px solid #e2e8f0;
 }
 
-/* ── Shimmer ── */
-@keyframes shimmer {
- 0% { transform: translateX(-100%); }
- 100% { transform: translateX(300%); }
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
-/* ── Orb (reserved for future use) ── */
-}
-
-/* ── Subtle scrollbar styling ── */
+/* ── Hide all scrollbars globally ── */
 * {
-  scrollbar-width: thin;
-  scrollbar-color: hsl(var(--border)) transparent;
+  scrollbar-width: none;
 }
 *::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  display: none;
 }
-*::-webkit-scrollbar-track {
-  background: transparent;
-}
-*::-webkit-scrollbar-thumb {
-  background: hsl(var(--border));
-  border-radius: 3px;
-}
- *::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground));
-}
-
-/* Provider card brand color hover effects */
-.provider-card:hover {
-  border-color: var(--brand-hover-border) !important;
-}
-.provider-card:hover .provider-icon-wrapper {
-  border-color: var(--brand-hover-border) !important;
-  background: var(--brand-hover-bg) !important;
-}
-.provider-card:hover .provider-icon {
-  color: var(--brand-hover-color) !important;
-}
-.provider-card[data-brand-color="#10A37F"]:hover { --brand-hover-border: rgba(16,163,127,0.4); --brand-hover-bg: linear-gradient(135deg, rgba(16,163,127,0.08), rgba(20,184,166,0.05)); --brand-hover-color: #10A37F; }
-.provider-card[data-brand-color="#F55036"]:hover { --brand-hover-border: rgba(245,80,54,0.4); --brand-hover-bg: linear-gradient(135deg, rgba(245,80,54,0.08), rgba(249,115,22,0.05)); --brand-hover-color: #F55036; }
-.provider-card[data-brand-color="#CC785C"]:hover { --brand-hover-border: rgba(204,120,92,0.4); --brand-hover-bg: linear-gradient(135deg, rgba(204,120,92,0.08), rgba(245,158,11,0.05)); --brand-hover-color: #CC785C; }
-.provider-card[data-brand-color="#635BFF"]:hover { --brand-hover-border: rgba(99,91,255,0.4); --brand-hover-bg: linear-gradient(135deg, rgba(99,91,255,0.08), rgba(99,102,241,0.05)); --brand-hover-color: #635BFF; }
-.provider-card[data-brand-color="#24292F"]:hover { --brand-hover-border: rgba(36,41,47,0.4); --brand-hover-bg: linear-gradient(135deg, rgba(36,41,47,0.06), rgba(107,114,128,0.04)); --brand-hover-color: #24292F; }
-.provider-card[data-brand-color="#000000"]:hover { --brand-hover-border: rgba(0,0,0,0.3); --brand-hover-bg: linear-gradient(135deg, rgba(0,0,0,0.04), rgba(0,0,0,0.02)); --brand-hover-color: #000000; }
-.provider-card[data-brand-color="#3ECF8E"]:hover { --brand-hover-border: rgba(62,207,142,0.4); --brand-hover-bg: linear-gradient(135deg, rgba(62,207,142,0.08), rgba(34,197,94,0.05)); --brand-hover-color: #3ECF8E; }
-.provider-card[data-brand-color="#FF9900"]:hover { --brand-hover-border: rgba(255,153,0,0.4); --brand-hover-bg: linear-gradient(135deg, rgba(255,153,0,0.08), rgba(249,115,22,0.05)); --brand-hover-color: #FF9900; }
-.provider-card[data-brand-color="#4285F4"]:hover { --brand-hover-border: rgba(66,133,244,0.4); --brand-hover-bg: linear-gradient(135deg, rgba(66,133,244,0.08), rgba(99,102,241,0.05)); --brand-hover-color: #4285F4; }

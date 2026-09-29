@@ -1,81 +1,147 @@
+import { useEffect, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { ExternalLink, Info, ShieldCheck } from "lucide-react";
 import { KeyPingLogo } from "@/components/KeyPingLogo";
-import { Lock } from "lucide-react";
 
-const sections = [
- { id: "collect", title: "1. Information We Collect", content: "We collect API keys temporarily during validation (never stored permanently validated in-flight and discarded), usage data (validation counts, timestamps), and account data (email, name via Google OAuth)." },
- { id: "use", title: "2. How We Use Your Information", content: "We use your information to provide and improve the service, send expiry alerts and notifications, and analyze aggregate usage patterns to improve performance." },
- { id: "security", title: "3. Data Security", content: "All data is encrypted in transit via TLS. Keys are validated server-side via Edge Functions and never persisted. Supabase Row Level Security (RLS) protects all user data." },
- { id: "third-party", title: "4. Third-Party Services", content: "We use Supabase for database and authentication, Google OAuth for sign-in, and Vercel for hosting. Each service has its own privacy policy." },
- { id: "cookies", title: "5. Cookies & Tracking", content: "We use session cookies for authentication only. We do not use advertising trackers or third-party analytics cookies." },
- { id: "retention", title: "6. Data Retention", content: "Test history is retained per your settings (default 90 days). Account deletion removes all associated data within 30 days." },
- { id: "rights", title: "7. Your Rights", content: "You may access, correct, or delete your data at any time. You can export your test history as CSV from Settings. Contact us at privacy@keyping.dev." },
- { id: "changes", title: "8. Changes to This Policy", content: "We will notify you via email for any material changes to this policy." },
- { id: "contact", title: "9. Contact", content: "For privacy-related questions, email privacy@keyping.dev or visit our support page." },
+const sections: { id: string; title: string; content: ReactNode }[] = [
+  {
+    id: "collect",
+    title: "1. Information we collect",
+    content: (
+      <>
+        <p>KeyPing processes account information such as your email address, authentication metadata, display name, team membership, and the results you choose to save.</p>
+        <p className="mt-3">When you test a key, the full key is sent to the validation service for that request. If you save a result, KeyPing stores a masked preview made from the last four characters, along with the provider, status, timestamp, latency, health score, notes, scopes, and rate-limit information returned by the provider.</p>
+      </>
+    ),
+  },
+  {
+    id: "use",
+    title: "2. How we use information",
+    content: (
+      <p>We use information to authenticate accounts, validate keys, display saved history and analytics, create team memberships, prevent abuse, and diagnose service errors. We do not use saved test history to advertise third-party products.</p>
+    ),
+  },
+  {
+    id: "providers",
+    title: "3. Providers and custom endpoints",
+    content: (
+      <>
+        <p>A validation request is sent to the API provider you select. If you choose the custom provider option, the request is sent to the HTTPS endpoint and with the authorization header that you provide. The selected provider or endpoint receives the information needed to authenticate that request.</p>
+        <p className="mt-3">Those services have their own privacy and retention practices. Review the provider's documentation before sending a key to a custom endpoint.</p>
+      </>
+    ),
+  },
+  {
+    id: "security",
+    title: "4. Security and storage",
+    content: (
+      <>
+        <p>Authentication and application data are handled through Supabase. Database access is protected by Row Level Security, and network requests use encrypted connections where supported by the deployment.</p>
+        <p className="mt-3">The KeyPing application does not write the full API key to its saved test history. The key may remain in active browser memory while the tester or bulk page is open, then is cleared by the page lifecycle or the tester's inactivity timer. The validation service handles it for the request, and a provider or custom endpoint may process it according to its own systems.</p>
+      </>
+    ),
+  },
+  {
+    id: "retention",
+    title: "5. Retention and deletion",
+    content: (
+      <>
+        <p>Saved test history remains available until you delete it from Settings or delete your account. Automatic test-history deletion is not currently configured. Bulk-test keys remain in the browser page until you clear the session, close the page, or the browser releases the memory.</p>
+        <p className="mt-3">Account deletion requests removal of the account and associated KeyPing data. Team ownership rules may require you to transfer or delete an owned team before an account can be removed.</p>
+      </>
+    ),
+  },
+  {
+    id: "cookies",
+    title: "6. Cookies and account preferences",
+    content: (
+      <p>Supabase manages authentication session storage needed to keep you signed in. Notification preferences are stored in your KeyPing account so they can follow you across devices. These preferences are not sent as notification deliveries. KeyPing does not use advertising trackers.</p>
+    ),
+  },
+  {
+    id: "third-party",
+    title: "7. Service providers",
+    content: (
+      <p>The deployment may use Supabase for authentication, database, and edge functions, a hosting provider for web delivery, and Google when you choose Google sign-in. Selected API providers receive validation requests as described above. Each service provider has its own terms and privacy policy.</p>
+    ),
+  },
+  {
+    id: "rights",
+    title: "8. Your choices and rights",
+    content: (
+      <>
+        <p>You can update your display name, export visible test history as CSV, delete saved test history, update notification preferences, or request account deletion from Settings.</p>
+        <p className="mt-3">If you have questions about access, correction, or deletion, contact the project using the address listed in Section 9.</p>
+      </>
+    ),
+  },
+  {
+    id: "changes",
+    title: "9. Policy changes and contact",
+    content: (
+      <>
+        <p>Material changes to this policy should be reflected on this page with an updated review date. Continuing to use the service after an update means the revised policy applies from that point onward.</p>
+        <p className="mt-3">For privacy questions, email <a href="mailto:privacy@keyping.dev" className="font-semibold text-blue-700 underline hover:text-blue-800">privacy@keyping.dev</a>.</p>
+      </>
+    ),
+  },
 ];
 
 export default function Privacy() {
- return (
-  <div className="min-h-screen bg-white">
-   {/* Navbar */}
-   <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-slate-200 px-6 py-3 flex items-center justify-between">
-    <Link to="/" className="flex items-center gap-2.5">
-     <KeyPingLogo size={24} />
-     <span className="font-display text-base font-bold text-slate-900">KeyPing</span>
-    </Link>
-    <ThemeToggle />
-   </header>
+  useEffect(() => {
+    document.title = "Privacy Policy | KeyPing";
+  }, []);
 
-   <main className="max-w-3xl mx-auto py-16 px-6">
-    {/* Header */}
-    <div className="mb-10">
-     <h1 className="font-display text-4xl font-extrabold text-slate-900">Privacy Policy</h1>
-     <p className="font-mono text-sm text-blue-500 mt-2">Last updated: March 31, 2025</p>
-     <p className="font-sans text-slate-600 mt-4 leading-relaxed">
-      KeyPing is committed to protecting your privacy. This policy explains how we collect, use, and safeguard your information.
-     </p>
-    </div>
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-900">
+      <a href="#policy-content" className="sr-only fixed left-3 top-3 z-[60] rounded-lg bg-blue-700 px-3 py-2 text-sm font-semibold text-white focus:not-sr-only">Skip to policy content</a>
+      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur-xl sm:px-6">
+        <div className="mx-auto flex max-w-4xl items-center justify-between gap-4">
+          <Link to="/" className="flex min-h-10 items-center gap-2.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500" aria-label="KeyPing home">
+            <KeyPingLogo size={24} /><span className="font-display text-base font-bold text-slate-900">KeyPing</span>
+          </Link>
+        </div>
+      </header>
 
-    {/* Security callout */}
-    <div className="flex gap-3 p-4 rounded-xl border bg-blue-50 border-blue-200 text-blue-800 mb-8">
-     <Lock className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
-     <p className="font-sans text-sm">We take your API key security seriously. Keys are never stored - only validated in transit via encrypted Edge Functions and immediately discarded.</p>
-    </div>
+      <main id="policy-content" className="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-16">
+        <div className="mb-8 max-w-3xl sm:mb-10">
+          <p className="mb-3 font-mono text-xs font-semibold uppercase tracking-widest text-blue-600">KeyPing policies</p>
+          <h1 className="font-display text-3xl font-extrabold tracking-tight text-slate-950 sm:text-4xl">Privacy Policy</h1>
+          <p className="mt-3 font-mono text-xs text-slate-500">Last reviewed: September 24, 2026</p>
+          <p className="mt-5 text-base leading-relaxed text-slate-600">This policy explains how the KeyPing deployment handles account information, validation requests, saved test records, and local browser preferences.</p>
+        </div>
 
-    {/* Table of contents */}
-    <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 mb-10">
-     <p className="font-display text-sm font-bold text-slate-900 mb-3">Table of Contents</p>
-     <ol className="space-y-1">
-      {sections.map(({ id, title }) => (
-       <li key={id}>
-        <a href={`#${id}`} className="font-sans text-sm text-blue-600 hover:underline">{title}</a>
-       </li>
-      ))}
-     </ol>
-    </div>
+        <div className="mb-8 flex gap-3 rounded-2xl border border-blue-200 bg-blue-50 p-4 text-blue-900 sm:p-5" role="note">
+          <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" aria-hidden="true" />
+          <div className="text-sm leading-relaxed"><p className="font-bold">Preview-only history</p><p className="mt-1">KeyPing does not write a full API key to its saved test records. A saved record contains a masked preview. The key is still sent to the provider or custom endpoint needed to perform the validation request.</p></div>
+        </div>
 
-    {/* Sections */}
-    <div className="space-y-10">
-     {sections.map(({ id, title, content }) => (
-      <section key={id} id={id}>
-       <h2 className="font-display text-xl font-bold text-slate-900 mb-3">{title}</h2>
-       <p className="font-sans text-slate-600 leading-relaxed">{content}</p>
-      </section>
-     ))}
-    </div>
+        <nav className="mb-10 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" aria-label="Privacy policy contents">
+          <h2 className="mb-3 font-display text-sm font-bold text-slate-900">On this page</h2>
+          <ol className="grid gap-1 sm:grid-cols-2 sm:gap-x-8">
+            {sections.map(({ id, title }) => <li key={id}><a href={`#${id}`} className="block rounded py-1 text-sm text-blue-700 underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">{title}</a></li>)}
+          </ol>
+        </nav>
 
-    {/* Footer note */}
-    <div className="flex gap-3 p-4 rounded-xl border bg-blue-50 border-blue-200 text-blue-800 mt-12">
-     <Lock className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
-     <p className="font-sans text-sm">We take your API key security seriously. Keys are never stored - only validated in transit.</p>
-    </div>
+        <div className="space-y-10">
+          {sections.map(({ id, title, content }) => (
+            <section id={id} key={id} className="scroll-mt-24">
+              <h2 className="mb-3 font-display text-xl font-bold text-slate-900">{title}</h2>
+              <div className="space-y-3 text-sm leading-7 text-slate-600">{content}</div>
+            </section>
+          ))}
+        </div>
 
-    <div className="mt-8 pt-8 border-t border-slate-200 flex items-center justify-between">
-     <Link to="/" className="font-sans text-sm text-blue-600 hover:underline">← Back to KeyPing</Link>
-     <Link to="/terms" className="font-sans text-sm text-blue-600 hover:underline">Terms of Service </Link>
+        <div className="mt-12 flex gap-3 rounded-2xl border border-slate-200 bg-white p-4 text-slate-700 shadow-sm sm:p-5">
+          <Info className="mt-0.5 h-5 w-5 shrink-0 text-slate-500" aria-hidden="true" />
+          <p className="text-sm leading-relaxed">This summary is for clarity and does not replace the terms of a provider or hosting service. Review linked policies when sending sensitive information.</p>
+        </div>
+
+        <div className="mt-8 flex flex-col gap-3 border-t border-slate-200 pt-6 text-sm sm:flex-row sm:items-center sm:justify-between">
+          <Link to="/" className="inline-flex items-center gap-2 font-semibold text-blue-700 hover:text-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">Back to KeyPing</Link>
+          <Link to="/terms" className="inline-flex items-center gap-2 font-semibold text-blue-700 hover:text-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">Terms of Service <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" /></Link>
+        </div>
+      </main>
     </div>
-   </main>
-  </div>
- );
+  );
 }

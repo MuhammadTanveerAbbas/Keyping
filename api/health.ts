@@ -1,19 +1,19 @@
 import { createClient } from '@supabase/supabase-js';
 import { withTimeout } from './_shared/with-timeout';
+import { resolveAllowedOrigin } from './_shared/origins';
 
 export const config = { runtime: 'edge' };
 
 const CHECK_TIMEOUT_MS = 5_000;
 
-function getCorsHeaders() {
-  const vercelUrl = process.env.VERCEL_URL;
-  const corsOrigin = vercelUrl
-    ? `https://${vercelUrl}`
-    : 'https://key-ping.vercel.app';
-
+function getCorsHeaders(origin: string | null) {
+  const vercelOrigin = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null;
   return {
-    'Access-Control-Allow-Origin': corsOrigin,
+    'Access-Control-Allow-Origin': resolveAllowedOrigin(origin, vercelOrigin),
     'Access-Control-Allow-Headers': 'content-type',
+    'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+    'Cache-Control': 'no-store',
+    'Vary': 'Origin',
     'Content-Type': 'application/json',
   };
 }
@@ -21,44 +21,40 @@ function getCorsHeaders() {
 function getSupabase() {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) {
-    throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set');
-  }
-  return createClient(url, key);
+  if (!url || !key) throw new Error('Supabase server configuration is incomplete');
+  return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
 }
 
 export default async function handler(req: Request) {
-  const headers = getCorsHeaders();
+  const headers = getCorsHeaders(req.headers.get('origin'));
 
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers });
+  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers });
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    return new Response(JSON.stringify({ status: 'error', error: 'Method not allowed' }), { status: 405, headers });
   }
 
-  const checks: Record<string, string | boolean> = {};
-
+  let databaseHealthy = false;
   try {
-    const supabase = getSupabase();
-    const { error } = await withTimeout(
-      supabase.from('key_tests').select('id').limit(1),
+    const result = await withTimeout(
+      getSupabase().from('key_tests').select('id', { head: true }).limit(1),
       CHECK_TIMEOUT_MS,
     );
-    checks.database = error ? `error: ${error.message}` : true;
-  } catch (e) {
-    checks.database = `error: ${e instanceof Error ? e.message : 'unknown'}`;
+    databaseHealthy = !result.error;
+  } catch (error) {
+    console.error('health check failed', error instanceof Error ? error.message : 'unknown error');
   }
 
-  const healthy = checks.database === true;
+  const body = JSON.stringify({
+    status: databaseHealthy ? 'ok' : 'degraded',
+    timestamp: new Date().toISOString(),
+    // Read from the environment with a fallback, rather than a literal that
+    // silently drifts away from package.json.
+    version: process.env.npm_package_version ?? '1.0.0',
+    checks: { database: databaseHealthy ? 'ok' : 'unavailable' },
+  });
 
-  return new Response(
-    JSON.stringify({
-      status: healthy ? 'ok' : 'degraded',
-      timestamp: new Date().toISOString(),
-      version: '1.0.0',
-      checks,
-    }),
-    {
-      status: healthy ? 200 : 503,
-      headers,
-    },
-  );
+  return new Response(req.method === 'HEAD' ? null : body, {
+    status: databaseHealthy ? 200 : 503,
+    headers,
+  });
 }

@@ -1,26 +1,30 @@
 export const pageMeta: Record<string, { title: string; description?: string }> = {
   "/dashboard": {
-    title: "API Key Tester",
-    description: "Validate a key against its provider and inspect health, latency, and scopes.",
+    title: "Command center",
+    description: "Run validations, review provider health, and monitor saved results.",
   },
   "/dashboard/bulk": {
-    title: "Bulk Test",
-    description: "Run up to 10 keys in parallel and export a PDF report.",
+    title: "Bulk test",
+    description: "Run multiple key checks and export a report.",
   },
   "/dashboard/analytics": {
     title: "Analytics",
-    description: "Comprehensive breakdowns of your API key validation history.",
+    description: "Explore validation trends, uptime, latency, and provider health.",
   },
   "/dashboard/history": {
-    title: "History & Vault",
-    description: "Every saved result, filterable by provider and status.",
+    title: "History and vault",
+    description: "Review saved results with provider, status, and time filters.",
+  },
+  "/dashboard/alerts": {
+    title: "Expiry alerts",
+    description: "Track credential expiry dates and reminder windows.",
   },
   "/dashboard/team": {
-    title: "Team Workspace",
-    description: "Create teams and share invite links with collaborators.",
+    title: "Team workspace",
+    description: "Manage members and secure workspace invitations.",
   },
   "/dashboard/settings": {
     title: "Settings",
-    description: "Profile, appearance, notifications, and data controls.",
+    description: "Manage your profile, preferences, security, and data.",
   },
 };

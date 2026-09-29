@@ -1,4 +1,15 @@
-project_id = "imojrbwweyodwmxnotud"
+project_id = "keyping"
+
+[db.migrations]
+schema_paths = ["./database/structure.sql", "./database/security.sql"]
+
+[api]
+schemas = ["public", "storage", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db.seed]
+enabled = false
 
 [functions.test-api-key]
 verify_jwt = true

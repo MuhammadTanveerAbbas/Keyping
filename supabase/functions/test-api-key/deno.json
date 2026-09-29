@@ -1,0 +1,10 @@
+{
+  "lock": false,
+  "imports": {
+    "@std/assert": "jsr:@std/assert@1.0.14",
+    "@std/http/server.ts": "https://deno.land/std@0.220.0/http/server.ts"
+  },
+  "compilerOptions": {
+    "strict": true
+  }
+}
