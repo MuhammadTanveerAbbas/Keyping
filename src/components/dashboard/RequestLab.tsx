@@ -81,9 +81,6 @@ export function RequestLab() {
     if (keyTimer.current) clearTimeout(keyTimer.current);
     keyTimer.current = setTimeout(() => {
       setApiKey("");
-      // The endpoint's response body can itself contain sensitive material, so
-      // it is discarded at the same moment the key is. Clearing only the key
-      // left the previous response sitting on screen.
       setResponse(null);
       setTab("form");
       toast.info("Request lab key cleared after 10 minutes");
@@ -111,9 +108,7 @@ export function RequestLab() {
       return;
     }
     setFieldErrors({});
-    if (method !== "GET" && !body.trim()) {
-      toast.info("The request body is empty");
-    }
+    if (method !== "GET" && !body.trim()) toast.info("The request body is empty");
 
     setSending(true);
     setResponse(null);
@@ -134,9 +129,6 @@ export function RequestLab() {
       if (result.error) toast.warning(errorMessage(result.error));
       else toast.success("Request completed");
     } catch (error: unknown) {
-      // A rejected custom endpoint, a blocked address, and a DNS failure all
-      // have distinct explanations on the server. Using the server's message
-      // is what makes the request lab usable for diagnosing them.
       const message = describeEdgeFunctionError(error);
       setResponse({ status: "invalid", error: message });
       setTab("banner");
@@ -157,96 +149,347 @@ export function RequestLab() {
 
   const tabs: { id: LabTab; label: string; icon: typeof Braces }[] = [
     { id: "form", label: "Form", icon: Braces },
-    { id: "text", label: "Text response", icon: Code2 },
-    { id: "banner", label: "Status banner", icon: ShieldAlert },
+    { id: "text", label: "Response", icon: Code2 },
+    { id: "banner", label: "Status", icon: ShieldAlert },
   ];
 
   const bodyText = responseText(response?.body);
 
   return (
     <section id="request-lab" className="scroll-mt-20 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
-      <div className="flex flex-col gap-3 border-b border-slate-100 bg-slate-50/70 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+      {/* Header */}
+      <div className="flex flex-col gap-4 border-b border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-900 text-white shadow-sm"><Terminal className="h-4 w-4" /></div>
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600 ring-1 ring-violet-100">
+            <Terminal className="h-5 w-5" />
+          </div>
           <div>
             <h2 className="text-sm font-bold text-slate-900">Request lab</h2>
             <p className="mt-0.5 text-xs text-slate-500">Send a safe request and inspect the response without saving the secret.</p>
           </div>
         </div>
-        <div className="flex max-w-full items-center gap-1 overflow-x-auto rounded-lg border border-slate-200 bg-white p-1" role="tablist" aria-label="Request lab views">
+
+        {/* Tab bar */}
+        <div
+          className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1"
+          role="tablist"
+          aria-label="Request lab views"
+        >
           {tabs.map(({ id, label, icon: Icon }) => (
-            <button key={id} type="button" role="tab" aria-selected={tab === id} aria-controls={`request-lab-${id}`} onClick={() => setTab(id)} className={cn("inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500", tab === id ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-50 hover:text-slate-800")}>
-              <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              aria-selected={tab === id}
+              aria-controls={`request-lab-${id}`}
+              onClick={() => setTab(id)}
+              className={cn(
+                "flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
+                tab === id
+                  ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-200/80"
+                  : "text-slate-500 hover:text-slate-700",
+              )}
+            >
+              <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
               <span>{label}</span>
             </button>
           ))}
         </div>
       </div>
 
+      {/* Form tab */}
       {tab === "form" && (
         <div id="request-lab-form" role="tabpanel" className="space-y-5 p-5 sm:p-6">
-          <div className="grid gap-4 md:grid-cols-[150px_1fr]">
+          <div className="grid gap-4 sm:grid-cols-[140px_1fr]">
             <div className="space-y-1.5">
-              <Label htmlFor="lab-method" className="text-xs font-semibold uppercase tracking-wider text-slate-600">Method</Label>
+              <Label htmlFor="lab-method" className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Method
+              </Label>
               <Select value={method} onValueChange={(value) => setMethod(value as Method)}>
-                <SelectTrigger id="lab-method" className="h-11 rounded-xl border-slate-200 bg-slate-50/60 font-mono text-sm"><SelectValue /></SelectTrigger>
-                <SelectContent>{METHODS.map((item) => <SelectItem key={item} value={item} className="font-mono">{item}</SelectItem>)}</SelectContent>
+                <SelectTrigger id="lab-method" className="h-10 rounded-xl border-slate-200 font-mono text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {METHODS.map((item) => (
+                    <SelectItem key={item} value={item} className="font-mono">
+                      {item}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="lab-endpoint" className="text-xs font-semibold uppercase tracking-wider text-slate-600">HTTPS endpoint</Label>
-              <Input ref={endpointRef} id="lab-endpoint" type="url" placeholder="https://api.example.com/v1/models" value={endpoint} onChange={(event) => setEndpoint(event.target.value)} className={cn("h-11 rounded-xl border-slate-200 bg-slate-50/60 font-mono text-sm", fieldErrors.endpoint && "border-red-400")} aria-invalid={Boolean(fieldErrors.endpoint)} aria-describedby={fieldErrors.endpoint ? "lab-endpoint-error" : undefined} />
-              {fieldErrors.endpoint && <p id="lab-endpoint-error" className="text-xs font-medium text-red-600" role="alert">{fieldErrors.endpoint}</p>}
+              <Label htmlFor="lab-endpoint" className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                HTTPS endpoint
+              </Label>
+              <Input
+                ref={endpointRef}
+                id="lab-endpoint"
+                type="url"
+                placeholder="https://api.example.com/v1/models"
+                value={endpoint}
+                onChange={(e) => setEndpoint(e.target.value)}
+                className={cn("h-10 rounded-xl border-slate-200 font-mono text-sm", fieldErrors.endpoint && "border-red-400")}
+                aria-invalid={Boolean(fieldErrors.endpoint)}
+                aria-describedby={fieldErrors.endpoint ? "lab-endpoint-error" : undefined}
+              />
+              {fieldErrors.endpoint && (
+                <p id="lab-endpoint-error" className="text-xs font-medium text-red-600" role="alert">
+                  {fieldErrors.endpoint}
+                </p>
+              )}
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="lab-key" className="text-xs font-semibold uppercase tracking-wider text-slate-600">API key</Label>
-              <Input ref={keyRef} id="lab-key" type="password" placeholder="Paste a key" value={apiKey} onChange={(event) => setApiKey(event.target.value)} maxLength={512} autoComplete="off" spellCheck={false} className={cn("h-11 rounded-xl border-slate-200 bg-slate-50/60 font-mono text-sm", fieldErrors.apiKey && "border-red-400")} aria-invalid={Boolean(fieldErrors.apiKey)} aria-describedby={fieldErrors.apiKey ? "lab-key-error" : undefined} />
-              {fieldErrors.apiKey && <p id="lab-key-error" className="text-xs font-medium text-red-600" role="alert">{fieldErrors.apiKey}</p>}
+              <Label htmlFor="lab-key" className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                API key
+              </Label>
+              <Input
+                ref={keyRef}
+                id="lab-key"
+                type="password"
+                placeholder="Paste a key"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                maxLength={512}
+                autoComplete="off"
+                spellCheck={false}
+                className={cn("h-10 rounded-xl border-slate-200 font-mono text-sm", fieldErrors.apiKey && "border-red-400")}
+                aria-invalid={Boolean(fieldErrors.apiKey)}
+                aria-describedby={fieldErrors.apiKey ? "lab-key-error" : undefined}
+              />
+              {fieldErrors.apiKey && (
+                <p id="lab-key-error" className="text-xs font-medium text-red-600" role="alert">
+                  {fieldErrors.apiKey}
+                </p>
+              )}
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="lab-auth" className="text-xs font-semibold uppercase tracking-wider text-slate-600">Auth header</Label>
-              <Input id="lab-auth" placeholder="Authorization: Bearer YOUR_KEY" value={authHeader} onChange={(event) => setAuthHeader(event.target.value)} className="h-11 rounded-xl border-slate-200 bg-slate-50/60 font-mono text-sm" />
+              <Label htmlFor="lab-auth" className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Auth header
+              </Label>
+              <Input
+                id="lab-auth"
+                placeholder="Authorization: Bearer YOUR_KEY"
+                value={authHeader}
+                onChange={(e) => setAuthHeader(e.target.value)}
+                className="h-10 rounded-xl border-slate-200 font-mono text-sm"
+              />
             </div>
           </div>
 
-          {method !== "GET" && <div className="space-y-1.5"><div className="flex items-center justify-between"><Label htmlFor="lab-body" className="text-xs font-semibold uppercase tracking-wider text-slate-600">Request body</Label><span className="text-[11px] text-slate-400">JSON or text</span></div><Textarea id="lab-body" maxLength={128 * 1024} placeholder={'{\n  "example": true\n}'} value={body} onChange={(event) => setBody(event.target.value)} className="min-h-32 rounded-xl border-slate-200 bg-slate-950 font-mono text-xs leading-relaxed text-slate-100 placeholder:text-slate-500" /></div>}
+          {method !== "GET" && (
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="lab-body" className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Request body
+                </Label>
+                <span className="text-[11px] text-slate-400">JSON or text</span>
+              </div>
+              <Textarea
+                id="lab-body"
+                maxLength={128 * 1024}
+                placeholder={'{\n  "example": true\n}'}
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+                className="min-h-32 rounded-xl border-slate-200 bg-slate-950 font-mono text-xs leading-relaxed text-slate-100 placeholder:text-slate-500"
+              />
+            </div>
+          )}
 
-          <div className="flex flex-wrap items-center gap-2">
-            <Button type="button" onClick={sendRequest} disabled={sending} className="h-11 gap-2 rounded-xl bg-blue-600 px-5 text-white shadow-sm hover:bg-blue-700">
-              {sending ? <><Loader2 className="h-4 w-4 animate-spin" />Sending request</> : <><Send className="h-4 w-4" />Send request</>}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Button
+              type="button"
+              onClick={sendRequest}
+              disabled={sending}
+              className="h-10 gap-2 rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500"
+            >
+              {sending ? (
+                <><Loader2 className="h-4 w-4 animate-spin" />Sending</>
+              ) : (
+                <><Send className="h-4 w-4" />Send request</>
+              )}
             </Button>
-            <Button type="button" variant="ghost" onClick={clearLab} disabled={sending} className="h-11 gap-2 rounded-xl text-slate-600 hover:bg-slate-50"><RotateCcw className="h-4 w-4" />Reset</Button>
-            <span className="inline-flex items-center gap-1.5 text-xs text-slate-400"><ShieldAlert className="h-3.5 w-3.5" />Public HTTPS endpoints only</span>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={clearLab}
+              disabled={sending}
+              className="h-10 gap-2 rounded-xl text-slate-600 hover:bg-slate-100"
+            >
+              <RotateCcw className="h-4 w-4" />
+              Reset
+            </Button>
+            <span className="flex items-center gap-1.5 text-xs text-slate-400 sm:ml-auto">
+              <ShieldAlert className="h-3.5 w-3.5 shrink-0" />
+              Public HTTPS endpoints only
+            </span>
           </div>
         </div>
       )}
 
+      {/* Text response tab */}
       {tab === "text" && (
         <div id="request-lab-text" role="tabpanel" className="space-y-4 p-5 sm:p-6">
           <div className="flex flex-wrap items-center gap-2">
-            <span className={cn("inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold", response?.status === "valid" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : response?.status === "limited" ? "border-amber-200 bg-amber-50 text-amber-700" : "border-slate-200 bg-slate-50 text-slate-600")}>
-              {response?.status === "valid" ? <CheckCircle2 className="h-3.5 w-3.5" /> : <FileJson className="h-3.5 w-3.5" />}
+            <span
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold",
+                response?.status === "valid"
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                  : response?.status === "limited"
+                    ? "border-amber-200 bg-amber-50 text-amber-700"
+                    : "border-slate-200 bg-slate-50 text-slate-600",
+              )}
+            >
+              {response?.status === "valid" ? (
+                <CheckCircle2 className="h-3.5 w-3.5" />
+              ) : (
+                <FileJson className="h-3.5 w-3.5" />
+              )}
               {response?.status ?? "No request yet"}
             </span>
-            {response?.statusCode && <span className="font-mono text-xs text-slate-500">HTTP {response.statusCode}</span>}
-            {response?.latencyMs !== undefined && <span className="font-mono text-xs text-slate-500">{response.latencyMs}ms</span>}
-            {bodyText && <Button type="button" variant="ghost" size="sm" onClick={() => copyText(bodyText)} className="ml-auto gap-1.5 text-slate-600"><Clipboard className="h-3.5 w-3.5" />Copy response</Button>}
+            {response?.statusCode && (
+              <span className="rounded-md bg-slate-100 px-2 py-0.5 font-mono text-xs text-slate-600">
+                HTTP {response.statusCode}
+              </span>
+            )}
+            {response?.latencyMs !== undefined && (
+              <span className="font-mono text-xs text-slate-500">{response.latencyMs}ms</span>
+            )}
+            {bodyText && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => copyText(bodyText)}
+                className="ml-auto gap-1.5 rounded-lg text-slate-600 hover:bg-slate-100"
+              >
+                <Clipboard className="h-3.5 w-3.5" />
+                Copy
+              </Button>
+            )}
           </div>
-          {response?.error && <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{errorMessage(response.error)}</p>}
-          {bodyText ? <pre className="max-h-[420px] overflow-auto rounded-xl border border-slate-800 bg-slate-950 p-4 font-mono text-xs leading-relaxed text-slate-100">{bodyText}</pre> : <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/60 px-4 py-12 text-center"><Code2 className="mx-auto h-7 w-7 text-slate-300" /><p className="mt-2 text-sm font-semibold text-slate-700">Response text will appear here</p><p className="mt-1 text-xs text-slate-500">Send a request from the Form tab to inspect the response.</p></div>}
+
+          {response?.error && (
+            <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
+              {errorMessage(response.error)}
+            </p>
+          )}
+
+          {bodyText ? (
+            <pre className="max-h-[420px] overflow-auto rounded-xl border border-slate-800 bg-slate-950 p-4 font-mono text-xs leading-relaxed text-slate-100">
+              {bodyText}
+            </pre>
+          ) : (
+            <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/60 px-4 py-12 text-center">
+              <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100">
+                <Code2 className="h-5 w-5 text-slate-400" />
+              </div>
+              <p className="text-sm font-semibold text-slate-700">Response text will appear here</p>
+              <p className="mt-1 text-xs text-slate-500">Send a request from the Form tab to inspect the response.</p>
+            </div>
+          )}
         </div>
       )}
 
+      {/* Status banner tab */}
       {tab === "banner" && (
         <div id="request-lab-banner" role="tabpanel" className="p-5 sm:p-6">
-          <div className={cn("flex items-start gap-3 rounded-xl border p-4", !response ? "border-slate-200 bg-slate-50/70" : response.status === "valid" ? "border-emerald-200 bg-emerald-50" : response.status === "limited" ? "border-amber-200 bg-amber-50" : "border-red-200 bg-red-50")}>
-            {response?.status === "valid" ? <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" /> : <ShieldAlert className={cn("mt-0.5 h-5 w-5 shrink-0", !response ? "text-slate-400" : "text-red-500")} />}
-            <div className="min-w-0"><p className={cn("text-sm font-bold", !response ? "text-slate-700" : response.status === "valid" ? "text-emerald-800" : response.status === "limited" ? "text-amber-800" : "text-red-800")}>{!response ? "Request lab is ready" : response.status === "valid" ? "Request completed successfully" : response.status === "limited" ? "Request completed with limits" : "Request needs attention"}</p><p className={cn("mt-1 text-sm", !response ? "text-slate-500" : response.status === "valid" ? "text-emerald-700" : response.status === "limited" ? "text-amber-700" : "text-red-700")}>{!response ? "Use the Form tab to send a request to a public HTTPS endpoint." : errorMessage(response.error) || "The response is available in the Text response tab."}</p></div>
+          <div
+            className={cn(
+              "flex items-start gap-3 rounded-xl border p-4",
+              !response
+                ? "border-slate-200 bg-slate-50"
+                : response.status === "valid"
+                  ? "border-emerald-200 bg-emerald-50"
+                  : response.status === "limited"
+                    ? "border-amber-200 bg-amber-50"
+                    : "border-red-200 bg-red-50",
+            )}
+          >
+            <div
+              className={cn(
+                "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
+                !response
+                  ? "bg-slate-100 text-slate-400"
+                  : response.status === "valid"
+                    ? "bg-emerald-100 text-emerald-600"
+                    : response.status === "limited"
+                      ? "bg-amber-100 text-amber-600"
+                      : "bg-red-100 text-red-600",
+              )}
+            >
+              {response?.status === "valid" ? (
+                <CheckCircle2 className="h-4.5 w-4.5" />
+              ) : (
+                <ShieldAlert className="h-4.5 w-4.5" />
+              )}
+            </div>
+            <div className="min-w-0">
+              <p
+                className={cn(
+                  "text-sm font-bold",
+                  !response
+                    ? "text-slate-700"
+                    : response.status === "valid"
+                      ? "text-emerald-800"
+                      : response.status === "limited"
+                        ? "text-amber-800"
+                        : "text-red-800",
+                )}
+              >
+                {!response
+                  ? "Request lab is ready"
+                  : response.status === "valid"
+                    ? "Request completed successfully"
+                    : response.status === "limited"
+                      ? "Request completed with limits"
+                      : "Request needs attention"}
+              </p>
+              <p
+                className={cn(
+                  "mt-1 text-sm",
+                  !response
+                    ? "text-slate-500"
+                    : response.status === "valid"
+                      ? "text-emerald-700"
+                      : response.status === "limited"
+                        ? "text-amber-700"
+                        : "text-red-700",
+                )}
+              >
+                {!response
+                  ? "Use the Form tab to send a request to a public HTTPS endpoint."
+                  : errorMessage(response.error) || "The response is available in the Response tab."}
+              </p>
+            </div>
           </div>
-          <div className="mt-4 flex flex-wrap gap-2.5"><Button type="button" variant="outline" size="sm" onClick={() => setTab("form")} className="gap-2 rounded-xl border-slate-200 bg-white shadow-sm"><Play className="h-3.5 w-3.5" />Open form</Button><Button type="button" variant="ghost" size="sm" onClick={clearLab} className="gap-2 rounded-xl text-slate-600 hover:bg-slate-100"><Trash2 className="h-3.5 w-3.5" />Clear lab</Button></div>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setTab("form")}
+              className="gap-2 rounded-xl border-slate-200 bg-white shadow-sm hover:border-slate-300"
+            >
+              <Play className="h-3.5 w-3.5" />
+              Open form
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={clearLab}
+              className="gap-2 rounded-xl text-slate-600 hover:bg-slate-100"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Clear lab
+            </Button>
+          </div>
         </div>
       )}
     </section>

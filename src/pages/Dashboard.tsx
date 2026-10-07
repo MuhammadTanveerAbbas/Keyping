@@ -20,7 +20,16 @@ export default function Dashboard() {
     if (!location.hash) return;
     const target = document.getElementById(location.hash.slice(1));
     if (!target) return;
-    window.requestAnimationFrame(() => target.scrollIntoView({ behavior: "smooth", block: "start" }));
+    window.requestAnimationFrame(() => {
+      const container = target.closest("main") ?? target.parentElement;
+      if (!container) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+      const HEADER_OFFSET = 88;
+      const top = target.getBoundingClientRect().top - container.getBoundingClientRect().top - HEADER_OFFSET;
+      container.scrollBy({ top, behavior: "smooth" });
+    });
   }, [location.hash]);
 
   const handleRefresh = useCallback(() => {
@@ -45,7 +54,7 @@ export default function Dashboard() {
           onRefresh={handleRefresh}
         />
 
-        <div id="key-tester" className="scroll-mt-20 pt-2">
+        <div id="key-tester" className="pt-2">
           <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h2 className="text-xl font-bold tracking-tight text-slate-950">Run a new validation</h2>

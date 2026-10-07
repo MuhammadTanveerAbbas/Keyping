@@ -286,7 +286,7 @@ export default function DashboardLayout() {
           </div>
         </header>
 
-        <main id="main-content" tabIndex={-1} className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-4 pb-20 outline-none sm:p-6 sm:pb-20 lg:p-8 lg:pb-8">
+        <main id="main-content" tabIndex={-1} className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-none p-4 pb-24 outline-none sm:p-6 sm:pb-24 lg:p-8 lg:pb-8">
           <PageTransition key={location.pathname}>
             <Outlet />
           </PageTransition>

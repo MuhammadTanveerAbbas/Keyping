@@ -119,20 +119,22 @@ function CapabilityCards() {
   ] as const;
 
   const toneClasses = {
-    blue: "bg-blue-50 text-blue-600 border-blue-100 shadow-sm",
-    violet: "bg-violet-50 text-violet-600 border-violet-100 shadow-sm",
-    emerald: "bg-emerald-50 text-emerald-600 border-emerald-100 shadow-sm",
+    blue: "bg-blue-50 text-blue-600 border-blue-100",
+    violet: "bg-violet-50 text-violet-600 border-violet-100",
+    emerald: "bg-emerald-50 text-emerald-600 border-emerald-100",
   };
 
   return (
-    <div className="grid gap-3 sm:grid-cols-3">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
       {cards.map(({ title, description, icon: Icon, tone }) => (
-        <div key={title} className="group rounded-2xl border border-slate-200/80 bg-white p-4.5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300">
-          <div className={cn("mb-3 flex h-10 w-10 items-center justify-center rounded-xl border transition-transform group-hover:scale-105", toneClasses[tone])}>
+        <div key={title} className="group flex items-start gap-3 rounded-2xl border border-slate-200/80 bg-slate-50/50 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white hover:shadow-md sm:flex-col sm:items-start sm:gap-0">
+          <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border transition-transform group-hover:scale-105 sm:mb-3", toneClasses[tone])}>
             <Icon className="h-5 w-5" />
           </div>
-          <p className="text-sm font-bold text-slate-900">{title}</p>
-          <p className="mt-1 text-xs leading-relaxed text-slate-500">{description}</p>
+          <div>
+            <p className="text-sm font-bold text-slate-900">{title}</p>
+            <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{description}</p>
+          </div>
         </div>
       ))}
     </div>
@@ -284,11 +286,11 @@ function QuickActions() {
   ];
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
       {actions.map(({ label, description, to, icon: Icon }) => (
-        <Link key={to} to={to} className="group flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition-colors group-hover:bg-blue-50 group-hover:text-blue-600">
-            <Icon className="h-4.5 w-4.5" />
+        <Link key={to} to={to} className="group flex items-center gap-3 rounded-xl border border-slate-200/80 bg-slate-50/50 p-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:bg-white hover:shadow-md">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-slate-500 shadow-sm ring-1 ring-slate-200/80 transition-colors group-hover:bg-blue-50 group-hover:text-blue-600 group-hover:ring-blue-200">
+            <Icon className="h-4 w-4" />
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-slate-800">{label}</p>
@@ -330,14 +332,14 @@ export function DashboardOverview({ analytics, tests, loading, onRefresh }: Over
         <Stat icon={Gauge} label="Average health" value={`${averageHealth}/100`} tone={averageHealth >= 80 ? "success" : averageHealth >= 50 ? "warning" : "danger"} loading={loading} />
       </StatGrid>
 
-      <div className="grid gap-5 xl:grid-cols-[1.4fr_1fr]">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.4fr_1fr]">
         <section className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-sm">
           <div className="mb-5 flex items-center justify-between gap-3">
             <div>
               <h3 className="text-sm font-bold text-slate-900">Recent validations</h3>
               <p className="mt-0.5 text-xs text-slate-500">Your latest saved provider checks</p>
             </div>
-            <Link to="/dashboard/history" className="text-xs font-semibold text-blue-600 hover:text-blue-700">View all</Link>
+            <Link to="/dashboard/history" className="shrink-0 text-xs font-semibold text-blue-600 hover:text-blue-700">View all</Link>
           </div>
           <RecentTests tests={tests} loading={loading} />
         </section>
@@ -348,15 +350,17 @@ export function DashboardOverview({ analytics, tests, loading, onRefresh }: Over
               <h3 className="text-sm font-bold text-slate-900">Provider health</h3>
               <p className="mt-0.5 text-xs text-slate-500">Uptime across saved tests</p>
             </div>
-            <Activity className="h-4 w-4 text-slate-400" />
+            <Activity className="h-4 w-4 shrink-0 text-slate-400" />
           </div>
           <ProviderHealth analytics={analytics} />
         </section>
       </div>
 
       <section className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-sm">
-        <div className="mb-4 flex items-center gap-2">
-          <Terminal className="h-4 w-4 text-blue-600" />
+        <div className="mb-4 flex items-start gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+            <Terminal className="h-4 w-4" />
+          </div>
           <div>
             <h3 className="text-sm font-bold text-slate-900">Validation capabilities</h3>
             <p className="text-xs text-slate-500">Everything included in one key test</p>
@@ -365,19 +369,29 @@ export function DashboardOverview({ analytics, tests, loading, onRefresh }: Over
         <CapabilityCards />
       </section>
 
-      <div className="grid gap-5 xl:grid-cols-[1fr_1fr]">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
         <section className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-sm">
-          <div className="mb-4 flex items-center gap-2">
-            <CalendarClock className="h-4 w-4 text-amber-500" />
-            <div><h3 className="text-sm font-bold text-slate-900">Expiry alerts</h3><p className="text-xs text-slate-500">Upcoming credential reminders</p></div>
-            <Link to="/dashboard/alerts" className="ml-auto text-xs font-semibold text-blue-600 hover:text-blue-700">Manage</Link>
+          <div className="mb-4 flex items-center gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-500">
+              <CalendarClock className="h-4 w-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-sm font-bold text-slate-900">Expiry alerts</h3>
+              <p className="text-xs text-slate-500">Upcoming credential reminders</p>
+            </div>
+            <Link to="/dashboard/alerts" className="shrink-0 text-xs font-semibold text-blue-600 hover:text-blue-700">Manage</Link>
           </div>
           <AlertsPreview />
         </section>
         <section className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-sm">
-          <div className="mb-4 flex items-center gap-2">
-            <Plus className="h-4 w-4 text-blue-600" />
-            <div><h3 className="text-sm font-bold text-slate-900">Quick actions</h3><p className="text-xs text-slate-500">Move to another workflow</p></div>
+          <div className="mb-4 flex items-center gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+              <Plus className="h-4 w-4" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">Quick actions</h3>
+              <p className="text-xs text-slate-500">Move to another workflow</p>
+            </div>
           </div>
           <QuickActions />
         </section>

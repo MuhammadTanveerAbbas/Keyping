@@ -226,7 +226,17 @@ export default function SettingsPage() {
   };
 
   const scrollToSection = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+    const el = document.getElementById(id);
+    if (!el) return;
+    const container = el.closest("main");
+    if (!container) {
+      el.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+      return;
+    }
+    // Use absolute scrollTop so repeated clicks never overshoot.
+    const HEADER_OFFSET = 24;
+    const target = container.scrollTop + el.getBoundingClientRect().top - container.getBoundingClientRect().top - HEADER_OFFSET;
+    container.scrollTo({ top: target, behavior: reduceMotion ? "auto" : "smooth" });
   };
 
   return (
@@ -263,7 +273,7 @@ export default function SettingsPage() {
           ))}
         </nav>
 
-        <div id="profile" className="scroll-mt-24">
+        <div id="profile" className="scroll-mt-0">
           <Panel title="Profile" description="Manage the account information available to KeyPing.">
             <div className="space-y-4">
               <div className="space-y-2">
@@ -306,7 +316,7 @@ export default function SettingsPage() {
           </Panel>
         </div>
 
-        <div id="notifications" className="scroll-mt-24">
+        <div id="notifications" className="scroll-mt-0">
           <Panel title="Notification preferences" description="These choices are saved in your KeyPing account. Delivery integrations are not connected yet.">
             <div className="mb-5 overflow-hidden rounded-xl border border-amber-200/70 bg-gradient-to-r from-amber-50 to-orange-50/40">
               <div className="flex items-start gap-3 px-4 py-3.5">
@@ -368,7 +378,7 @@ export default function SettingsPage() {
           </Panel>
         </div>
 
-        <div id="security" className="scroll-mt-24">
+        <div id="security" className="scroll-mt-0">
           <Panel title="Security & data" description="Review retention, export, and deletion controls.">
             <div className="space-y-4">
               <Notice variant="info">
@@ -463,7 +473,7 @@ export default function SettingsPage() {
           </Panel>
         </div>
 
-        <div id="help" className="scroll-mt-24 space-y-4">
+        <div id="help" className="scroll-mt-0 space-y-4">
           <Panel title="Quick start" description="A short path from a key to a useful result.">
             <div className="grid gap-3 sm:grid-cols-2">
               {quickStartSteps.map((step) => (
