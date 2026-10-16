@@ -11,7 +11,7 @@ interface StatusBadgeProps {
 export function StatusBadge({ status, size = "md", className, showIcon = true }: StatusBadgeProps) {
   const isSmall = size === "sm";
   const iconSize = isSmall ? "h-3 w-3" : "h-3.5 w-3.5";
-  const iconWrap = isSmall ? "h-4 w-4 rounded-full" : "h-4.5 w-4.5 rounded-full";
+  const iconWrap = isSmall ? "h-4 w-4 rounded-full" : "h-[18px] w-[18px] rounded-full";
   const base = cn(
     "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 font-mono font-semibold select-none shadow-[0_1px_2px_rgba(15,23,42,0.04)]",
     isSmall ? "text-[11px]" : "text-xs",

@@ -7,6 +7,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { GlobalError } from "@/components/GlobalError";
 import { SupabaseConfigError } from "@/components/SupabaseConfigError";
 import DashboardLayout from "@/components/DashboardLayout";
+import { KeyPingLogo } from "@/components/KeyPingLogo";
 import { isSupabaseConfigured } from "@/integrations/supabase/client";
 import Landing from "./pages/Landing";
 import { Footer } from "@/components/Footer";
@@ -23,13 +24,13 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Terms = lazy(() => import("./pages/Terms"));
 
+// Auth resolves in a few hundred milliseconds. A spinner with a line of text
+// read as a stall, and a blank flash reads as a broken page, so this is a quiet
+// brand splash and nothing more.
 function FullScreenLoader() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="flex flex-col items-center gap-3">
-        <div className="h-5 w-5 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
-        <span className="font-mono text-sm text-muted-foreground">Initializing KeyPing...</span>
-      </div>
+      <KeyPingLogo size={40} />
     </div>
   );
 }

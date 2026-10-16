@@ -2,6 +2,40 @@
 @tailwind components;
 @tailwind utilities;
 
+/* The validator strip slides a track that holds two identical groups, so a
+   half track width is exactly one full loop. It is a CSS animation rather
+   than a JS transform so the hover pause and prefers-reduced-motion
+   overrides both work through ordinary utility classes. */
+@keyframes keyping-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* A touch screen needs a 44px target, a mouse does not, and screen width
+   cannot tell the two apart because a tablet is wide but still touch driven.
+   Tailwind 3 has no pointer type variant, they only arrived in v4, so the
+   coarse pointer rule lives here. min-height and min-width are used on
+   purpose: they beat the height and width utilities no matter which order
+   the rules end up in. */
+@media (pointer: coarse) {
+  .touch-target {
+    min-height: 2.75rem;
+  }
+  .touch-target-square {
+    min-height: 2.75rem;
+    min-width: 2.75rem;
+  }
+  /* Footer links carry a 44px row height on touch so they clear the target
+     rule. min-height wins over height, so this holds regardless of order. */
+  .footer-touch {
+    min-height: 2.75rem;
+  }
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;

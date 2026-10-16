@@ -8,23 +8,20 @@ import {
   AlertTriangle,
   Bell,
   CheckCircle2,
-  Clock3,
   Download,
-  ExternalLink,
-  HelpCircle,
-  KeyRound,
+  LogOut,
   Save,
   Shield,
   Trash2,
   User,
-  Zap,
 } from "lucide-react";
 import { toast } from "sonner";
-import { ProviderIcon } from "@/components/ProviderIcon";
+import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { cn } from "@/lib/utils";
 import {
   Form,
   FormControl,
@@ -53,12 +50,10 @@ import {
   PageShell,
   Panel,
 } from "@/components/dashboard/ui";
-import { useAuth } from "@/lib/auth";
 import { usePreferences } from "@/hooks/usePreferences";
 import { downloadCsv } from "@/lib/csv";
 import { supabase } from "@/integrations/supabase/client";
 import { PROVIDERS } from "@/lib/providers";
-import { cn } from "@/lib/utils";
 import { notifyDataChanged } from "@/lib/data-events";
 
 const profileFormSchema = z.object({
@@ -71,22 +66,8 @@ const navSections = [
   { id: "profile", icon: User, label: "Profile" },
   { id: "notifications", icon: Bell, label: "Notifications" },
   { id: "security", icon: Shield, label: "Security & data" },
-  { id: "help", icon: HelpCircle, label: "Help & docs" },
 ] as const;
 
-const quickStartSteps = [
-  { step: "1", title: "Select a provider", desc: "Choose a built-in provider or configure a custom HTTPS endpoint." },
-  { step: "2", title: "Paste a key", desc: "The full secret is used for this request and kept out of saved history." },
-  { step: "3", title: "Run the test", desc: "Review status, latency, scopes, and the health score." },
-  { step: "4", title: "Save a result", desc: "Optionally save a masked preview with a nickname for history and CSV export." },
-];
-
-const features = [
-  { icon: Zap, title: "Live validation", desc: "Requests run through the KeyPing edge function." },
-  { icon: KeyRound, title: "Preview-only history", desc: "Saved records retain only the last four key characters." },
-  { icon: Download, title: "Portable data", desc: "Export saved test history as a CSV file." },
-  { icon: Clock3, title: "Session bulk tests", desc: "Run up to ten keys and export a PDF or CSV report." },
-];
 
 function formatJson(value: unknown) {
   if (value === null || value === undefined) return "";
@@ -96,6 +77,38 @@ function formatJson(value: unknown) {
   } catch {
     return "";
   }
+}
+
+function SignOutButton() {
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
+  const [signingOut, setSigningOut] = useState(false);
+
+  const handleSignOut = async () => {
+    if (signingOut) return;
+    setSigningOut(true);
+    try {
+      await signOut();
+      navigate("/");
+    } catch {
+      setSigningOut(false);
+      toast.error("Could not sign out. Please try again.");
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleSignOut}
+      disabled={signingOut}
+      className={cn(
+        "flex min-h-11 w-full touch-manipulation select-none items-center gap-2.5 rounded-xl border border-red-200 bg-red-50 px-2.5 py-2 text-left text-[13px] font-semibold text-red-700 transition-colors hover:border-red-300 hover:bg-red-100 hover:text-red-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 active:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+      )}
+    >
+      <LogOut className="h-4 w-4 shrink-0" aria-hidden="true" />
+      {signingOut ? "Signing out..." : "Sign out"}
+    </button>
+  );
 }
 
 export default function SettingsPage() {
@@ -241,7 +254,7 @@ export default function SettingsPage() {
 
   return (
     <>
-      <PageShell width="sm">
+      <PageShell width="md">
         <PageHeader
           title="Settings"
           description="Manage your profile, account preferences, data controls, and dashboard guidance."
@@ -378,7 +391,11 @@ export default function SettingsPage() {
           </Panel>
         </div>
 
-        <div id="security" className="scroll-mt-0">
+        <div id="security" className="scroll-mt-0 space-y-4">
+          <Panel title="Sign out" description="End your current session and return to the login page.">
+            <SignOutButton />
+          </Panel>
+          
           <Panel title="Security & data" description="Review retention, export, and deletion controls.">
             <div className="space-y-4">
               <Notice variant="info">
@@ -473,89 +490,6 @@ export default function SettingsPage() {
           </Panel>
         </div>
 
-        <div id="help" className="scroll-mt-0 space-y-4">
-          <Panel title="Quick start" description="A short path from a key to a useful result.">
-            <div className="grid gap-3 sm:grid-cols-2">
-              {quickStartSteps.map((step) => (
-                <div key={step.step} className="flex gap-3 rounded-xl border border-slate-100 p-3 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-sm font-semibold text-blue-700">{step.step}</div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-800">{step.title}</p>
-                    <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{step.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Panel>
-
-          <Panel title="Capabilities" description="What the current dashboard supports today.">
-            <div className="grid gap-3 sm:grid-cols-2">
-              {features.map(({ icon: Icon, title, desc }) => (
-                <div key={title} className="rounded-xl border border-slate-100 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">
-                  <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600"><Icon className="h-4 w-4" aria-hidden="true" /></div>
-                  <p className="text-sm font-medium text-slate-800">{title}</p>
-                  <p className="mt-1 text-xs leading-relaxed text-slate-500">{desc}</p>
-                </div>
-              ))}
-            </div>
-          </Panel>
-
-          <Panel title="Provider coverage" description="Review availability and open provider authentication documentation before testing a key.">
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {PROVIDERS.map((provider) => {
-                const content = (
-                  <>
-                    <ProviderIcon provider={provider.id} size="sm" className="text-slate-500" />
-                    <span className="min-w-0 flex-1 truncate text-sm text-slate-700">{provider.name}</span>
-                    <span className={cn("rounded-full border px-1.5 py-0.5 font-mono text-[9px] font-semibold", provider.availability === "active" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : provider.availability === "limited" ? "border-amber-200 bg-amber-50 text-amber-700" : "border-slate-200 bg-slate-50 text-slate-500")}>{provider.availability === "active" ? "Active" : provider.availability === "limited" ? "Limited" : "Planned"}</span>
-                    {provider.docsUrl && <ExternalLink className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />}
-                  </>
-                );
-                const className = "flex min-h-10 items-center gap-2 rounded-lg border border-slate-100 px-3 py-2 transition-colors hover:border-slate-200 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500";
-                return provider.docsUrl ? (
-                  <a key={provider.id} href={provider.docsUrl} target="_blank" rel="noopener noreferrer" className={className}>
-                    {content}
-                    <span className="sr-only">Open {provider.name} documentation</span>
-                  </a>
-                ) : (
-                  <div key={provider.id} className={className}>
-                    {content}
-                    <span className="text-[10px] text-slate-400">Custom endpoint</span>
-                  </div>
-                );
-              })}
-            </div>
-          </Panel>
-
-          <Panel title="Keyboard shortcuts" description="Useful shortcuts for faster dashboard work.">
-            <div className="divide-y divide-slate-100 rounded-xl border border-slate-100">
-              {[
-                { keys: "Ctrl K / Cmd K", action: "Open the command palette" },
-                { keys: "R", action: "Open the request lab" },
-                { keys: "E", action: "Open expiry alerts" },
-                { keys: "Esc", action: "Close a menu or dialog" },
-                { keys: "Tab", action: "Move focus through controls" },
-              ].map(({ keys, action }) => (
-                <div key={keys} className="flex items-center justify-between gap-3 px-4 py-3">
-                  <span className="text-sm text-slate-700">{action}</span>
-                  <kbd className="shrink-0 rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs text-slate-600">{keys}</kbd>
-                </div>
-              ))}
-            </div>
-          </Panel>
-
-          <Panel title="Policies and support" description="Review the current service policies before sharing an invite or key.">
-            <div className="grid gap-2 sm:grid-cols-2">
-              <Link to="/privacy" className="flex min-h-11 items-center justify-between rounded-lg border border-slate-100 px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
-                Privacy policy <ExternalLink className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
-              </Link>
-              <Link to="/terms" className="flex min-h-11 items-center justify-between rounded-lg border border-slate-100 px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
-                Terms of service <ExternalLink className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
-              </Link>
-            </div>
-            <p className="mt-3 text-xs leading-relaxed text-slate-500">For provider-specific questions, use the provider documentation above. For account or policy questions, use the contact address listed in the policy.</p>
-          </Panel>
-        </div>
       </PageShell>
 
       <AlertDialog open={deleteDataOpen} onOpenChange={(open) => { if (!deletingData) setDeleteDataOpen(open); }}>

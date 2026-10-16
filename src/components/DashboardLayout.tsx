@@ -1,4 +1,4 @@
-import { BarChart3, Bell, Command, History, LogOut, Package, Settings, Users, Zap } from "lucide-react";
+import { BarChart3, Bell, Command, History, Package, Settings, Users, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -36,11 +36,10 @@ const navSections = [
 ];
 
 export default function DashboardLayout() {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [totalTests, setTotalTests] = useState<number | null>(null);
-  const [signingOut, setSigningOut] = useState(false);
   const meta = pageMeta[location.pathname] ?? { title: "Workspace", description: "Monitor credentials and validation performance." };
 
   useEffect(() => {
@@ -54,50 +53,26 @@ export default function DashboardLayout() {
     }
 
     let active = true;
-    supabase
-      .from("key_tests")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", user.id)
-      .then(({ count, error }) => {
-        if (active && !error) setTotalTests(count || 0);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [user]);
-
-  useEffect(() => {
-    if (!user) return;
     const refreshCount = () => {
       void supabase
         .from("key_tests")
         .select("id", { count: "exact", head: true })
         .eq("user_id", user.id)
         .then(({ count, error }) => {
-          if (!error) setTotalTests(count || 0);
+          if (active && !error) setTotalTests(count || 0);
         });
     };
-    return onDataChanged(["key_tests"], () => void refreshCount());
+
+    refreshCount();
+    const unsubscribe = onDataChanged(["key_tests"], () => void refreshCount());
+
+    return () => {
+      active = false;
+      unsubscribe();
+    };
   }, [user]);
 
-  const handleSignOut = async () => {
-    if (signingOut) return;
-    setSigningOut(true);
-    try {
-      await signOut();
-      navigate("/");
-    } catch {
-      setSigningOut(false);
-      toast.error("Could not sign out. Please try again.");
-    }
-  };
-
   const openCommandPalette = () => {
-    // Dispatches the same event a real keyboard would produce, using the
-    // modifier that matches the platform. It previously set metaKey and
-    // ctrlKey together, which no keyboard can do, so the button took a
-    // different path through the handler than the real shortcut.
     const useMeta = typeof navigator !== "undefined" && /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent);
     document.dispatchEvent(
       new KeyboardEvent("keydown", {
@@ -176,27 +151,6 @@ export default function DashboardLayout() {
           )}
         </div>
       </nav>
-
-      <div className="shrink-0 border-t border-slate-200/80 p-3">
-        <div className="flex items-center gap-3 rounded-lg px-2.5 py-2">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 text-sm font-bold text-white shadow-sm" aria-hidden="true">
-            {user?.user_metadata?.full_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "U"}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-semibold text-slate-900">{user?.user_metadata?.full_name || "Account"}</p>
-            <p className="truncate text-[11px] text-slate-500">{user?.email || "Signed in"}</p>
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={handleSignOut}
-          disabled={signingOut}
-          className="mt-1 flex min-h-11 w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] font-medium text-slate-600 transition-colors hover:bg-red-50 hover:text-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          <LogOut className="h-4 w-4" aria-hidden="true" />
-          {signingOut ? "Signing out..." : "Sign out"}
-        </button>
-      </div>
     </div>
   );
 
@@ -234,7 +188,7 @@ export default function DashboardLayout() {
           >
             {({ isActive }) => (
               <>
-                <span className={cn("flex h-6.5 w-6.5 items-center justify-center rounded-lg transition-colors", isActive ? "bg-blue-50 text-blue-600" : "text-slate-500")}>
+                <span className={cn("flex h-[26px] w-[26px] items-center justify-center rounded-lg transition-colors", isActive ? "bg-blue-50 text-blue-600" : "text-slate-500")}>
                   <Icon className="h-4 w-4" aria-hidden="true" />
                 </span>
                 <span className="truncate max-w-full px-0.5">{label}</span>
@@ -242,6 +196,7 @@ export default function DashboardLayout() {
             )}
           </NavLink>
         ))}
+
       </nav>
 
       <aside className="hidden h-dvh w-64 min-h-0 shrink-0 flex-col border-r border-slate-200/80 bg-white lg:flex" aria-label="Workspace navigation">
@@ -251,7 +206,16 @@ export default function DashboardLayout() {
       <div className="flex h-dvh min-h-0 min-w-0 flex-1 flex-col">
         <header className="z-40 flex min-h-16 shrink-0 items-center justify-between gap-3 border-b border-slate-200/80 bg-white/95 px-4 py-2 backdrop-blur-sm sm:px-6">
           <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-            <div className="min-w-0">
+            {/* On small screens show the brand; on large screens the sidebar carries it */}
+            <NavLink
+              to="/dashboard"
+              className="flex items-center gap-2 rounded-lg px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 lg:hidden"
+              aria-label="KeyPing home"
+            >
+              <KeyPingLogo size={22} />
+              <span className="font-display text-sm font-bold tracking-tight text-slate-900">KeyPing</span>
+            </NavLink>
+            <div className="hidden min-w-0 lg:block">
               <p className="truncate font-display text-sm font-bold text-slate-900 sm:text-base">{meta.title}</p>
               <div className="flex items-center gap-2">
                 {meta.description && <p className="hidden max-w-[34rem] truncate text-xs font-medium text-slate-500 md:block">{meta.description}</p>}
@@ -269,7 +233,7 @@ export default function DashboardLayout() {
               onClick={openCommandPalette}
               aria-label="Open command palette"
               aria-keyshortcuts="Control+K Meta+K"
-              className="hidden h-9 items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 text-xs font-medium text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 active:scale-95 sm:flex"
+              className="hidden h-10 touch-manipulation touch-target items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 text-xs font-medium text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 active:scale-95 sm:flex"
             >
               <Command className="h-3 w-3" aria-hidden="true" />
               <span>K</span>
@@ -277,7 +241,7 @@ export default function DashboardLayout() {
             <Button
               type="button"
               size="sm"
-              className="h-10 min-w-[44px] rounded-lg bg-blue-600 px-3 font-semibold text-white shadow-sm transition-all hover:bg-blue-700 hover:shadow-md"
+              className="h-11 min-w-[44px] touch-manipulation touch-target rounded-lg bg-blue-600 px-3 font-semibold text-white shadow-sm transition-all hover:bg-blue-700 hover:shadow-md sm:h-10 sm:min-w-0"
               onClick={() => navigate("/dashboard")}
             >
               <span className="hidden sm:inline">New test</span>

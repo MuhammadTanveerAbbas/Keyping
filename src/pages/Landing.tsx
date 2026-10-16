@@ -32,7 +32,6 @@ import {
   Zap,
   GitBranch,
   Wifi,
-  BarChart2,
   RefreshCw,
   User,
   Calendar,
@@ -59,15 +58,16 @@ const ACTIVE_BRANDED_PROVIDERS = PROVIDERS.filter(
   (provider) => provider.availability === "active" && BRAND_ICONS[provider.id],
 );
 
+// The hero row drops the Twitter / X mark. Its glyph is a plain black X on
+// white, which reads as a close button next to the other brand tiles, and the
+// scrolling validator strip below already shows the provider by name.
+const HERO_BRAND_PROVIDERS = ACTIVE_BRANDED_PROVIDERS.filter((provider) => provider.id !== "twitter");
+
 const SUPPORTED_BRANDED_PROVIDERS = PROVIDERS.filter(
   (provider) =>
     BRAND_ICONS[provider.id] &&
     (provider.availability === "active" ||
       (provider.availability === "limited" && provider.validationKind === "legacy-api")),
-);
-
-const UNAVAILABLE_PROVIDERS = PROVIDERS.filter(
-  (provider) => provider.availability === "planned" || provider.validationKind === "unsupported",
 );
 
 const CHECK_LABELS: Record<ValidationCheck, string> = {
@@ -77,6 +77,19 @@ const CHECK_LABELS: Record<ValidationCheck, string> = {
   docs: "Docs",
   responseTime: "Latency",
   healthScore: "Health score",
+};
+
+// Every signal used to render as the same grey chip, so a card listing four
+// capabilities read as one undifferentiated block. Each signal now carries its
+// own icon and its own colour, drawn from the project palette and skipping
+// violet, so the list can be scanned without reading the words.
+const SIGNAL_STYLES: Record<ValidationCheck, { icon: LucideIcon; chip: string }> = {
+  status: { icon: CheckCircle2, chip: "border-emerald-200/90 bg-emerald-50 text-emerald-700" },
+  rateLimit: { icon: Gauge, chip: "border-amber-200/90 bg-amber-50 text-amber-700" },
+  scopes: { icon: KeyRound, chip: "border-sky-200/90 bg-sky-50 text-sky-700" },
+  docs: { icon: Layers3, chip: "border-slate-200 bg-slate-50 text-slate-600" },
+  responseTime: { icon: Timer, chip: "border-cyan-200/90 bg-cyan-50 text-cyan-700" },
+  healthScore: { icon: Activity, chip: "border-blue-200/90 bg-blue-50 text-blue-700" },
 };
 
 function ProviderMark({ provider, className }: { provider: string; className?: string }) {
@@ -91,8 +104,8 @@ function ProviderMark({ provider, className }: { provider: string; className?: s
 
 function HeroProviderCluster() {
   return (
-    <div className="relative mx-auto mt-10 flex max-w-3xl flex-wrap items-center justify-center gap-2.5 sm:mt-12 sm:gap-3" aria-label="Supported provider brands">
-      {ACTIVE_BRANDED_PROVIDERS.slice(0, 8).map((provider, index) => {
+    <div className="relative mx-auto mt-10 flex max-w-3xl flex-wrap items-center justify-center gap-2.5 sm:mt-12 sm:gap-3" role="group" aria-label="Supported provider brands">
+      {HERO_BRAND_PROVIDERS.slice(0, 8).map((provider, index) => {
         const BrandIcon = BRAND_ICONS[provider.id];
         if (!BrandIcon) return null;
         return (
@@ -249,16 +262,16 @@ function HeroResultPreview() {
             <div className="col-span-2 rounded-xl border border-slate-200/80 bg-white px-3.5 py-3 shadow-[0_4px_14px_rgba(15,23,42,0.05),inset_0_1px_0_rgba(255,255,255,0.9)] sm:col-span-1">
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <dt className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                     <LiveMetricIcon icon={Timer} tone="blue" className="h-6 w-6 rounded-md" /> Latency
-                  </dt>
-                  <dd className="mt-1.5 flex items-baseline gap-1">
+                  </p>
+                  <p className="mt-1.5 flex items-baseline gap-1">
                     <span className="font-mono text-2xl font-extrabold text-slate-900">142</span>
                     <span className="font-mono text-sm font-semibold text-slate-400">ms</span>
                     <span className="ml-1 inline-flex items-center gap-0.5 rounded-full border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 font-mono text-[10px] font-bold text-emerald-700">
                       <TrendingUp className="h-2.5 w-2.5" aria-hidden="true" /> Fast
                     </span>
-                  </dd>
+                  </p>
                   <p className="mt-0.5 text-[10px] text-slate-400">p95 this session</p>
                 </div>
                 <svg viewBox={`0 0 ${sparkW} ${sparkH}`} className="h-11 w-28 shrink-0" aria-hidden="true">
@@ -299,10 +312,10 @@ function HeroResultPreview() {
 
             {/* Rate limit */}
             <div className="col-span-2 rounded-xl border border-slate-200/80 bg-white px-3.5 py-3 shadow-[0_4px_14px_rgba(15,23,42,0.05),inset_0_1px_0_rgba(255,255,255,0.9)] sm:col-span-1">
-              <dt className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 <LiveMetricIcon icon={Gauge} tone="violet" className="h-6 w-6 rounded-md" /> Rate limit
-              </dt>
-              <dd className="mt-1.5 font-mono text-xl font-extrabold text-slate-900">4,821 <span className="text-sm font-semibold text-slate-400">/ 5,000</span></dd>
+              </p>
+              <p className="mt-1.5 font-mono text-xl font-extrabold text-slate-900">4,821 <span className="text-sm font-semibold text-slate-400">/ 5,000</span></p>
               <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100">
                 <motion.div
                   className="h-full rounded-full bg-gradient-to-r from-violet-500 to-indigo-500"
@@ -330,12 +343,12 @@ function HeroResultPreview() {
             {/* Scopes */}
             <div className="col-span-2 rounded-xl border border-slate-200/80 bg-white px-3.5 py-3 shadow-[0_4px_14px_rgba(15,23,42,0.05),inset_0_1px_0_rgba(255,255,255,0.9)]">
               <div className="flex items-center justify-between gap-2">
-                <dt className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                   <LiveMetricIcon icon={ShieldCheck} tone="emerald" className="h-6 w-6 rounded-md" /> Returned scopes
-                </dt>
+                </p>
                 <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 font-mono text-[10px] font-semibold text-slate-500">5 granted</span>
               </div>
-              <dd className="mt-2.5 space-y-2">
+              <div className="mt-2.5 space-y-2">
                 <div className="flex flex-wrap gap-1.5">
                   {[
                     { label: "read:user", level: "read", icon: User },
@@ -371,7 +384,7 @@ function HeroResultPreview() {
                   </span>
                   <span className="sm:ml-auto text-[10px] font-semibold text-slate-400">via OAuth token</span>
                 </div>
-              </dd>
+              </div>
             </div>
           </div>
         </div>
@@ -437,28 +450,40 @@ function HeroResultPreview() {
 function ValidatorLoop() {
   const providers = SUPPORTED_BRANDED_PROVIDERS;
   return (
-    <div className="relative mt-8 overflow-hidden py-2" aria-label="Supported provider validators">
-      <motion.div
-        animate={{ x: ["0%", "-50%"] }}
-        transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-        className="flex w-max items-stretch gap-3 hover:[animation-play-state:paused]"
-      >
+    <div className="relative mt-8 overflow-hidden py-2" role="group" aria-label="Supported provider validators">
+      {/* Cards ran past both edges and got sliced mid tile. Fading them into
+          the white band makes the cut read as deliberate. */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-white to-transparent sm:w-24" />
+      <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-white to-transparent sm:w-24" />
+      {/* The track pauses on hover, which is what the old dead
+          hover:[animation-play-state:paused] class was reaching for. */}
+      <div className="flex w-max items-stretch gap-4 [animation:keyping-marquee_34s_linear_infinite] hover:[animation-play-state:paused] motion-reduce:[animation:none]">
         {[0, 1].map((group) => (
-          <div key={group} className="flex shrink-0 gap-3" aria-hidden={group === 1}>
+          <div
+            key={group}
+            className={cn("flex shrink-0 gap-4", group === 1 && "motion-reduce:hidden")}
+            aria-hidden={group === 1}
+          >
             {providers.map((provider) => {
               const BrandIcon = BRAND_ICONS[provider.id];
               if (!BrandIcon) return null;
               const isLimited = provider.availability === "limited";
+              // White cards on a white band had no edge, so they read as
+              // faint. A solid hairline plus a two layer shadow gives a real
+              // boundary without tinting the card grey.
               return (
-                <div key={`${group}-${provider.id}`} className="flex w-52 items-center gap-3 rounded-2xl border border-slate-200/90 bg-white/95 p-3 shadow-[0_10px_30px_rgba(15,23,42,0.07),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur">
+                <div
+                  key={`${group}-${provider.id}`}
+                  className="flex w-64 items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_16px_40px_rgba(15,23,42,0.10),0_2px_6px_rgba(15,23,42,0.04)] ring-1 ring-slate-900/[0.04] transition-shadow duration-300 hover:shadow-[0_22px_52px_rgba(15,23,42,0.14),0_2px_8px_rgba(15,23,42,0.06)]"
+                >
                   <span
-                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl shadow-[0_8px_18px_rgba(15,23,42,0.14),inset_0_1px_0_rgba(255,255,255,0.3)] ring-1 ring-black/5"
+                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl shadow-[0_6px_16px_rgba(15,23,42,0.12),inset_0_1px_0_rgba(255,255,255,0.3)] ring-1 ring-black/5"
                     style={{ color: provider.icon.brandColor, backgroundColor: provider.icon.backgroundColor }}
                   >
                     <BrandIcon className="h-6 w-6" />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-bold text-slate-800">{provider.name}</span>
+                    <span className="block truncate text-sm font-bold text-slate-900">{provider.name}</span>
                     <span className="mt-0.5 flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
                       <span className={cn("h-1.5 w-1.5 rounded-full", isLimited ? "bg-amber-500" : "bg-emerald-500")} />
                       {isLimited ? "Limited" : "Active"}
@@ -469,7 +494,7 @@ function ValidatorLoop() {
             })}
           </div>
         ))}
-      </motion.div>
+      </div>
     </div>
   );
 }
@@ -571,7 +596,7 @@ const FEATURE_CARDS = [
 
 function FeaturesSection() {
   return (
-    <section id="features" className="scroll-mt-28 border-y border-slate-200/60 bg-slate-50/70 px-4 py-20 sm:px-6 sm:py-28">
+    <section id="features" className="scroll-mt-28 bg-white px-4 py-20 sm:px-6 sm:py-28">
       <div className="mx-auto max-w-6xl">
         <SectionHeading
           id="features-title"
@@ -806,7 +831,7 @@ function AnalyticsSection() {
   const analyticsInView = useInView(analyticsRef, { once: true, margin: "-80px" });
 
   return (
-    <section id="analytics" className="scroll-mt-28 border-y border-slate-200/60 bg-slate-50/70 px-4 py-20 sm:px-6 sm:py-28">
+    <section id="analytics" className="scroll-mt-28 bg-white px-4 py-20 sm:px-6 sm:py-28">
       <div className="mx-auto max-w-6xl">
         <SectionHeading
           id="analytics-title"
@@ -1043,9 +1068,7 @@ function ProvidersSection() {
             if (!BrandIcon) return null;
             const isLimited = provider.availability === "limited";
             const canAutoDetect = provider.detectionPriority < 1000;
-            const signals = provider.supportedChecks
-              .filter((check) => check !== "docs")
-              .map((check) => CHECK_LABELS[check]);
+            const signals = provider.supportedChecks.filter((check) => check !== "docs");
 
             return (
               <motion.article
@@ -1083,13 +1106,23 @@ function ProvidersSection() {
                 <h3 className="mt-4 text-base font-bold text-slate-900">{provider.name}</h3>
                 <p className="mt-1 min-h-10 text-xs leading-5 text-slate-500">{provider.availabilityNote}</p>
                 <div className="mt-4 flex flex-wrap gap-1.5">
-                  {signals.map((signal) => (
-                    <span key={signal} className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-semibold text-slate-600">
-                      {signal}
-                    </span>
-                  ))}
+                  {signals.map((check) => {
+                    const { icon: SignalIcon, chip } = SIGNAL_STYLES[check];
+                    return (
+                      <span
+                        key={check}
+                        className={cn(
+                          "inline-flex items-center gap-1.5 rounded-lg border px-2 py-1 text-[11px] font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]",
+                          chip,
+                        )}
+                      >
+                        <SignalIcon className="h-3 w-3 shrink-0" aria-hidden="true" />
+                        {CHECK_LABELS[check]}
+                      </span>
+                    );
+                  })}
                 </div>
-                <div className="mt-auto flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
+                <div className="mt-auto flex items-center justify-between gap-3 pt-4">
                   <span className="text-[11px] font-medium text-slate-500">
                     {canAutoDetect ? "Pattern detection" : "Manual selection"}
                   </span>
@@ -1113,7 +1146,7 @@ function ProvidersSection() {
         <div className="mt-5">
           <div className="flex gap-4 rounded-2xl border border-blue-200/70 bg-blue-50/70 p-5">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-blue-200 bg-white text-blue-600">
-              <Globe2 className="h-4.5 w-4.5" aria-hidden="true" />
+              <Globe2 className="h-[18px] w-[18px]" aria-hidden="true" />
             </span>
             <div>
               <h3 className="text-sm font-bold text-slate-900">Custom HTTPS endpoint</h3>
@@ -1154,46 +1187,41 @@ const SECURITY_CARDS = [
 
 function SecuritySection() {
   return (
-    <section id="security" className="scroll-mt-28 border-y border-slate-200/60 bg-white px-4 py-20 sm:px-6 sm:py-28">
+    <section id="security" className="scroll-mt-28 bg-white px-4 py-20 sm:px-6 sm:py-28">
       <div className="mx-auto max-w-6xl">
-        <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
-          <div>
-            <span className="mb-5 inline-flex items-center gap-2.5 rounded-full border border-blue-200/70 bg-gradient-to-b from-white to-blue-50 px-2.5 py-1.5 pr-4 text-xs font-bold text-blue-700 shadow-[0_8px_20px_rgba(37,99,235,0.10),inset_0_1px_0_rgba(255,255,255,0.9)]">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-[0_5px_12px_rgba(37,99,235,0.28),inset_0_1px_0_rgba(255,255,255,0.28)] ring-1 ring-blue-900/10">
-                <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
-              </span>
-              Key handling
-            </span>
-            <h2 id="security-title" className="text-balance text-3xl font-extrabold leading-tight tracking-tight text-slate-950 sm:text-4xl lg:text-5xl">
-              Keep the useful history. <span className="text-blue-600">Not the full secret.</span>
-            </h2>
-            <p className="mt-5 text-base leading-7 text-slate-600">
-              KeyPing explains exactly what the app does with test inputs and saved records. Security claims stay tied to the implemented behavior.
-            </p>
+        {/* This section used to lay its own badge, heading and cards out in a
+            two column split, so it was the only one on the page with the
+            heading hard left while every other section centres it. It now
+            uses the shared SectionHeading, so the badge sits centred above the
+            title like the rest of the page. */}
+        <SectionHeading
+          id="security-title"
+          eyebrow="Key handling"
+          icon={ShieldCheck}
+          title={<>Keep the useful history. <span className="text-blue-600">Not the full secret.</span></>}
+          description="KeyPing explains exactly what the app does with test inputs and saved records. Security claims stay tied to the implemented behavior."
+        />
 
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            {SECURITY_CARDS.map((item, index) => {
-              const Icon = item.icon;
-              return (
-                <motion.article
-                  key={item.title}
-                  initial={{ opacity: 0, y: 18 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-60px" }}
-                  transition={{ duration: 0.45, delay: (index % 2) * 0.08, ease: EASE }}
-                  className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.05),inset_0_1px_0_rgba(255,255,255,0.9)] transition-all hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-[0_14px_34px_rgba(15,23,42,0.08)]"
-                >
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-[0_8px_18px_rgba(37,99,235,0.24),inset_0_1px_0_rgba(255,255,255,0.28)] ring-1 ring-blue-900/10">
-                    <Icon className="h-4.5 w-4.5" aria-hidden="true" />
-                  </span>
-                  <h3 className="mt-4 text-sm font-bold text-slate-900">{item.title}</h3>
-                  <p className="mt-2 text-xs leading-5 text-slate-600">{item.description}</p>
-                </motion.article>
-              );
-            })}
-          </div>
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {SECURITY_CARDS.map((item, index) => {
+            const Icon = item.icon;
+            return (
+              <motion.article
+                key={item.title}
+                initial={{ opacity: 0, y: 18 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-60px" }}
+                transition={{ duration: 0.45, delay: (index % 4) * 0.07, ease: EASE }}
+                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.08),0_2px_6px_rgba(15,23,42,0.03)] ring-1 ring-slate-900/[0.04] transition-all hover:-translate-y-1 hover:border-blue-200 hover:shadow-[0_22px_50px_rgba(15,23,42,0.12),0_2px_8px_rgba(15,23,42,0.05)]"
+              >
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-[0_8px_18px_rgba(37,99,235,0.24),inset_0_1px_0_rgba(255,255,255,0.28)] ring-1 ring-blue-900/10">
+                  <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
+                </span>
+                <h3 className="mt-4 text-sm font-bold text-slate-900">{item.title}</h3>
+                <p className="mt-2 text-xs leading-5 text-slate-600">{item.description}</p>
+              </motion.article>
+            );
+          })}
         </div>
       </div>
     </section>
@@ -1271,7 +1299,7 @@ const Landing = () => {
                   aria-expanded={mobileMenuOpen}
                   aria-controls="mobile-navigation"
                 >
-                  {mobileMenuOpen ? <X className="h-4.5 w-4.5" aria-hidden="true" /> : <Menu className="h-4.5 w-4.5" aria-hidden="true" />}
+                  {mobileMenuOpen ? <X className="h-[18px] w-[18px]" aria-hidden="true" /> : <Menu className="h-[18px] w-[18px]" aria-hidden="true" />}
                 </button>
               </div>
             </div>
@@ -1311,13 +1339,20 @@ const Landing = () => {
             >
               <motion.div
                 variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: EASE } } }}
-                className="mx-auto inline-flex min-h-9 items-center gap-2 rounded-full border border-blue-200/90 bg-white/90 px-4 py-1.5 text-xs font-bold tracking-wide text-blue-700 shadow-sm backdrop-blur"
+                className="mx-auto inline-flex min-h-12 items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-1.5 pl-3 shadow-[0_12px_32px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.95)] backdrop-blur"
               >
-                <span className="relative flex h-2 w-2" aria-hidden="true">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-50" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-600" />
+                {/* The tile is a solid object with a lit top edge and a coloured
+                    cast shadow, so it reads as raised rather than as a flat
+                    swatch sitting on the pill. */}
+                <span
+                  aria-hidden="true"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-400 via-blue-500 to-blue-700 text-white shadow-[0_10px_20px_rgba(37,99,235,0.34),inset_0_1px_0_rgba(255,255,255,0.45),inset_0_-2px_4px_rgba(15,23,42,0.18)] ring-1 ring-blue-900/15"
+                >
+                  <ShieldCheck className="h-[18px] w-[18px]" strokeWidth={2.4} />
                 </span>
-                Built for reliable API operations
+                <span className="pr-2 text-left text-[13px] font-extrabold tracking-[-0.01em] text-slate-900 sm:text-sm">
+                  Built for reliable API operations
+                </span>
               </motion.div>
 
               <motion.h1
@@ -1325,7 +1360,7 @@ const Landing = () => {
                 className="mx-auto mt-7 max-w-5xl text-balance font-display text-[2.7rem] font-extrabold leading-[0.98] tracking-[-0.055em] text-slate-950 sm:text-6xl lg:text-7xl xl:text-[5.5rem]"
               >
                 Validate every key.
-                <span className="mt-1 block bg-gradient-to-r from-blue-700 via-indigo-600 to-violet-600 bg-clip-text text-transparent">Ship with confidence.</span>
+                <span className="mt-1 block bg-gradient-to-r from-blue-700 via-blue-600 to-blue-500 bg-clip-text text-transparent">Ship with confidence.</span>
               </motion.h1>
 
               <motion.p
@@ -1376,7 +1411,7 @@ const Landing = () => {
             </motion.div>
           </section>
 
-          <section className="border-y border-slate-200/70 bg-white/95 px-4 py-12 sm:px-6 sm:py-14" aria-labelledby="coverage-title">
+          <section className="bg-white px-4 py-12 sm:px-6 sm:py-14" aria-labelledby="coverage-title">
             <div className="mx-auto max-w-6xl">
               <div className="text-center">
                 <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-wider text-slate-600 shadow-sm">
@@ -1396,7 +1431,7 @@ const Landing = () => {
           <ProvidersSection />
           <SecuritySection />
 
-          <section className="relative overflow-hidden border-t border-slate-200/60 bg-gradient-to-br from-white via-blue-50/40 to-white px-4 py-20 sm:px-6 sm:py-24">
+          <section className="relative overflow-hidden bg-gradient-to-br from-white via-blue-50/40 to-white px-4 py-20 sm:px-6 sm:py-24">
             <div className="pointer-events-none absolute -left-24 top-0 h-80 w-80 rounded-full bg-blue-200/25 blur-[90px]" aria-hidden="true" />
             <div className="pointer-events-none absolute -right-16 bottom-0 h-72 w-72 rounded-full bg-indigo-200/20 blur-[80px]" aria-hidden="true" />
             <motion.div

@@ -304,7 +304,7 @@ export default function ApiKeyTester({ onSave }: { onSave?: () => void } = {}) {
         <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-500" />
         <div className="flex items-center gap-4 border-b border-slate-100 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 px-5 py-4">
           <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-400/20 to-blue-600/30 shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_4px_12px_rgba(0,0,0,0.3)] ring-1 ring-white/10">
-            <Lock className="h-4.5 w-4.5 text-blue-300" strokeWidth={2.25} aria-hidden="true" />
+            <Lock className="h-[18px] w-[18px] text-blue-300" strokeWidth={2.25} aria-hidden="true" />
             <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-slate-800 bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.7)]" aria-hidden="true" />
           </span>
           <div className="min-w-0 flex-1">

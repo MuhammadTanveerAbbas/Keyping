@@ -423,9 +423,9 @@ export function RequestLab() {
               )}
             >
               {response?.status === "valid" ? (
-                <CheckCircle2 className="h-4.5 w-4.5" />
+                <CheckCircle2 className="h-[18px] w-[18px]" />
               ) : (
-                <ShieldAlert className="h-4.5 w-4.5" />
+                <ShieldAlert className="h-[18px] w-[18px]" />
               )}
             </div>
             <div className="min-w-0">
