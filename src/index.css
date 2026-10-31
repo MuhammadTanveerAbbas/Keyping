@@ -154,15 +154,7 @@ video {
     background-size: 32px 32px;
   }
 
-  /* ── Command Palette terminal item hover ── */
-  [cmdk-item][data-selected="true"] {
-    background: linear-gradient(90deg, rgba(59,130,246,0.08), rgba(139,92,246,0.04)) !important;
-    border-left: 2px solid rgba(59,130,246,0.4);
-    color: rgba(226,232,240,0.9) !important;
-  }
-  [cmdk-item][data-selected="true"] svg {
-    color: rgba(96,165,250,0.8) !important;
-  }
+
 }
 
 @media (prefers-reduced-motion: reduce) {

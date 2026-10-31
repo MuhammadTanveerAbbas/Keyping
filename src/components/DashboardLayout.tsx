@@ -1,4 +1,4 @@
-import { BarChart3, Bell, Command, History, Package, Settings, Users, Zap } from "lucide-react";
+import { BarChart3, Bell, Command, History, Package, PanelLeftClose, PanelLeftOpen, Settings, Users, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -40,6 +40,7 @@ export default function DashboardLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [totalTests, setTotalTests] = useState<number | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const meta = pageMeta[location.pathname] ?? { title: "Workspace", description: "Monitor credentials and validation performance." };
 
   useEffect(() => {
@@ -86,71 +87,114 @@ export default function DashboardLayout() {
 
   const sidebarContent = (
     <div className="flex h-full min-h-0 flex-col bg-white">
+      {/* Header: logo only */}
       <div className="shrink-0 border-b border-slate-200/80 px-4 py-3.5">
         <NavLink
           to="/dashboard"
-          className="flex min-h-11 items-center gap-2.5 rounded-lg px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+          className={cn(
+            "flex min-h-11 items-center rounded-lg px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2",
+            sidebarOpen ? "gap-2.5" : "justify-center",
+          )}
           aria-label="KeyPing tester home"
         >
           <KeyPingLogo size={26} />
-          <span className="font-display text-base font-bold tracking-tight text-slate-900">KeyPing</span>
+          {sidebarOpen && (
+            <span className="font-display text-base font-bold tracking-tight text-slate-900">KeyPing</span>
+          )}
         </NavLink>
       </div>
 
-      <nav className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4" aria-label="Primary navigation">
-        <div className="space-y-0.5">
-          {navSections.flatMap((section, si) =>
-            [
-              si > 0 && (
-                <div key={`sep-${section.label}`} className="my-3 mx-2 h-px bg-slate-100" />
-              ),
-              ...section.items.map(({ to, icon: Icon, label, end }) => (
-                <NavLink
-                  key={to}
-                  to={to}
-                  end={end}
-                  title={label}
-                  className={({ isActive }) =>
-                    cn(
-                      "group relative flex min-h-10 items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium",
-                      "transition-all duration-200 ease-out",
-                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2",
-                      isActive
-                        ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-[0_4px_14px_rgba(37,99,235,0.35),inset_0_1px_0_rgba(255,255,255,0.2)] scale-[1.01]"
-                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:scale-[1.01] hover:shadow-sm active:scale-[0.99]",
-                    )
-                  }
-                >
-                  {({ isActive }) => (
-                    <>
-                      {isActive && (
-                        <span className="absolute inset-0 rounded-xl bg-white/10 blur-sm" aria-hidden="true" />
-                      )}
-                      <span
-                        className={cn(
-                          "relative flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-all duration-200",
-                          isActive
-                            ? "bg-white/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_2px_4px_rgba(0,0,0,0.15)]"
-                            : "bg-gradient-to-b from-white to-slate-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_1px_3px_rgba(0,0,0,0.08)] group-hover:from-blue-50 group-hover:to-blue-100 group-hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_2px_6px_rgba(37,99,235,0.12)]",
+      {/* Nav with category labels */}
+      <nav className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 py-4" aria-label="Primary navigation">
+        <div className="space-y-1">
+          {navSections.map((section, si) => (
+            <div key={section.label} className={cn(si > 0 && "mt-4")}>
+              {sidebarOpen ? (
+                <p className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-widest text-slate-400 select-none">
+                  {section.label}
+                </p>
+              ) : si > 0 ? (
+                <div className="mx-2 mb-2 h-px bg-slate-100" />
+              ) : null}
+              <div className="space-y-0.5">
+                {section.items.map(({ to, icon: Icon, label, end }) => (
+                  <NavLink
+                    key={to}
+                    to={to}
+                    end={end}
+                    title={label}
+                    className={({ isActive }) =>
+                      cn(
+                        "group relative flex min-h-10 items-center rounded-xl px-3 py-2 text-sm font-medium",
+                        "transition-all duration-200 ease-out",
+                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2",
+                        sidebarOpen ? "gap-3" : "justify-center",
+                        isActive
+                          ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-[0_4px_14px_rgba(37,99,235,0.35),inset_0_1px_0_rgba(255,255,255,0.2)] scale-[1.01]"
+                          : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:scale-[1.01] hover:shadow-sm active:scale-[0.99]",
+                      )
+                    }
+                  >
+                    {({ isActive }) => (
+                      <>
+                        {isActive && (
+                          <span className="absolute inset-0 rounded-xl bg-white/10 blur-sm" aria-hidden="true" />
                         )}
-                        aria-hidden="true"
-                      >
-                        <Icon
+                        <span
                           className={cn(
-                            "h-[15px] w-[15px] transition-all duration-200",
-                            isActive ? "text-white drop-shadow-sm" : "text-slate-400 group-hover:text-blue-500 group-hover:scale-110",
+                            "relative flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-all duration-200",
+                            isActive
+                              ? "bg-white/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_2px_4px_rgba(0,0,0,0.15)]"
+                              : "bg-gradient-to-b from-white to-slate-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_1px_3px_rgba(0,0,0,0.08)] group-hover:from-blue-50 group-hover:to-blue-100 group-hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_2px_6px_rgba(37,99,235,0.12)]",
                           )}
-                        />
-                      </span>
-                      <span className="relative">{label}</span>
-                    </>
-                  )}
-                </NavLink>
-              )),
-            ].filter(Boolean)
-          )}
+                          aria-hidden="true"
+                        >
+                          <Icon
+                            className={cn(
+                              "h-[15px] w-[15px] transition-all duration-200",
+                              isActive ? "text-white drop-shadow-sm" : "text-slate-400 group-hover:text-blue-500 group-hover:scale-110",
+                            )}
+                          />
+                        </span>
+                        {sidebarOpen && <span className="relative">{label}</span>}
+                      </>
+                    )}
+                  </NavLink>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </nav>
+
+      {/* Collapse toggle — pinned to bottom, styled like a nav row */}
+      <div className="shrink-0 border-t border-slate-200/80 px-2 py-3">
+        <button
+          type="button"
+          onClick={() => setSidebarOpen((v) => !v)}
+          title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+          aria-label={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+          className={cn(
+            "group flex w-full min-h-10 items-center rounded-xl px-3 py-2 text-sm font-medium",
+            "text-slate-500 transition-all duration-200 ease-out",
+            "hover:bg-slate-50 hover:text-slate-800 hover:scale-[1.01] hover:shadow-sm",
+            "active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2",
+            sidebarOpen ? "gap-3" : "justify-center",
+          )}
+        >
+          <span
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-b from-white to-slate-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_1px_3px_rgba(0,0,0,0.08)] transition-all duration-200 group-hover:from-slate-50 group-hover:to-slate-200"
+            aria-hidden="true"
+          >
+            {sidebarOpen ? (
+              <PanelLeftClose className="h-[15px] w-[15px] text-slate-400 transition-all duration-200 group-hover:text-slate-600" />
+            ) : (
+              <PanelLeftOpen className="h-[15px] w-[15px] text-slate-400 transition-all duration-200 group-hover:text-slate-600" />
+            )}
+          </span>
+          {sidebarOpen && <span className="relative">Collapse</span>}
+        </button>
+      </div>
     </div>
   );
 
@@ -199,7 +243,14 @@ export default function DashboardLayout() {
 
       </nav>
 
-      <aside className="hidden h-dvh w-64 min-h-0 shrink-0 flex-col border-r border-slate-200/80 bg-white lg:flex" aria-label="Workspace navigation">
+      <aside
+        className={cn(
+          "hidden h-dvh shrink-0 flex-col border-r border-slate-200/80 bg-white lg:flex",
+          "transition-[width] duration-200 ease-in-out",
+          sidebarOpen ? "w-64" : "w-16",
+        )}
+        aria-label="Workspace navigation"
+      >
         {sidebarContent}
       </aside>
 
