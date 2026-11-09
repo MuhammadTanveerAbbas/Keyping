@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="./public/favicon.svg" alt="Keyping Logo" width="80" height="80" />
+
 # KeyPing
 
 **Validate API keys with provider aware diagnostics, health scoring, latency checks, and secure history.**
@@ -375,6 +377,16 @@ logging the API key, and update `docs/diagrams.md` if the flow changed.
 
 Distributed under the MIT License. See `LICENSE` for more information.
 
-## Built by Muhammad Tanveer Abbas
 
-SaaS Developer and builder of practical production tools.
+## 👨‍💻 Built by Muhammad Tanveer Abbas
+
+<div>
+
+**Muhammad Tanveer Abbas**
+Technical Product Partner for B2B SaaS & Internals Tools
+
+[![Twitter](https://img.shields.io/badge/Twitter-@m_tanveerabbas-1DA1F2?style=for-the-badge&logo=twitter)](https://x.com/m_tanveerabbas)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0077B5?style=for-the-badge&logo=linkedin)](https://linkedin.com/in/muhammadtanveerabbas)
+[![GitHub](https://img.shields.io/badge/GitHub-Follow-181717?style=for-the-badge&logo=github)](https://github.com/MuhammadTanveerAbbas)
+
+If this project helped you, please consider giving it a ⭐
