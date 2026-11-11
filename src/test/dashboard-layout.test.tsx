@@ -176,7 +176,7 @@ describe("DashboardLayout sign out", () => {
     });
   });
 
-  it("unlocks the sidebar sign out button after the dialog closes mid request", async () => {
+  it("unlocks the account dialog sign out button after the dialog closes mid request", async () => {
     let release: () => void = () => {};
     signOut.mockImplementation(() => new Promise<void>((resolve) => { release = resolve; }));
     await renderLayout();
@@ -186,7 +186,7 @@ describe("DashboardLayout sign out", () => {
       trigger.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
 
-    const dialog = document.querySelector('[role="dialog"]') as HTMLElement;
+    let dialog = document.querySelector('[role="dialog"]') as HTMLElement;
     const dialogSignOut = Array.from(dialog.querySelectorAll("button")).find(
       (button) => button.textContent?.trim() === "Sign out",
     ) as HTMLButtonElement;
@@ -195,18 +195,23 @@ describe("DashboardLayout sign out", () => {
       dialogSignOut.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
 
-    // Dismissing the dialog while the request runs used to leave the sidebar
-    // button stuck on "Signing out..." for the rest of the session.
+    // Dismissing the dialog while the request runs should not leave the
+    // account dialog stuck in a signing-out state for the rest of the session.
     await act(async () => {
       document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
     });
 
-    const sidebarSignOut = Array.from(container.querySelectorAll("aside button")).find((button) =>
+    await act(async () => {
+      trigger.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    dialog = document.querySelector('[role="dialog"]') as HTMLElement;
+    const reopenedSignOut = Array.from(dialog.querySelectorAll("button")).find((button) =>
       button.textContent?.includes("Sign out"),
     ) as HTMLButtonElement;
 
-    expect(sidebarSignOut.disabled).toBe(false);
-    expect(sidebarSignOut.textContent?.trim()).toBe("Sign out");
+    expect(reopenedSignOut.disabled).toBe(false);
+    expect(reopenedSignOut.textContent?.trim()).toBe("Sign out");
 
     await act(async () => {
       release();

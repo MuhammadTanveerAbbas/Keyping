@@ -200,10 +200,10 @@ export default function AuthPage() {
         <div className="absolute bottom-0 right-0 h-[500px] w-[500px] translate-x-1/3 translate-y-1/3 rounded-full bg-blue-500/[0.07] blur-[120px]" />
         <div className="absolute left-0 top-0 h-[300px] w-[300px] -translate-x-1/3 -translate-y-1/3 rounded-full bg-violet-500/[0.05] blur-[100px]" />
 
-        <div className="relative z-10 flex items-center gap-2.5"><KeyPingLogo size={30} /><span className="font-display text-base font-semibold tracking-tight text-white">KeyPing</span></div>
+        <div className="relative z-10 flex items-center justify-center gap-2.5"><KeyPingLogo size={30} /><span className="font-display text-base font-semibold tracking-tight text-white">KeyPing</span></div>
         <div className="relative z-10 flex flex-1 items-center justify-center py-8"><AuthIllustration /></div>
-        <div className="relative z-10">
-          <div className="mb-4 flex flex-wrap items-center gap-4">
+        <div className="relative z-10 text-center">
+          <div className="mb-4 flex flex-wrap items-center justify-center gap-4">
             <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-emerald-400" /><span className="text-xs text-slate-400">Provider validation</span></div>
             <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-blue-400" /><span className="text-xs text-slate-400">Preview-only history</span></div>
           </div>
@@ -249,7 +249,7 @@ export default function AuthPage() {
               <form onSubmit={handleSubmit} noValidate className="space-y-4" aria-busy={submitting} aria-describedby={generalError ? formErrorId : undefined}>
                 <div>
                   <label htmlFor={emailId} className="mb-1.5 block text-xs font-semibold text-slate-600">Email</label>
-                  <input ref={emailRef} id={emailId} name="email" type="email" inputMode="email" autoComplete="email" required value={email} onChange={(event) => { setEmail(event.target.value); setGeneralError(null); setFormErrors((previous) => ({ ...previous, email: undefined })); }} placeholder="you@company.com" aria-invalid={Boolean(formErrors.email)} aria-describedby={formErrors.email ? emailErrorId : undefined} className={`w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm font-sans text-slate-900 outline-none transition-all duration-150 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/30 ${formErrors.email ? "border-red-400" : "border-slate-200 focus:border-slate-400"}`} />
+                  <input ref={emailRef} id={emailId} name="email" type="email" inputMode="email" autoComplete="email" required value={email} onChange={(event) => { setEmail(event.target.value); setGeneralError(null); setFormErrors((previous) => ({ ...previous, email: undefined })); }} placeholder="you@company.com" aria-invalid={Boolean(formErrors.email)} aria-describedby={formErrors.email ? emailErrorId : undefined} className={`w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm font-sans text-slate-900 outline-none placeholder:text-slate-400 focus:outline-none focus:ring-0 ${formErrors.email ? "border-red-400" : "border-slate-200"}`} />
                   {formErrors.email && <p id={emailErrorId} className="mt-1 text-xs font-medium text-red-600">{formErrors.email}</p>}
                 </div>
 
@@ -257,7 +257,7 @@ export default function AuthPage() {
                   <div>
                     <label htmlFor={passwordId} className="mb-1.5 block text-xs font-semibold text-slate-600">Password</label>
                     <div className="relative">
-                      <input ref={passwordRef} id={passwordId} name="password" type={showPass ? "text" : "password"} autoComplete={isSignUp ? "new-password" : "current-password"} required value={password} onChange={(event) => { setPassword(event.target.value); setGeneralError(null); setFormErrors((previous) => ({ ...previous, password: undefined })); }} placeholder="At least 6 characters" aria-invalid={Boolean(formErrors.password)} aria-describedby={formErrors.password ? passwordErrorId : undefined} className={`w-full rounded-xl border bg-white px-3.5 py-2.5 pr-11 text-sm font-sans text-slate-900 outline-none transition-all duration-150 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/30 ${formErrors.password ? "border-red-400" : "border-slate-200 focus:border-slate-400"}`} />
+                      <input ref={passwordRef} id={passwordId} name="password" type={showPass ? "text" : "password"} autoComplete={isSignUp ? "new-password" : "current-password"} required value={password} onChange={(event) => { setPassword(event.target.value); setGeneralError(null); setFormErrors((previous) => ({ ...previous, password: undefined })); }} placeholder="At least 6 characters" aria-invalid={Boolean(formErrors.password)} aria-describedby={formErrors.password ? passwordErrorId : undefined} className={`w-full rounded-xl border bg-white px-3.5 py-2.5 pr-11 text-sm font-sans text-slate-900 outline-none placeholder:text-slate-400 focus:outline-none focus:ring-0 ${formErrors.password ? "border-red-400" : "border-slate-200"}`} />
                       <button type="button" onClick={() => setShowPass((previous) => !previous)} className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500" aria-label={showPass ? "Hide password" : "Show password"} aria-pressed={showPass}>
                         {showPass ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
                       </button>

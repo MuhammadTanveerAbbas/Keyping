@@ -97,17 +97,16 @@ function SignOutButton() {
   };
 
   return (
-    <button
+    <Button
       type="button"
-      onClick={handleSignOut}
+      onClick={() => void handleSignOut()}
       disabled={signingOut}
-      className={cn(
-        "flex min-h-11 w-full touch-manipulation select-none items-center gap-2.5 rounded-xl border border-red-200 bg-red-50 px-2.5 py-2 text-left text-[13px] font-semibold text-red-700 transition-colors hover:border-red-300 hover:bg-red-100 hover:text-red-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 active:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
-      )}
+      variant="outline"
+      className="h-10 w-full justify-center gap-2 rounded-xl border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900 sm:w-auto"
     >
       <LogOut className="h-4 w-4 shrink-0" aria-hidden="true" />
-      {signingOut ? "Signing out..." : "Sign out"}
-    </button>
+      {signingOut ? "Signing out..." : "Sign out of this device"}
+    </Button>
   );
 }
 
@@ -392,8 +391,14 @@ export default function SettingsPage() {
         </div>
 
         <div id="security" className="scroll-mt-0 space-y-4">
-          <Panel title="Sign out" description="End your current session and return to the login page.">
-            <SignOutButton />
+          <Panel title="Session" description="End your current session on this device.">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-slate-900">Sign out</p>
+                <p className="mt-0.5 text-xs text-slate-500">You will return to the login page and can sign in again anytime.</p>
+              </div>
+              <SignOutButton />
+            </div>
           </Panel>
           
           <Panel title="Security & data" description="Review retention, export, and deletion controls.">
